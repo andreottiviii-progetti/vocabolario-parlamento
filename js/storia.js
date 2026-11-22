@@ -122,7 +122,7 @@
         if ((mese(p[0]) && /-01$/.test(String(p[0]))) || (!mese(p[0]) && i % passo === 0)) g.append("text").attr("x", x(p[0]) + x.bandwidth() / 2).attr("y", h - 6).attr("text-anchor", "middle").text(mese(p[0]) ? String(p[0]).slice(0, 4) : etX(p[0]));
       });
       const p = pts[imax];
-      svg.append("text").attr("class", "etich").attr("x", x(p[0]) + x.bandwidth() / 2).attr("y", y(p[1]) - 6).attr("text-anchor", x(p[0]) > w - 80 ? "end" : "middle").attr("fill", G.ROSSO).text(etX(p[0]) + ": " + fmt(p[1]));
+      svg.append("text").attr("class", "etich").attr("x", x(p[0]) + x.bandwidth() / 2).attr("y", y(p[1]) - 6).attr("text-anchor", x(p[0]) > w - 80 ? "end" : x(p[0]) < (etX(p[0]) + ": " + fmt(p[1])).length * 3.6 + 4 ? "start" : "middle").attr("fill", G.ROSSO).text(etX(p[0]) + ": " + fmt(p[1]));
       return;
     }
     if (D.forma === "intervalli") {

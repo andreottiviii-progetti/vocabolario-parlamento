@@ -1602,8 +1602,8 @@ def _(g):
         return sum(v) / len(v)
     com = [a for a in sorted(p) if a in q and 1950 <= a <= 2008 and all((a + k) in p and (a + k) in q for k in (-1, 1))]
     rho = round(pearson([m3(p, a) for a in com], [m3(q, a) for a in com]), 2)  # media mobile di tre anni di tutte e due le serie
-    return LINEE([("Parola «sciopero» in aula (massimo = 100)", norm100([(a, v) for a, v in sorted(p.items())])),
-                  ("Ore di sciopero non lavorate (massimo = 100)", norm100([(a, v) for a, v in sorted(q.items())]))]), [rho]
+    return LINEE([("Parola «sciopero» in aula (massimo = 100)", norm100([(a, v) for a, v in sorted(p.items()) if 1949 <= a <= 2009])),
+                  ("Ore di sciopero non lavorate (massimo = 100)", norm100([(a, v) for a, v in sorted(q.items()) if 1949 <= a <= 2009]))]), [rho]
 
 
 @regola("scuola-riforme", 1)
@@ -2012,6 +2012,144 @@ def _(g):
     for c, n in (("numeri_economici_per_1000", "Numeri dell'economia"), ("rif_legge_per_1000", "Rimandi a leggi e articoli")):
         out.append((n, [(x, y) for x, y in serie_anni(rr, "anno", c, 1, 2) if x in ok]))
     return cand(g, LINEE(out), LINEE([(n, media3(p)) for n, p in out]))
+
+
+# ---------------------------------------------------------------- seconda tornata: grafici con etichette di filtro, serie in piu' o nomi grezzi
+
+@regola("fascismo-fine-del-dissenso", 2)
+def _(g):
+    rr = righe("risultati/h18_periodi.csv", ramo="camera", periodo={"liberale 1913-1921", "regime 1927-1938"})
+    d = {r["periodo"]: r for r in rr}
+    a, b = d["liberale 1913-1921"], d["regime 1927-1938"]
+    NOMI = [("proteste_100", "Proteste e rumori"), ("commenti_100", "Commenti"), ("interruzioni_100", "Interruzioni"),
+            ("ilarita_100", "Risate"), ("applausi_100", "Applausi e acclamazioni")]
+    rows = [[n, it(fl(a[c]), 1), it(fl(b[c]), 1)] for c, n in NOMI]  # testo: cosi' 11,0 resta 11,0
+    return TABELLA(["Che cosa annota il resoconto", "Periodo liberale, 1913-1921", "Regime, 1927-1938"], rows, "Annotazioni ogni cento interventi, Camera.")
+
+
+@regola("fine-delle-ideologie", 2)
+def _(g):
+    rr = righe("risultati/h29_voci.csv", lista="classe", periodo={"1948-1969", "2008-2022"})
+    d = {}
+    for r in rr:
+        d.setdefault(r["voce"], {})[r["periodo"]] = fl(r["per_milione"])
+    voci = sorted((v for v in d if len(d[v]) == 2), key=lambda v: -d[v]["1948-1969"])[:12]
+    rows = [[v.replace("_", " "), round(d[v]["1948-1969"], 2), round(d[v]["2008-2022"], 2)] for v in voci]
+    return TABELLA(["Parola", "1948-1969 (volte per milione)", "2008-2022 (volte per milione)"], rows,
+                   "Le %d parole del lessico di classe con piu' volte nel 1948-1969 (su %d)." % (len(voci), len(d)))
+
+
+@regola("compromesso-storico-pci-verso-dc", 2)
+def _(g):
+    rr = righe("risultati/h56_spostamenti.csv", gruppo="base")
+    VOC = {"tutte": "5.000 parole", "sa": "senza parole d'argomento"}
+    RIF = {"resto": "confronto con il resto", "tutta": "confronto con tutta la Camera", "assoluta": "confronto assoluto"}
+    rows = [["%s, %s" % (VOC[r["vocabolario"]], RIF[r["riferimento"]]), r_(r["spost_pci_verso_dc"], 2), r_(r["spost_dc_verso_pci"], 2)] for r in rr]
+    rows.sort(key=lambda r: -r[1])
+    return TABELLA(["Versione della misura", "Spostamento del PCI verso la DC", "Spostamento della DC verso il PCI"], rows,
+                   "Spostamento della lingua del partito tra il periodo di riferimento e il 1976-79, nelle sei versioni della misura.")
+
+
+@regola("urss-usa-pci-dc", 2)
+def _(g):
+    rr = righe("risultati/h39_prev_d_partiti.csv", periodo="1948-1968", paese={"Russia/URSS", "Stati Uniti"}, partito={"PCI", "DC"})
+    d = {(r["paese"], r["partito"]): r for r in rr}
+    rows = []
+    for paese in ("Russia/URSS", "Stati Uniti"):
+        for p in ("PCI", "DC"):
+            r = d[(paese, p)]
+            rows.append([paese, p, r_(r["indice"], 2), "da %s a %s" % (it(fl(r["lo"]), 2), it(fl(r["hi"]), 2))])
+    return TABELLA(["Paese", "Partito", "Indice di ostilita' (con le parole)", "Margine"], rows, "Da −1 (amico) a +1 (nemico), Camera, 1948-1968.")
+
+
+@regola("fascismo-lessico-del-regime", 2)
+def _(g):
+    rr = righe("risultati/h18c_stesse_persone.csv", ramo="camera", a="regno_28")
+    d = {r["lista"]: r for r in rr}
+    n = int(fl(d["regime"]["persone"]))
+    NOMI = [("regime", "Parole del regime (17)"), ("specifiche", "Parole del regime senza le generiche"), ("liberale", "Parole liberali")]
+    rows = []
+    for k, nome in NOMI:
+        r = d[k]
+        rows.append([nome, int(round(fl(r["pm_prima"]))), int(round(fl(r["pm_dopo"]))),
+                     "%s (da %s a %s)" % (it(fl(r["differenza_media"]), 0), it(fl(r["lo"]), 0), it(fl(r["hi"]), 0))])
+    return TABELLA(["Lista", "Prima (per milione)", "Dopo (per milione)", "Differenza (margine)"], rows,
+                   "Gli stessi %d deputati nella XXVI legislatura e nella XXVIII, Camera." % n)
+
+
+@regola("chi-fa-ridere", 2)
+def _(g):
+    rr = sorted(tabella("risultati/h20_oratori.csv"), key=lambda r: -(fl(r["ila_indice_ic_basso"]) or -1e9))[:10]
+    x = [corto("%s (%d-%d)" % (r["nome"], fl(r["anno_min"]), fl(r["anno_max"]))) for r in rr]
+    return INTERVALLI(x, [r_(r["ila_osservata_su_attesa"], 1) for r in rr], [r_(r["ila_indice_ic_basso"], 1) for r in rr],
+                      [r_(r["ila_indice_ic_alto"], 1) for r in rr], "volte le risate attese")
+
+
+@regola("emozioni-non-crescono", 2)
+def _(g):
+    voci = ["preoccupazione", "speranza", "preoccupazioni", "paura", "speranze", "dolore", "timore", "vergogna", "orgoglio", "odio"]
+    rr = righe("risultati/h31_voci.csv", periodo={"1946-1969", "2008-2022"}, voce=voci)
+    d = {}
+    for r in rr:
+        d.setdefault(r["voce"], {})[r["periodo"]] = fl(r["per_milione"])
+    ok = sorted((v for v in d if len(d[v]) == 2), key=lambda v: -d[v]["2008-2022"])
+    rows = [[v, round(d[v]["1946-1969"], 1), round(d[v]["2008-2022"], 1)] for v in ok]
+    return TABELLA(["Parola", "1946-1969 (volte per milione)", "2008-2022 (volte per milione)"], rows)
+
+
+@regola("corruzione-salto-1980", 3)
+def _(g):
+    rr = [r for r in tabella("risultati/h55_c_gruppi.csv") if int(r["anno"]) != 1994]
+    return LINEE([("Governo", serie_anni(rr, "anno", "governo", 1, 2)), ("Parlamentari fuori dal governo", serie_anni(rr, "anno", "fuori_governo", 1, 2)),
+                  ("Partiti fuori dal sistema", serie_anni(rr, "anno", "fuori_sistema", 1, 2))])
+
+
+@regola("pci-1984-scala-mobile", 3)
+def _(g):
+    rr = sorted(tabella("risultati/riparazione_pesi/416_pci_1984_giorni.csv"), key=lambda r: -fl(r["parole"]))[:12]
+    def giorno(iso):
+        a, m, d = iso.split("-")
+        return "%d %s %s" % (int(d), MESI[int(m) - 1], a)
+    return BARRE(["%s (%s%% del giorno)" % (giorno(r["data"]), it(fl(r["quota_del_giorno"]) * 100, 0)) for r in rr], [int(fl(r["parole"])) for r in rr],
+                 "parole dei deputati comunisti in una seduta")
+
+
+@regola("pci-e-nato", 2)
+def _(g):
+    rr = sorted(tabella("risultati/h68_h75_h77/h75_giudice_periodi_fini.csv"), key=lambda r: int(fl(r["da"])))
+    x = ["%d-%02d%s" % (int(fl(r["da"])), int(fl(r["a"])) % 100, "*" if fl(r["validi"]) < 30 else "") for r in rr]
+    return COLONNE(x, [pc(r["quota_contro"], 0) for r in rr], "passaggi del PCI contrari alla NATO (%); * = meno di 30 passaggi validi")
+
+
+@regola("potere-cambia-la-lingua", 1)
+def _(g):
+    rr = [r for r in tabella("risultati/h33_misure.csv") if r["misura"] == "q" and r["confronto"] == "G-O"]
+    SOT = [("tutte le legislature", "Tutte le legislature"), ("digitale (XIII-XVIII)", "1996-2022"), ("scansione (I-XII)", "1948-96")]
+    rows = []
+    for s, nome in SOT:
+        for pref, spiega in (("a:", "stessa persona"), ("a1:", "stessa persona, stessa legislatura")):
+            r = next((x for x in rr if x["sottoinsieme"] == s and x["variante"].startswith(pref)), None)
+            if r:
+                rows.append(["%s, %s" % (nome, spiega), r_(r["media_O"], 2), r_(r["media_G"], 2),
+                             "%s (da %s a %s)" % (it(fl(r["diff"]), 2), it(fl(r["lo"]), 2), it(fl(r["hi"]), 2))])
+    return TABELLA(["Gruppo", "All'opposizione", "Al governo", "Differenza (margine)"], rows, "Domande ogni 1.000 parole degli stessi deputati.")
+
+
+@regola("potere-cambia-la-lingua", 2)
+def _(g):
+    rr = righe("risultati/h33_passaggi_8.csv", prima={"G", "O"}, dopo={"G", "O"})
+    nome = {"G": "governo", "O": "opposizione"}
+    meno = sum(1 for r in rr if fl(r["q"]) < 0)
+    rr.sort(key=lambda r: fl(r["q"]))
+    return BARRE(["%s, %s, %s → %s" % (r["partito"], r["data_passaggio"][:4], nome[r["prima"]], nome[r["dopo"]]) for r in rr],
+                 [round(-fl(r["q"]), 2) for r in rr], "domande in meno al governo ogni 1.000 parole"), [meno, len(rr)]
+
+
+@regola("semplificazione-ottocento", 3)
+def _(g):
+    rr = [r for r in righe("risultati/rumore_per_decennio.csv", ramo="camera") if 1840 <= int(r["decennio"]) <= 1930]
+    return LINEE([("Terzo di interventi con meno errori dello scanner", serie_anni(rr, "decennio", "frase_media_basso_rumore", 1, 2)),
+                  ("Tutti gli interventi", serie_anni(rr, "decennio", "frase_media_tutti", 1, 2))])
 
 
 if __name__ == "__main__":

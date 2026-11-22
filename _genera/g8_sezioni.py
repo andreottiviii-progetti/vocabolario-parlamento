@@ -236,6 +236,9 @@ def main():
     # temi in cui il partito parla più del suo peso: parole forti dei 40 temi (h37_temi_K40.txt, temi non procedurali),
     # volte per milione di parole del partito contro tutta l'aula repubblicana della Camera (conteggi di g4)
     temi_par = {}
+    # oltre ai temi procedurali (h37) restano fuori quelli di stile o generici, che non sono una materia:
+    # 0 linguaggio del regime (stile d'epoca), 7 cifre di spesa, 13 patria popolo retorica, 16 partiti e maggioranza, 22 discorso moderno generico
+    NON_MATERIA = {0, 7, 13, 16, 22}
     agp = os.path.join(CACHE, "aggregati.pkl")
     if os.path.exists(agp):
         AG = pickle.load(open(agp, "rb"))
@@ -245,7 +248,7 @@ def main():
             forti = {}
             for riga in open(os.path.join(RIS, "h37_temi_K40.txt"), encoding="utf-8", errors="replace"):
                 m = re.match(r"T(\d+) quota\s+([\d.,]+)%: (.*)", riga.strip())
-                if m and int(m.group(1)) in et and not et[int(m.group(1))][1]:
+                if m and int(m.group(1)) in et and not et[int(m.group(1))][1] and int(m.group(1)) not in NON_MATERIA:
                     ws = [w.strip() for w in m.group(3).split(",") if w.strip() in pos][:15]
                     if ws:
                         forti[int(m.group(1))] = ws

@@ -412,7 +412,7 @@
       if (s.piccoEtich && s.piccoEtich.x != null) {
         const px = x(s.piccoEtich.x), py = y(s.piccoEtich.y);
         svg.append("circle").attr("cx", px).attr("cy", py).attr("r", 3).attr("fill", s.colore);
-        const anchor = px > w - 90 ? "end" : px < 60 ? "start" : "middle";
+        const mezza = String(s.piccoEtich.testo).length * 3.6, anchor = px > w - mezza - 10 ? "end" : px < mezza + 4 ? "start" : "middle";
         svg.append("text").attr("class", "etich").attr("x", px).attr("y", Math.max(12, py - 7)).attr("text-anchor", anchor).attr("fill", s.colore).text(s.piccoEtich.testo);
       }
     });
@@ -641,6 +641,19 @@
       el.innerHTML = `<p class="nel-racconto"><b>Nel racconto:</b> ${caps.map((c) => `<a class="lk" href="capitolo.html?n=${c.n}">capitolo ${c.n}, ${G.esc(c.titolo)}</a>`).join(" · ")}</p>`;
     }).catch(() => {});
   };
+
+  /* colore del testo leggibile su uno sfondo: bianco sugli scuri, inchiostro sui chiari (contrasto WCAG) */
+  G.testoSu = function (bg) {
+    const c = d3.rgb(bg), l = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    const L = 0.2126 * l(c.r) + 0.7152 * l(c.g) + 0.0722 * l(c.b);
+    return 1.05 / (L + 0.05) >= 4.5 ? "#fff" : "#16181D";
+  };
+  /* un grafico con collegamenti dentro non è un'immagine: il ruolo diventa «group» (accessibilità) */
+  if (typeof MutationObserver !== "undefined") {
+    let attesa = null;
+    const ruoli = () => { attesa = null; document.querySelectorAll('svg[role="img"]').forEach((s) => { if (s.querySelector("a")) s.setAttribute("role", "group"); }); };
+    new MutationObserver(() => { if (!attesa) attesa = setTimeout(ruoli, 200); }).observe(document.documentElement, { childList: true, subtree: true });
+  }
 
   /* errore leggibile */
   G.nonTrovato = function (el, testo) {

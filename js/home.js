@@ -106,7 +106,7 @@
         }
         tit.innerHTML = t;
       }
-      document.getElementById("asse-gettoni").innerHTML = serie.map((s) => `<button class="gettone" type="button" style="background:${s.col}" data-w="${s.w}" aria-label="Togli ${G.esc(s.c.forma)}">${G.esc(s.c.forma)}<small>picco ${s.vero.anno}</small><span aria-hidden="true">×</span></button>`).join(" ");
+      document.getElementById("asse-gettoni").innerHTML = serie.map((s) => `<button class="gettone" type="button" style="background:${s.col};color:${G.testoSu(s.col)}" data-w="${s.w}" aria-label="Togli ${G.esc(s.c.forma)}">${G.esc(s.c.forma)}<small>picco ${s.vero.anno}</small><span aria-hidden="true">×</span></button>`).join(" ");
       document.querySelectorAll("#asse-gettoni .gettone").forEach((b) => b.addEventListener("click", () => { attive = attive.filter((w) => w !== b.dataset.w); aggiornaURL(); disegna(); }));
       document.getElementById("asse-fatti").innerHTML = serie.map((s) => `<div><b style="color:${s.col}">${G.esc(s.c.forma)}</b>: ${G.num(s.c.tot)} volte. Anno di punta ${G.lAnno(s.vero.anno)} (${G.num1(s.vero.val)} per milione). Dal ${s.c.y0} in curva. <a class="lk" href="parola.html?p=${s.w}">La scheda</a></div>`).join("");
       fig.datum(serie);

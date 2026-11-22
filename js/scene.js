@@ -282,6 +282,9 @@
   };
   /* le prime volte delle parole del regime, dall'archivio delle prime volte */
   S.primeParole = function (lista) {
-    return Promise.all(lista.map((w) => G.schedaPrime(w).then((s) => (s && s.p && s.p[0] ? { forma: s.f || w, data: s.p[0][0] } : null)))).then((v) => v.filter(Boolean).sort((a, b) => (a.data < b.data ? -1 : 1)));
+    // prima il file piccolo delle parole scelte (g6), poi l'archivio intero solo per le parole che mancano
+    return G.carica("prime/scelte.json").catch(() => ({})).then((SC) => Promise.all(lista.map((w) => (SC[w] ? { forma: SC[w].f, data: SC[w].data }
+      : G.schedaPrime(w).then((s) => (s && s.p && s.p[0] ? { forma: s.f || w, data: s.p[0][0] } : null))))))
+      .then((v) => v.filter(Boolean).sort((a, b) => (a.data < b.data ? -1 : 1)));
   };
 })();

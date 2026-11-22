@@ -279,7 +279,7 @@ def porte_html(t):
     if not t:
         return ""
     h = md_inline(re.sub(r"`([a-z0-9-]+)`", r"[[\1]]", t))
-    h = re.sub(r"[Ss]tori[ae]\s+(?=\[\[)", "", h)
+    h = re.sub(r"\b[Ss]tori[ae]\s+(?=\[\[)", "", h)
     h = re.sub(r"\[\[([a-z0-9-]+)\]\]", r'<a class="lk" href="storia.html?id=\1">la storia</a>', h)
     h = re.sub(r"\b(H\d+[a-z]?)\b", r'<a class="lk" href="esperimento.html?cod=\1">\1</a>', h)
     h = re.sub(r"«([^»]{2,40})»", lambda m: '«<a class="lk" href="parola.html?p=%s">%s</a>»' % (m.group(1).lower(), m.group(1)), h)
@@ -334,6 +334,16 @@ def main():
                 if cand:
                     usate.append(cand[0])
                     dati = {"forma": "tabella", "colonne": cand[0]["colonne"], "righe": cand[0]["righe"], "nota": cand[0].get("nota", "")}
+            # nomi leggibili delle serie, se la storia li dà: «- **nomi**: `cong` = congiuntivo; `cond` = condizionale»
+            if dati and g.get("nomi") and isinstance(dati.get("serie"), list):
+                nomi_s = dict((a_.strip(), b_.strip()) for a_, b_ in re.findall(r"`([^`]+)`\s*=\s*([^;]+)", g["nomi"]))
+                for s_ in dati["serie"]:
+                    s_["nome"] = nomi_s.get(s_["nome"], s_["nome"])
+            # etichette in codice spiegate nella storia («A = 1948-63, B = 1964-69...»): si mostrano per esteso
+            if dati and isinstance(dati.get("x"), list):
+                mappa_x = dict(re.findall(r"\b([A-Z])\s*=\s*(\d{4}(?:-\d{2,4})?)", g.get("colonne", "")))
+                if mappa_x and all(str(v) in mappa_x for v in dati["x"]):
+                    dati["x"] = [mappa_x[str(v)] for v in dati["x"]]
             # correzioni dopo il controllo a occhio (g6c_correzioni.py): sostituiscono il grafico automatico
             corr = CORREZIONI.get(sid, {}).get(str(len(gr) + 1))
             if corr:
@@ -453,6 +463,25 @@ def main():
         scommesse.append({"capitolo": int(m.group(1)), "passo": int(m.group(2)), "domanda": c[1], "risposte": risposte, "giusta": giusta,
                           "esce": esce, "codici": re.findall(r"\bH\d+[a-z]?\b", esce)})
     scrivi_json("capitoli/scommesse.json", {"scommesse": scommesse})
+
+    # prime volte delle parole usate nelle cronologie del sito (capitolo 3, fascismo, percorso «Parole»): un file piccolo
+    # invece di decine di pezzi grandi dell'archivio delle prime volte (g9)
+    SCELTE = ["antifascismo", "camerati", "autarchia", "razzismo", "littorio", "camorra", "maffia", "telefono", "automobile", "aviazione",
+              "televisione", "immigrati", "computer", "privacy", "spread", "ndrangheta", "ambientalismo", "tangentopoli", "internet",
+              "femminicidio", "smartphone", "covid"]
+    mp = os.path.join(DATI, "prime", "mappa.json")
+    if os.path.exists(mp):
+        import bisect
+        inizi = json.load(open(mp, encoding="utf-8"))["inizi"]
+        scelte, pezzi_p = {}, {}
+        for w in SCELTE:
+            k = bisect.bisect_right(inizi, w) - 1
+            if k not in pezzi_p:
+                pezzi_p[k] = json.load(open(os.path.join(DATI, "prime", "d", "%03d.json" % k), encoding="utf-8"))
+            sp = pezzi_p[k].get(w)
+            if sp and sp.get("p"):
+                scelte[w] = {"f": sp.get("f") or w, "data": sp["p"][0][0]}
+        scrivi_json("prime/scelte.json", scelte)
 
     # i quattro percorsi nuovi (PERCORSI.md, sezioni 3, 4, 7, 8); gli altri quattro hanno già la loro pagina
     pp = os.path.join(SITO, "_progetto", "racconto", "PERCORSI.md")
