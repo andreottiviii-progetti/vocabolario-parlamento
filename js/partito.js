@@ -66,7 +66,7 @@
       U.forEach((u) => {
         const lg = B.legislature.find((l) => l.id === legId(u.leg));
         const x0 = x(lg ? lg.da : u.anno - 2), x1 = x(lg ? lg.a + 1 : u.anno + 2) - 2;
-        const lk = svg.append("a").attr("href", "legislatura.html?id=" + legId(u.leg));
+        const lk = svg.append("a").attr("href", "legislatura.html?id=" + legId(u.leg)).attr("aria-label", G.romano(u.leg) + " legislatura: " + G.pct(u.quota));
         lk.append("rect").attr("x", x0).attr("width", Math.max(2, x1 - x0)).attr("y", y(u.quota)).attr("height", y(0) - y(u.quota)).attr("fill", u === max ? G.ROSSO : G.NERO);
         if (x1 - x0 > 26) lk.append("text").attr("x", (x0 + x1) / 2).attr("y", y(u.quota) - 4).attr("text-anchor", "middle").attr("font-size", 12).attr("font-weight", 700).text(G.romano(u.leg));
       });
