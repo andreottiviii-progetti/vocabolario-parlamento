@@ -235,3 +235,4 @@ body[data-sezione="fascismo"] .scommessa{border-color:#2A2D33;border-top-color:#
 body[data-sezione="fascismo"] .menu button,body[data-sezione="fascismo"] .bottone{background:#F2F3F5;color:#0E0F12}
 body[data-sezione="fascismo"] .fig-fonte button{color:#F2F3F5}
 body[data-sezione="fascismo"] .filtri button{color:#F2F3F5}
+body[data-sezione="fascismo"] .esito.smentita{color:#FF6B66}
