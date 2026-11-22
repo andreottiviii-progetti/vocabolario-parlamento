@@ -18,7 +18,7 @@
         <p class="sommario">Dal ${G.num(p0.dissenso_100, 1)} al ${G.num(p1.dissenso_100, 1)} ogni cento interventi: alla Camera il dissenso annotato dallo stenografo sparisce tra il periodo liberale e il regime. Le parole del regime si moltiplicano, il «Lei» lascia il posto al «Voi», le sedute si svuotano di oratori.</p>
         <section class="griglia" style="margin-top:40px">
           <div class="c4"><div class="numero-ill">${G.num(p0.dissenso_100, 0)}→${G.num(p1.dissenso_100, 0)}</div><p class="che-cosa">annotazioni di dissenso ogni cento interventi alla Camera, ${G.esc(p0.periodo)} e ${G.esc(p1.periodo)}</p></div>
-          <div class="c8" id="g-dissenso"></div>
+          <div class="c8"><div id="scena-sp"></div><div id="bottoni-sp"></div></div>
         </section>
         <section class="sezione"><div id="g-termini"></div>${h18c ? `<p class="piccolo grigio">${G.lEsp("H18c")} ${G.esc(h18c.numero)} ${G.esito(h18c.esito)}</p>` : ""}</section>
         <section class="sezione griglia"><div class="c6" id="g-lei"></div><div class="c6 fil" id="g-oratori"></div></section>
@@ -26,21 +26,13 @@
         <section class="sezione"><div class="testa"><h2>Le cinque legislature del regime</h2></div><div class="tessere" id="legs"></div></section>
         <section class="sezione"><div class="testa"><h2>Le storie del fascismo</h2><span class="a-destra"><a href="storie.html">Tutte le storie</a></span></div>${G.tessere(storie, 8)}</section>
         <section class="sezione"><div class="testa"><h2>Gli esperimenti</h2></div><div class="tab-scorre"><table class="fitta"><thead><tr><th>codice</th><th>esperimento</th><th>esito</th><th>il numero</th></tr></thead><tbody>${esp.map((e) => `<tr><td>${G.lEsp(e.cod)}</td><td>${G.esc(e.titolo)}</td><td>${G.esito(e.esito)}</td><td>${G.esc(e.numero)}</td></tr>`).join("")}</tbody></table></div></section>`;
+      G.Scena.primeParole(["antifascismo", "camerati", "autarchia", "razzismo", "littorio"]).then((PP) => {
+        const scSP = G.Scena.specchio("#scena-sp", F, PP);
+        G.bottoniStati("#bottoni-sp", scSP, ["1913-1922", "arriva il regime", "1913-1938", "con le parole"]);
+      });
       const c = F.colonne, sc = F.serie.camera || {}, ss = F.serie.senato || {};
       const col = (k) => c.indexOf(k);
       const punti = (S_, k) => Object.keys(S_).map(Number).sort().map((a) => [a, S_[a][col(k)]]);
-      const a1 = G.figura("#g-dissenso", {
-        titolo: "Il dissenso crolla nel 1926-27, gli applausi e il consenso salgono",
-        sotto: "Annotazioni dello stenografo ogni cento interventi, Camera, 1913-1943: dissenso (proteste, commenti, interruzioni) e consenso. La fascia scura sono gli anni del regime.",
-        limite: "Sotto il fascismo i resoconti sono ripuliti: non si separa l'aula che tace dal resoconto che tace.",
-        csv: () => [["anno", "dissenso_100", "consenso_100"]].concat(punti(sc, "b_dis_100").map((p, i) => [p[0], p[1], punti(sc, "b_cons_100")[i][1]])), nomeCSV: "fascismo_dissenso",
-      });
-      G.grafico(a1, (a, w) => {
-        const d = punti(sc, "b_dis_100"), k = punti(sc, "b_cons_100");
-        const mx = d3.max(d.concat(k), (p) => p[1] || 0);
-        G.linee(a, w, { x: [1913, 1943], y: [0, mx * 1.1], h: w < 560 ? 240 : 320, fasce: [{ da: 1926, a: 1943, colore: "#22252B", testo: "regime" }],
-          serie: [{ punti: d, colore: G.ROSSO, sp: 3, etich: "dissenso" }, { punti: k, colore: "#A3A9B2", sp: 2, etich: "consenso" }], unita: "ogni cento interventi" });
-      });
       const T = F.termini.filter((t) => t.ramo === "camera" && t.prima != null && t.regime != null).sort((a, b) => b.regime - a.regime).slice(0, 22);
       const a2 = G.figura("#g-termini", {
         titolo: `Le parole del regime: ${T.filter((t) => t.regime > t.prima).length} su ${T.length} si dicono di più nel 1927-38 che nel 1919-22`,

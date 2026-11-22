@@ -27,6 +27,7 @@
     el.innerHTML = `
       <h1 class="titolo-pagina">${G.esc(L.nome)}</h1>
       <p class="sommario">${L.da}-${L.a}. ${C ? `Alla Camera ${G.num(C.turni)} interventi e ${G.num(C.parole / 1e6, 1)} milioni di parole` : ""}${C && Se ? "; " : ""}${Se ? `al Senato ${G.num(Se.turni)} interventi e ${G.num(Se.parole / 1e6, 1)} milioni di parole` : ""}.${oc ? ` Chi parla di più alla Camera è ${lk(oc)}, con ${G.num(oc[2])} parole.` : ""}</p>
+      <div id="nel-racconto"></div>
       <section class="griglia">
         <div class="c8" id="g-oratori"></div>
         <aside class="c4 fil"><h3 class="titolo-piccolo">In cifre</h3><ul class="fatti" id="fatti"></ul></aside>
@@ -55,6 +56,7 @@
       </section>
       <nav class="prec-succ" aria-label="Legislature vicine"><span>${L.prec ? `<a href="legislatura.html?id=${L.prec}">← ${G.esc(nomeLeg(B, L.prec))}</a>` : ""}</span><span>${L.succ ? `<a href="legislatura.html?id=${L.succ}">${G.esc(nomeLeg(B, L.succ))} →</a>` : ""}</span></nav>`;
 
+    G.nelRacconto("#nel-racconto", "legislature", L.id);
     // fatti
     const f = [[`<b>${L.da}-${L.a}</b>`, epoca(L.epoca)]];
     [["Camera", C], ["Senato", Se]].forEach(([n, x]) => { if (x) f.push([`<b>${G.num(x.parole / 1e6, 1)} milioni</b> di parole, ${n}`, `${G.num(x.turni)} interventi; ${G.num(x.frase, 1)} parole per frase; ${G.num(x.lettere, 2)} lettere per parola; metà degli interventi è sotto le ${G.num(x.turno_mediana)} parole`]); });

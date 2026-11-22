@@ -109,6 +109,10 @@ def leggi_tabella(p):
         return list(csv.DictReader(f, delimiter=sep))
 
 
+TABELLINE = {}
+CORREZIONI = {}
+
+
 def risolvi(g, rapporto, sid):
     """Ritorna i dati del grafico o None (segnaposto)."""
     f = (g.get("file") or "").split(";")[0].split(" e ")[0]
@@ -130,6 +134,16 @@ def risolvi(g, rapporto, sid):
             anni = re.findall(r"(1[89]\d\d|20[0-2]\d)", g.get("anni", ""))
             m = [x for x in d["mese"] if x[0] and (not anni or anni[0] <= x[0][:4] <= anni[-1])]
             return {"forma": "colonne", "x": [x[0] for x in m], "serie": [{"nome": "volte", "v": [x[1] for x in m]}], "xtipo": "mese"}
+        mw = re.search(r"scan_([a-z]+)\.json", f)
+        if "oratori" in col and mw:
+            # conteggio per persona riconosciuta (schede del sito, g4): il resoconto scrive lo stesso nome in modi diversi
+            ix = json.load(open(os.path.join(DATI, "parole", "indice.json"), encoding="utf-8"))
+            pos = next((i for i, r in enumerate(ix["p"]) if r[0] == mw.group(1)), None)
+            if pos is not None:
+                sch = json.load(open(os.path.join(DATI, "parole", "d", "%03d.json" % (pos // ix["pezzo"])), encoding="utf-8")).get(mw.group(1), {})
+                o = [x for x in sch.get("or", []) if x[1]][:10]
+                if o:
+                    return {"forma": "barre", "x": [x[1].title() for x in o], "serie": [{"nome": "volte", "v": [x[2] for x in o]}]}
         if "oratori" in col and isinstance(d.get("oratori"), list):
             o = [x for x in d["oratori"] if x[0] and "RICONOSCIUTO" not in x[0]][:10]
             return {"forma": "barre", "x": [x[0].title() for x in o], "serie": [{"nome": "volte", "v": [x[1] for x in o]}]}
@@ -273,6 +287,12 @@ def porte_html(t):
 
 
 def main():
+    global TABELLINE
+    tp = os.path.join(CACHE, "tabelline.json")
+    TABELLINE = json.load(open(tp, encoding="utf-8")) if os.path.exists(tp) else {}
+    global CORREZIONI
+    cp = os.path.join(CACHE, "correzioni_grafici.json")
+    CORREZIONI = json.load(open(cp, encoding="utf-8")) if os.path.exists(cp) else {}
     files = [p for p in sorted(glob.glob(os.path.join(STORIE, "*.md"))) if not os.path.basename(p).startswith("_") and os.path.basename(p) != "INDICE.md"]
     ordine = []
     ip = os.path.join(STORIE, "INDICE.md")
@@ -298,6 +318,7 @@ def main():
             continue
         s = sezioni(corpo)
         gr = []
+        usate = []
         for g in grafici(s.get("grafici", "")):
             n_graf += 1
             try:
@@ -305,6 +326,18 @@ def main():
             except Exception as e:  # una tabella strana non deve fermare tutto
                 rapporto.append("%s: errore %s" % (sid, e))
                 dati = None
+            if not dati:
+                # tabelline ricavate dai rapporti di testo (g6b_tabelline.py): si aggancia per file, poi per titolo
+                f0 = re.findall(r"`([^`]+)`", (g.get("file") or "").split(";")[0].split(" e ")[0])
+                f0 = (f0[0] if f0 else (g.get("file") or "").split(";")[0].split(" e ")[0]).strip().rstrip(",")
+                cand = [t for t in TABELLINE.get(sid, []) if t.get("file") == f0 and t not in usate] or [t for t in TABELLINE.get(sid, []) if t.get("titolo") == g.get("titolo") and t not in usate]
+                if cand:
+                    usate.append(cand[0])
+                    dati = {"forma": "tabella", "colonne": cand[0]["colonne"], "righe": cand[0]["righe"], "nota": cand[0].get("nota", "")}
+            # correzioni dopo il controllo a occhio (g6c_correzioni.py): sostituiscono il grafico automatico
+            corr = CORREZIONI.get(sid, {}).get(str(len(gr) + 1))
+            if corr:
+                dati = corr
             if dati:
                 n_ok += 1
             gr.append({"tipo": g.get("tipo", ""), "titolo": md_inline(g.get("titolo", "")), "sotto": md_inline(g.get("sottotitolo", "")),
@@ -399,12 +432,71 @@ def main():
                "stenografo": md_blocchi(sez.get("il momento dello stenografo", "")), "porte_fondo": md_blocchi(sez.get("tre porte in fondo al capitolo", "")),
                "verdetti": md_blocchi(sez.get("verdetti toccati", "")), "verso": md_blocchi(next((v for k, v in sez.items() if k.startswith("verso")), ""))}
         scrivi_json("capitoli/%s.json" % cap["n"], cap)
-        capitoli.append({k: cap[k] for k in ("n", "id", "titolo", "simbolo", "sommario", "anni", "frase", "chi")})
+        capitoli.append({k: cap[k] for k in ("n", "id", "titolo", "simbolo", "sommario", "anni", "frase", "chi", "parole", "legislature", "storie", "ipotesi", "persone")})
     capitoli.sort(key=lambda c: int(c["n"] or 0))
     rac = open(os.path.join(SITO, "_progetto", "racconto", "RACCONTO.md"), encoding="utf-8").read()
     m1 = re.search(r"Prologo:[^«]*«([^»]+)»", rac)
     m2 = re.search(r"Chiusa:[^«]*«([^»]+)»", rac)
     m3 = re.search(r"Sotto, la riga: «([^»]+)»", rac)
+    # le sei scommesse (RACCONTO.md, «Le sei scommesse»): domanda, risposte, risposta giusta, che cosa esce, codici
+    scommesse = []
+    blocco = rac.split("### Le sei scommesse", 1)[-1].split("\n## ", 1)[0] if "### Le sei scommesse" in rac else ""
+    for riga in blocco.splitlines():
+        c = [x.strip() for x in riga.strip().strip("|").split("|")]
+        m = re.match(r"Cap\.\s*(\d+),\s*passo\s*(\d+)", c[0]) if len(c) >= 4 else None
+        if not m:
+            continue
+        risposte = [x.strip() for x in c[2].split("·")]
+        esce = c[3]
+        testa_ = re.split(r"[:.]", esce, maxsplit=1)[0].lower()
+        giusta = next((r for r in risposte if testa_.startswith(r.lower()) or r.lower() in testa_), "")
+        scommesse.append({"capitolo": int(m.group(1)), "passo": int(m.group(2)), "domanda": c[1], "risposte": risposte, "giusta": giusta,
+                          "esce": esce, "codici": re.findall(r"\bH\d+[a-z]?\b", esce)})
+    scrivi_json("capitoli/scommesse.json", {"scommesse": scommesse})
+
+    # i quattro percorsi nuovi (PERCORSI.md, sezioni 3, 4, 7, 8); gli altri quattro hanno già la loro pagina
+    pp = os.path.join(SITO, "_progetto", "racconto", "PERCORSI.md")
+    pubblicate = {x["id"]: x for x in indice}
+    elenco_p = []
+    if os.path.exists(pp):
+        testo_p = open(pp, encoding="utf-8").read()
+        ID_P = {3: "prima-repubblica", 4: "partiti", 7: "parole", 8: "resoconto"}
+        CORRETTE = {"semplificazione-ottocento", "correnti-dc-non-si-vedono", "chi-parla-di-piu", "ministri-nei-due-rami", "resoconto-nove-date", "tangentopoli-entra-in-aula"}
+        for blocco in re.split(r"\n## ", testo_p)[1:]:
+            m = re.match(r"(\d+)\.\s+(.+)", blocco)
+            if not m or int(m.group(1)) not in ID_P:
+                continue
+            num, titolo_p = int(m.group(1)), m.group(2).strip()
+            blocco = blocco.split("\n### La pagina di un partito")[0]
+            campo = lambda nome: (re.search(r"\*\*" + nome + r"\.?\*\*\.?\s*(.+)", blocco) or [None, ""])[1].strip()
+            tappe, ultimo = [], None
+            corpo_t = blocco.split("**Tappe", 1)[-1]
+            for riga in corpo_t.splitlines():
+                r_ = riga.strip()
+                mt = re.match(r"\d+\.\s+(.*)", r_)
+                if mt:
+                    ids = [x for x in re.findall(r"`([a-z0-9-]+)`", mt.group(1)) if x in pubblicate]
+                    nota = re.sub(r"`[a-z0-9-]+`(\s*\([^)]*\))?[,.]?\s*", "", mt.group(1)).strip()
+                    # storie corrette dopo la stesura dei percorsi (REVISIONE_PAGINE.md): la nota del percorso potrebbe dire numeri vecchi
+                    if re.fullmatch(r"(Smentita|Regge|In parte)\.?", nota):
+                        nota = ""
+                    if set(ids) & CORRETTE:
+                        nota = ""
+                    if ids:
+                        ultimo = {"storie": [{"id": x, "titolo": pubblicate[x]["titolo"], "occhiello": pubblicate[x].get("occhiello", ""), "verdetto": pubblicate[x].get("verdetto", "")} for x in ids], "nota": md_inline(nota)}
+                        tappe.append(ultimo)
+                elif r_.startswith("→") and ultimo is not None:
+                    ultimo["passaggio"] = md_inline(r_.lstrip("→ ").strip("*"))
+            lato = [x for x in re.findall(r"`([a-z0-9-]+)`", (re.search(r"richiam\w+ a lato[^\n]*", blocco) or [""])[0]) if x in pubblicate]
+            ap, _ = senza_frasi_in_verifica("<p>" + md_inline(campo("Apertura")) + "</p>")
+            tesi = (re.search(r"\*\*La tesi, in tre righe\.\*\*\s*(.+)", blocco) or [None, ""])[1]
+            elenco_p.append({"n": num, "id": ID_P[num], "titolo": titolo_p, "domanda": md_inline(campo("Domanda")), "apertura": ap, "tesi": md_inline(tesi), "tappe": tappe,
+                             "lato": [{"id": x, "titolo": pubblicate[x]["titolo"]} for x in lato]})
+    for P_ in elenco_p:
+        scrivi_json("percorsi/%s.json" % P_["id"], P_)
+    scrivi_json("percorsi/indice.json", {"percorsi": [{k: P_[k] for k in ("n", "id", "titolo", "domanda")} | {"tappe": len(P_["tappe"])} for P_ in elenco_p]})
+    print("percorsi:", [(P_["id"], len(P_["tappe"])) for P_ in elenco_p])
+    print("scommesse:", len(scommesse), [x["giusta"] for x in scommesse])
     scrivi_json("capitoli/indice.json", {"capitoli": capitoli, "prologo": m1.group(1) if m1 else "", "riga": m3.group(1) if m3 else "",
                                          "chiusa": m2.group(1) if m2 else ""})
     print("capitoli:", len(capitoli))

@@ -140,8 +140,10 @@ def main():
 
     # ------------------------------------------------------------------ lingue
     fr = defaultdict(dict)
+    turni_fr = defaultdict(dict)
     for r in leggi_csv("h8_francese.csv"):
         fr[r["ramo"]][int(r["anno"])] = f(float(r["quota_parole_fr"]) * 100, 2)
+        turni_fr[r["ramo"]][int(r["anno"])] = int(float(r["n_turni_fr"] or 0))
     liste = defaultdict(lambda: defaultdict(dict))
     for r in leggi_csv("serie_parole.csv"):
         if r["lista"] in ("h9_en_identici", "h9_fr_identici", "h9_la_frasi", "h7_ipotesi"):
@@ -178,7 +180,7 @@ def main():
             if data[:4].isdigit() and pulita(frase, francese=True):
                 frasi_fr.append([data, ramo, oratore_valido(o), frase])
     frasi_fr.sort()
-    scrivi_json("sezioni/lingue.json", {"francese": fr, "liste": liste, "contributori": {"%s|%s" % k: v for k, v in contr.items()},
+    scrivi_json("sezioni/lingue.json", {"turni_fr": turni_fr, "francese": fr, "liste": liste, "contributori": {"%s|%s" % k: v for k, v in contr.items()},
                                         "forme": forme, "grafie": grafie, "coppie": coppie_out, "regno": regno, "salto_unita": salto, "frasi_francese": frasi_fr})
     print("lingue: frasi in francese", len(frasi_fr), flush=True)
 
@@ -199,7 +201,18 @@ def main():
     giudice = json.load(open(os.path.join(RIS, "h70_h71_h78", "fase3_numeri.json"), encoding="utf-8")).get("h39d", {})
     giud_paesi = [[r["paese"], int(float(r["n"])), f(r["pendenza"], 3), f(r["lo"], 3), f(r["hi"], 3), f(r["r"], 3)] for r in leggi_csv("fase3_h39_paesi.csv", os.path.join(RIS, "h70_h71_h78"))]
     frasi_e = [[r["epoca"], r["nemico"], r["data"], r["ramo"], oratore_valido(r["oratore"]), r["frase"]] for r in leggi_csv("h39_epoche_frasi.csv") if pulita(r["frase"])]
-    scrivi_json("sezioni/esteri.json", {"paesi": paesi, "indice": ind, "alleanze": all_, "epoche": epoche, "nemico_anno": nemico,
+    # giudice automatico per periodi (H77): Jugoslavia 1945-90 e Austria dal 1945 (dove le parole sbagliano il segno)
+    cartella77 = os.path.join(RIS, "h68_h75_h77")
+    regole = open(os.path.join(cartella77, "00_date_regole_fissate_prima.md"), encoding="utf-8").read()
+    rapporto77 = open(os.path.join(cartella77, "h77_giudice.txt"), encoding="utf-8").read()
+    giud_per = {}
+    for paese, pref in (("Jugoslavia", "P"), ("Austria", "Q")):
+        anni_p = dict((k, (int(a1), int(a2) if len(a2) == 4 else int(a1[:2] + a2))) for k, a1, a2 in re.findall(r"\b(%s\d) (\d{4})-(\d{2,4})\b" % pref, regole))
+        m = re.search(r"%s per periodo[^:]*: (.+)" % paese, rapporto77)
+        if m and anni_p:
+            val = dict((k, float(v)) for k, v in re.findall(r"(%s\d) (\d+\.\d+)" % pref, m.group(1)))
+            giud_per[paese] = [[anni_p[k][0], anni_p[k][1], round(val[k], 3)] for k in sorted(val) if k in anni_p]
+    scrivi_json("sezioni/esteri.json", {"giudice_periodi": giud_per, "paesi": paesi, "indice": ind, "alleanze": all_, "epoche": epoche, "nemico_anno": nemico,
                                         "partiti": partiti, "giudice_urss_usa": giudice, "giudice_paesi": giud_paesi, "frasi": frasi_e})
 
     # ------------------------------------------------------------------ partiti: traiettorie, opposizione, frasi
@@ -220,10 +233,40 @@ def main():
         for (par, w), (data, o, pid, frase) in S["frasi_partiti"].items():
             if pulita(frase):
                 frasi_p[par][leg].append([w, data, chi(o, pid, data), pid, frase])
+    # temi in cui il partito parla più del suo peso: parole forti dei 40 temi (h37_temi_K40.txt, temi non procedurali),
+    # volte per milione di parole del partito contro tutta l'aula repubblicana della Camera (conteggi di g4)
+    temi_par = {}
+    agp = os.path.join(CACHE, "aggregati.pkl")
+    if os.path.exists(agp):
+        AG = pickle.load(open(agp, "rb"))
+        if "par_cont" in AG:
+            et = {int(r["tema"]): (r["etichetta"], int(r["procedurale"])) for r in leggi_csv("h37_etichette_temi.csv") if r["K"] == "40"}
+            pos = {w: i for i, w in enumerate(AG["parole"])}
+            forti = {}
+            for riga in open(os.path.join(RIS, "h37_temi_K40.txt"), encoding="utf-8", errors="replace"):
+                m = re.match(r"T(\d+) quota\s+([\d.,]+)%: (.*)", riga.strip())
+                if m and int(m.group(1)) in et and not et[int(m.group(1))][1]:
+                    ws = [w.strip() for w in m.group(3).split(",") if w.strip() in pos][:15]
+                    if ws:
+                        forti[int(m.group(1))] = ws
+            tutti, tok = AG["tutti_rep"], AG["tok_rep"]
+            for par, cont in AG["par_cont"].items():
+                n = AG["par_tok"].get(par, 0)
+                righe = []
+                for k, ws in forti.items():
+                    ix = [pos[w] for w in ws]
+                    pm_p = cont[ix].sum() / n * 1e6
+                    pm_a = tutti[ix].sum() / tok * 1e6
+                    if pm_a > 0 and cont[ix].sum() >= 200:
+                        righe.append([et[k][0], round(float(pm_p / pm_a), 2), round(float(pm_p), 1), ws[:5]])
+                righe.sort(key=lambda r: -r[1])
+                temi_par[par] = righe[:6]
+    print("temi per partito:", len(temi_par), flush=True)
     for fp in glob.glob(os.path.join(DATI, "partiti", "*.json")):
         if os.path.basename(fp) in ("indice.json", "traiettorie.json"):
             continue
         P = json.load(open(fp, encoding="utf-8"))
+        P["temi_su"] = temi_par.get(P["id"], [])
         P["opposizione"] = sorted(opp.get(P["id"], []))
         P["frasi_tipiche"] = {str(k): v for k, v in sorted(frasi_p.get(P["id"], {}).items())}
         P["traiettoria"] = traj.get(P["id"], [])

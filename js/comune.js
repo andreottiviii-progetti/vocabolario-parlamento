@@ -613,6 +613,35 @@
     });
   };
 
+  /* una scommessa: il lettore sceglie prima di vedere (niente viene salvato); senza JavaScript non si vede */
+  G.scommessa = function (box, S, E) {
+    const id = "sc" + S.capitolo + "-" + S.passo;
+    const el = document.createElement("div");
+    el.className = "scommessa";
+    el.innerHTML = `<p class="occhiello">La tua scommessa</p><p class="domanda">${G.esc(S.domanda)}</p><div class="risposte">${S.risposte.map((r) => `<button type="button" class="bottone" data-r="${G.esc(r)}">${G.esc(r)}</button>`).join(" ")}</div><div class="esito-sc" id="${id}" hidden></div>`;
+    // il paragrafo «Scommessa.» del testo lascia il posto ai bottoni
+    const par = Array.from(box.querySelectorAll("p")).find((q) => /^\s*Scommessa\./.test(q.textContent));
+    if (par) par.replaceWith(el); else box.appendChild(el);
+    el.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      const giusta = b.dataset.r === S.giusta;
+      el.querySelectorAll("button").forEach((x) => { x.disabled = true; x.classList.toggle("scelta", x === b); });
+      const ver = (S.codici || []).map((k) => { const e = (E.elenco || []).find((x) => x.cod === k); return e ? `${G.lEsp(k)} ${G.esito(e.esito)}` : ""; }).join(" ");
+      const out = el.querySelector(".esito-sc");
+      out.hidden = false;
+      out.innerHTML = `<p><b>${giusta ? "Esatto." : "No: la risposta è «" + G.esc(S.giusta) + "»."}</b> ${G.esc(S.esce.replace(/\s*H\d+[a-z]?(\s+e\s+H\d+[a-z]?)?:\s*[a-z ]+$/, ""))}</p>${ver ? `<p class="piccolo">${ver}</p>` : ""}`;
+    }));
+  };
+  /* la riga «Nel racconto»: i capitoli che parlano di una parola, una legislatura, una storia o un esperimento */
+  G.nelRacconto = function (sel, campo, valore) {
+    return G.carica("capitoli/indice.json").then((IX) => {
+      const v = String(valore).toLowerCase();
+      const caps = IX.capitoli.filter((c) => (c[campo] || []).some((x) => String(x).toLowerCase() === v || (campo === "ipotesi" && v.startsWith(String(x).toLowerCase()))));
+      const el = document.querySelector(sel);
+      if (!el || !caps.length) return;
+      el.innerHTML = `<p class="nel-racconto"><b>Nel racconto:</b> ${caps.map((c) => `<a class="lk" href="capitolo.html?n=${c.n}">capitolo ${c.n}, ${G.esc(c.titolo)}</a>`).join(" · ")}</p>`;
+    }).catch(() => {});
+  };
+
   /* errore leggibile */
   G.nonTrovato = function (el, testo) {
     el.innerHTML = `<p class="segnaposto"><b>${testo}</b> Torna alla <a class="lk" href="index.html">prima pagina</a> o cerca una parola qui sopra.</p>`;

@@ -96,6 +96,7 @@
     el.innerHTML = `
       <h1 class="titolo-pagina"><span class="evid">${G.esc(f)}</span></h1>
       <p class="sommario">Detta <b>${G.num(C.tot)}</b> volte in aula dal ${C.y0} al 2022, ${G.num(tc)} alla Camera e ${G.num(ts)} al Senato. L'anno di punta è il <a class="lk" href="anno.html?a=${pk.anno}">${pk.anno}</a>, con ${G.num1(pk.val)} volte per milione di parole. ${prima}</p>
+      <div id="nel-racconto"></div>
       <section class="griglia">
         <div class="c8">
           <div class="filtri" role="group" aria-label="Come disegnare la curva"><button type="button" data-m="m" class="attivo">Media dei due rami</button><button type="button" data-m="cs">Camera e Senato</button><button type="button" data-m="a">Anno per anno</button></div>
@@ -115,6 +116,7 @@
           <h3 class="titolo-piccolo" style="margin-top:18px">Gli anni in cui si dice di più</h3><ul class="elenco-n" id="anni-top"></ul></div>
         <div class="c3 fil"><h3 class="titolo-piccolo">Collegamenti</h3><ul class="fatti" id="colleg"></ul></div>
       </section>`;
+    G.nelRacconto("#nel-racconto", "parole", f);
     // fatti
     const fatti = [
       [`<b>${G.num(C.tot)}</b> volte`, `${G.num(tc)} alla Camera, ${G.num(ts)} al Senato`],

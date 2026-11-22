@@ -36,7 +36,7 @@
           <p class="occhiello">${G.esc(St.occhiello)}</p>
           <h1>${G.esc(St.titolo)}</h1>
           <p class="sommario">${G.esc(St.sottotitolo)}</p>
-          <div class="colonna-testo">${St.testo}</div>
+          <div id="nel-racconto"></div><div class="colonna-testo">${St.testo}</div>
           <div id="grafici"></div>
           <div class="colonna-testo verdetto" style="margin-top:32px"><h2 class="titolo-piccolo">Verdetto e limiti</h2>${St.verdetto_testo}</div>
         </div>
@@ -50,11 +50,18 @@
         </aside>
       </article>
       <nav class="prec-succ" aria-label="Storie vicine"><span>${prec ? `<a href="storia.html?id=${prec.id}">← ${G.esc(prec.titolo.slice(0, 70))}</a>` : ""}</span><span>${succ ? `<a href="storia.html?id=${succ.id}">${G.esc(succ.titolo.slice(0, 70))} →</a>` : ""}</span></nav>`;
+    G.nelRacconto("#nel-racconto", "storie", St.id);
     const box = d3.select("#grafici");
     St.grafici.forEach((g, i) => {
       const d = box.append("div").attr("class", "sezione sottile").style("max-width", "920px");
       if (!g.dati) {
         d.html(`<h3 class="fig-tit">${g.titolo}</h3><p class="fig-sotto">${g.sotto}</p><p class="segnaposto"><b>Grafico in preparazione.</b> I dati di questo grafico non sono ancora pronti per il sito.</p>`);
+        return;
+      }
+      if (g.dati.forma === "tabella") {
+        const T = g.dati;
+        const ar = G.figura(d, { titolo: g.titolo, sotto: g.sotto, limite: [g.limite, T.nota].filter(Boolean).join(" "), csv: () => [T.colonne].concat(T.righe), nomeCSV: St.id + "_" + (i + 1) });
+        ar.html(`<table class="fitta tabellina"><thead><tr>${T.colonne.map((c, j) => `<th${j ? ' class="n"' : ""}>${G.esc(c)}</th>`).join("")}</tr></thead><tbody>${T.righe.map((r) => `<tr>${r.map((v, j) => `<td${j && typeof v === "number" ? ' class="n"' : ""}>${typeof v === "number" ? fmt(v) : G.esc(v == null ? "" : v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`);
         return;
       }
       const area = G.figura(d, { titolo: g.titolo, sotto: g.sotto, limite: g.limite, lettura: g.dati.forma === "linee", csv: () => csv(g.dati), nomeCSV: St.id + "_" + (i + 1) });
@@ -67,14 +74,15 @@
     return [["voce"].concat(D.serie.map((s) => s.nome)).concat(D.lo ? ["basso", "alto"] : [])].concat(D.x.map((x, i) => [x].concat(D.serie.map((s) => s.v[i])).concat(D.lo ? [D.lo[i], D.hi ? D.hi[i] : ""] : [])));
   }
   const fmt = (v) => (v == null ? "–" : Number.isInteger(v) || Math.abs(v) >= 100 ? G.num(v) : Math.abs(v) >= 10 ? G.num(v, 1) : G.num(v, 2));
-  const etX = (x) => (typeof x === "number" ? String(Math.round(x)) : /^\d{4}-\d{2}$/.test(String(x)) ? G.MESI[+String(x).slice(5) - 1] + " " + String(x).slice(0, 4) : String(x));
+  let ETMESI = false;
+  const etX = (x) => (typeof x === "number" ? String(Math.round(x)) : /^\d{4}-(0[1-9]|1[0-2])$/.test(String(x)) && ETMESI ? G.MESI[+String(x).slice(5) - 1] + " " + String(x).slice(0, 4) : String(x));
 
   function disegna(a, w, D) {
     const col = (i) => (i === 0 ? G.ROSSO : i === 1 ? G.NERO : G.SERIE[i] || G.GDATI);
     if (D.forma === "linee" || D.forma === "multipli") {
       const tutti = [].concat(...D.serie.map((s) => s.punti));
       const xe = d3.extent(tutti, (p) => p[0]), ye = d3.extent(tutti.filter((p) => p[1] != null), (p) => p[1]);
-      const y0 = Math.min(0, ye[0]), y1 = ye[1] * 1.1 || 1;
+      const y0 = D.y0 != null ? D.y0 : Math.min(0, ye[0]), y1 = D.y0 != null ? ye[1] + (ye[1] - D.y0) * 0.1 : ye[1] * 1.1 || 1;
       if (D.forma === "multipli" && D.serie.length > 1) {
         const g = a.append("div").attr("class", "multipli");
         D.serie.forEach((s) => {
@@ -98,6 +106,8 @@
     if (D.forma === "colonne") {
       const s = D.serie[0];
       const pts = s.punti ? s.punti : D.x.map((x, i) => [x, s.v[i]]);
+      ETMESI = D.xtipo === "mese" || (pts.length > 13 && pts.every((q) => /^\d{4}-(0[1-9]|1[0-2])$/.test(String(q[0]))));
+      const mese = (q) => ETMESI && /^\d{4}-\d{2}$/.test(String(q));
       const h = w < 560 ? 220 : 280, m = { t: 24, r: 6, b: 24, l: 0 };
       const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "colonne");
       const x = d3.scaleBand().domain(pts.map((p) => p[0])).range([m.l, w - m.r]).paddingInner(0.18);
@@ -109,7 +119,7 @@
       const passo = Math.ceil(pts.length / Math.max(4, Math.floor(w / 60)));
       pts.forEach((p, i) => {
         if (p[1] != null) svg.append("rect").attr("x", x(p[0])).attr("width", x.bandwidth()).attr("y", Math.min(y(0), y(p[1]))).attr("height", Math.abs(y(0) - y(p[1]))).attr("fill", i === imax ? G.ROSSO : G.NERO);
-        if (/^\d{4}-01$/.test(String(p[0])) || (!/^\d{4}-\d{2}$/.test(String(p[0])) && i % passo === 0)) g.append("text").attr("x", x(p[0]) + x.bandwidth() / 2).attr("y", h - 6).attr("text-anchor", "middle").text(/^\d{4}-\d{2}$/.test(String(p[0])) ? String(p[0]).slice(0, 4) : etX(p[0]));
+        if ((mese(p[0]) && /-01$/.test(String(p[0]))) || (!mese(p[0]) && i % passo === 0)) g.append("text").attr("x", x(p[0]) + x.bandwidth() / 2).attr("y", h - 6).attr("text-anchor", "middle").text(mese(p[0]) ? String(p[0]).slice(0, 4) : etX(p[0]));
       });
       const p = pts[imax];
       svg.append("text").attr("class", "etich").attr("x", x(p[0]) + x.bandwidth() / 2).attr("y", y(p[1]) - 6).attr("text-anchor", x(p[0]) > w - 80 ? "end" : "middle").attr("fill", G.ROSSO).text(etX(p[0]) + ": " + fmt(p[1]));

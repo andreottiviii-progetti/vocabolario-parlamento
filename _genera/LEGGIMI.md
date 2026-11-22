@@ -9,7 +9,7 @@ Tutti i numeri del sito vengono da file generati dai programmi di questa cartell
 - Alla fine il programma controlla che nessun file superi 2 MB, che ogni pagina abbia il noindex e che nei file pubblici non ci siano parole vietate. Se scrive «TUTTO A POSTO» si può pubblicare.
 - Poi: `git add -A`, `git commit`, `git push` (GitHub Pages si aggiorna da solo).
 
-Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` → `g3_sito.py` → `g7_scansione2.py` → `g8_sezioni.py` → `g9_prime_volte.py` → `g6_storie.py` → `g5_pagine.py`; poi `g10_rapporti.py` scrive in `_progetto/` la copertura dei risultati e il conto delle frasi scartate. I file intermedi stanno in `_genera/cache/` (fuori dal repository).
+Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` → `g3_sito.py` → `g7_scansione2.py` → `g8_sezioni.py` → `g9_prime_volte.py` → `g6b_tabelline.py` → `g6c_correzioni.py` → `g6_storie.py` → `g5_pagine.py`; poi `g10_rapporti.py` scrive in `_progetto/` la copertura dei risultati e il conto delle frasi scartate. I file intermedi stanno in `_genera/cache/` (fuori dal repository).
 
 Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salta e le elenca in `_genera/cache/storie_rapporto.txt`. Tolto il marcatore, basta il comando «solo storie».
 
@@ -46,6 +46,11 @@ Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salt
 | «In breve», smentite e venti parole della home | `dati/home.json` | `_progetto/TESTI_PAGINE.md` (testi della redazione) | g3 |
 | Storie: testi, verdetti, collegamenti | `dati/storie/*.json` | `_progetto/storie/*.md`, ordine in `_progetto/storie/INDICE.md` | g6 |
 | Grafici delle storie | `dati/storie/*.json` (`grafici`) | i file indicati in ogni storia (campo «file»), letti in automatico; se non si leggono resta un segnaposto | g6 |
+| Tabelle al posto dei segnaposti | `dati/storie/*.json` (`grafici`, forma «tabella») | i rapporti di testo indicati nelle storie, letti da regole scritte storia per storia (`_genera/cache/tabelline.json`) | g6b, g6 |
+| Grafici corretti dopo il controllo a occhio | `dati/storie/*.json` (`grafici`) | gli stessi file delle storie, riletti con regole storia per storia (`_genera/cache/correzioni_grafici.json`); sostituiscono il grafico automatico | g6c, g6 |
+| Capitoli: grafici che cambiano a ogni passo, scommesse | `js/scene.js`, `dati/capitoli/scommesse.json` | dati del sito (curve delle parole, sezioni); scommesse dalla tabella «Le sei scommesse» di `_progetto/racconto/RACCONTO.md` | g6 |
+| Percorsi nuovi (Prima Repubblica, partiti, parole, resoconto) | `dati/percorsi/*.json` | `_progetto/racconto/PERCORSI.md`, sezioni 3, 4, 7, 8; titoli delle storie dall'indice delle storie | g6 |
+| Temi della pagina partito | `dati/partiti/<id>.json` (`temi_su`) | conteggi per partito di g4 e parole forti dei 40 temi (`h37_temi_K40.txt`, `h37_etichette_temi.csv`) | g4, g8 |
 | Testo della pagina del metodo | `metodo.html` | `_progetto/TESTI_PAGINE.md`, capitolo 3 | g6, g5 |
 | Pagine HTML, file scaricabili | `*.html`, `scarica/*.csv`, `dati/scarica.json` | dati qui sopra | g5 |
 

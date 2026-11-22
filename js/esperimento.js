@@ -21,6 +21,7 @@
       const stesso = E.elenco.filter((x) => x !== e && x.filone === e.filone && !fratelli.includes(x));
       const storie = (S.storie || []).filter((s) => (s.ipotesi || []).some((c) => c === e.cod || c === base));
       const prec = E.elenco[i - 1], succ = E.elenco[i + 1];
+      setTimeout(() => G.nelRacconto("#nel-racconto", "ipotesi", e.cod), 0);
       el.innerHTML = `
         <p class="occhiello" style="margin-top:18px">${G.esc(e.filone)} · ${G.esc(e.cod)}</p>
         <h1 class="titolo-pagina" style="font-size:clamp(44px,6vw,80px)">${G.esc(e.titolo)}</h1>
@@ -29,6 +30,7 @@
             <h2 class="titolo-piccolo" style="margin-top:8px">Che cosa ci aspettavamo</h2><p>${G.esc(e.attesa)}</p>
             <h2 class="titolo-piccolo">Esito</h2><p style="font-size:22px">${G.esito(e.esito)}</p>
             <h2 class="titolo-piccolo">Il numero che conta</h2><p>${G.esc(/^Vedi nota/.test(e.numero) ? "Il numero non è riportato nell'elenco degli esperimenti." : e.numero)}</p>
+            <div id="nel-racconto"></div>
             <p class="piccolo grigio">L'esito è quello dell'elenco degli esperimenti, alla lettera: la regola del verdetto è stata scritta prima di misurare. <a href="metodo.html">Come funziona</a></p>
           </div>
           <aside class="c4 fil">

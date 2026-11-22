@@ -226,6 +226,11 @@ def main():
     n += scrivi_json("parole/indice.json", {"pezzo": PEZZO, "p": indice})
     print("parole:", len(indice), "byte:", n, "pezzi:", len(pezzi_c), flush=True)
     agg["par_tok"] = dict(par_tok)
+    # per i temi della pagina partito (g8): conteggi di ogni parola per i partiti grandi e per tutta l'aula repubblicana
+    agg["par_cont"] = {p: par_cont[p].astype(np.int64) for p in grandi}
+    agg["tutti_rep"] = np.asarray(tutti_rep, dtype=np.int64)
+    agg["tok_rep"] = int(tok_rep)
+    agg["parole"] = list(parole)
     json.dump(SCARTATE, open(os.path.join(CACHE, "scartate_g4.json"), "w", encoding="utf-8"), ensure_ascii=False)
     print("frasi scartate dal filtro di qualita':", SCARTATE["n"], flush=True)
     with open(os.path.join(CACHE, "aggregati.pkl"), "wb") as f:

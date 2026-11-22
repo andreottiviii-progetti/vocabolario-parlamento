@@ -78,6 +78,8 @@ def controlli():
 def main():
     a = sys.argv[1:]
     if "--storie" in a:
+        lancia("g6b_tabelline.py")
+        lancia("g6c_correzioni.py")
         lancia("g6_storie.py")
         lancia("g5_pagine.py")
     else:
@@ -91,6 +93,8 @@ def main():
         lancia("g7_scansione2.py")
         lancia("g8_sezioni.py")
         lancia("g9_prime_volte.py")
+        lancia("g6b_tabelline.py")
+        lancia("g6c_correzioni.py")
         lancia("g6_storie.py")
         lancia("g5_pagine.py")
     ok = controlli()

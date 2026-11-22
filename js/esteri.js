@@ -16,7 +16,8 @@
       el.innerHTML = `
         <h1 class="titolo-pagina">Amici e nemici dell'Italia, 1848-2022</h1>
         <p class="sommario">Per ogni paese e ogni anno, quante volte l'aula ne parla con parole ostili o amichevoli. Sotto ogni linea, le alleanze e le guerre vere: si vede quando le parole seguono i trattati e quando li anticipano o li smentiscono.</p>
-        <section class="sezione" style="margin-top:40px"><div class="testa"><h2>Otto paesi, 175 anni</h2></div>
+        <section style="margin-top:32px"><div id="scena-an"></div><div id="bottoni-an"></div></section>
+        <section class="sezione"><div class="testa"><h2>Otto paesi, 175 anni</h2></div>
           <p class="sotto-titolo">Indice dalle parole vicine al nome del paese, Camera e Senato, media di tre anni: sopra lo zero l'aula ne parla più da nemico, sotto più da amico. Fasce turchesi: anni di alleanza; fasce rosa: anni di guerra (Correlates of War). La tacca grigia in basso è il fascismo.</p>
           <div class="multipli" id="paesi" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
           <p class="fig-fonte">Fonte: resoconti stenografici di Camera e Senato; alleanze e guerre: Correlates of War (Formal Alliances 4.1, Inter-State War 4.0). Il conteggio delle parole vicine sbaglia il segno in una parte delle frasi (non capisce le negazioni): per alcuni paesi c'è anche il giudice automatico, più sotto.</p></section>
@@ -25,6 +26,8 @@
         <section class="sezione"><div class="testa"><h2>Le frasi delle svolte</h2></div><ul class="elenco-frasi" id="frasi"></ul></section>
         <section class="sezione"><div class="testa"><h2>Le storie degli esteri</h2></div>${G.tessere(storie, 8)}</section>
         <section class="sezione"><div class="testa"><h2>Gli esperimenti</h2></div><div class="tab-scorre"><table class="fitta"><tbody>${e39.map((e) => `<tr><td>${G.lEsp(e.cod)}</td><td>${G.esc(e.titolo)}</td><td>${G.esito(e.esito)}</td><td>${G.esc(e.numero)}</td></tr>`).join("")}</tbody></table></div></section>`;
+      const scAN = G.Scena.amiciNemici("#scena-an", X);
+      G.bottoniStati("#bottoni-an", scAN, ["Germania 1916 e 1940", "Austria e Stati Uniti fino al 1914", "la Triplice", "la Germania", "URSS e Stati Uniti fino al 1968", "Jugoslavia e Alto Adige", "Russia 2022", "tutto"]);
       document.getElementById("paesi").innerHTML = PAESI.map((p, i) => {
         const o = X.indice[p] || {};
         const anni = Object.keys(o).map(Number).filter((y) => (o[y][3] || 0) >= 30);

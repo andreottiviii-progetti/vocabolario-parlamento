@@ -34,6 +34,7 @@
       <section class="griglia"><div class="c8" id="g-quota"></div><aside class="c4 fil"><h3 class="titolo-piccolo">Legislatura per legislatura</h3><ul class="fatti" id="fatti"></ul></aside></section>
       <section class="sezione griglia"><div class="c8" id="g-scia"></div><div class="c4 fil"><h3 class="titolo-piccolo">Da opposizione o da governo?</h3><p class="fig-sotto">Probabilità che la lingua dei suoi deputati sia «da opposizione», legislatura per legislatura, secondo il programma che riconosce il ruolo dalle parole (H67). La barra sotto è la quota di giorni passati al governo.</p><div id="g-opp"></div></div></section>
       <section class="sezione"><div class="testa"><h2>Le sue parole, con le frasi vere</h2></div><p class="sotto-titolo">Per ogni legislatura, alcune delle parole che il partito dice più del resto dell'aula, ognuna con una frase detta da un suo deputato.</p><div id="frasi-tip"></div></section>
+      <section class="sezione" id="temi-su" hidden><div class="testa"><h2>Di che cosa parla più degli altri</h2></div><p class="sotto-titolo">I temi in cui il partito supera di più il suo peso: volte per milione delle sue parole contro tutta l'aula della Camera repubblicana, contando le parole più forti di ogni tema. Accanto, alcune di quelle parole.</p><div class="c8" id="g-temi"></div></section>
       <section class="sezione griglia"><div class="c8" id="g-linea"></div><div class="c4 fil"><h3 class="titolo-piccolo">A chi somiglia</h3><p class="fig-sotto">Il partito di un'altra famiglia con la lingua più simile, legislatura per legislatura (somiglianza più alta = più simile)</p><ul class="elenco-n" id="somiglia"></ul></div></section>
       <section class="sezione"><div class="testa"><h2>Le parole più sue</h2></div><p class="sotto-titolo">Le parole che il partito dice più del resto dell'aula, in ogni legislatura, Camera. Tra queste ci sono anche i nomi dei suoi oratori.</p><div class="tab-scorre" id="t-tipiche"></div></section>
       <section class="sezione"><div class="testa"><h2>Che cosa guadagna e che cosa perde a ogni passaggio</h2></div><p class="sotto-titolo">Parole che salgono o scendono da una legislatura all'altra, misurate rispetto al resto dell'aula: una parola «persa» può crescere in valore assoluto se il resto dell'aula cresce di più. Accanto: volte per milione prima e dopo.</p><div class="tab-scorre" id="t-passaggi"></div></section>
@@ -43,6 +44,11 @@
         <div class="c3 fil"><h3 class="titolo-piccolo">Esperimenti</h3><ul class="fatti" id="colleg"></ul></div>
       </section>
       <section class="sezione"><div class="testa"><h2>Le storie</h2><span class="a-destra"><a href="storie.html">Tutte le storie</a></span></div><div id="tessere-p"></div></section>`;
+    // temi in cui supera il suo peso (g8)
+    if (P.temi_su && P.temi_su.length) {
+      document.getElementById("temi-su").hidden = false;
+      document.getElementById("g-temi").innerHTML = G.barre(P.temi_su.map((t, i) => [`${G.esc(t[0])} <span class="et">${t[3].map((w) => G.lParola(w)).join(", ")}</span>`, t[1], i === 0]), { fmt: (v) => G.num(v, 1) + " volte", max: P.temi_su[0][1] });
+    }
     // quota per legislatura: colonne sul tempo
     const area = G.figura("#g-quota", {
       titolo: `${G.esc(nome)} arriva al ${G.pct(max.quota)} delle parole dei deputati nella ${G.romano(max.leg)} legislatura`,

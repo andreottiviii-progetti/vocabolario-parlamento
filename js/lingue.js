@@ -21,7 +21,7 @@
         <p class="sommario">Nel ${amax} il ${G.num(fc[amax], 1)}% delle parole dette alla Camera è in francese; dal ${zero || 1861} è zero. Poi arriva l'inglese, il latino resta, e le forme antiche dell'italiano spariscono piano, senza salti.</p>
         <section class="griglia" style="margin-top:40px">
           <div class="c4"><div class="numero-ill">${G.num(fc[amax], 1)}%</div><p class="che-cosa">delle parole dette alla Camera nel ${amax} è in francese: lo parlano i deputati della Savoia</p>${e8 ? `<p class="piccolo">${G.lEsp("H8")} ${G.esito(e8.esito)}</p>` : ""}</div>
-          <div class="c8" id="g-francese"></div>
+          <div class="c8"><div id="scena-fr"></div><div id="bottoni-fr"></div></div>
         </section>
         <section class="sezione"><div class="testa"><h2>Il francese in aula, frase per frase</h2><span class="a-destra" id="n-fr"></span></div>
           <p class="sotto-titolo">Frasi vere dette in francese alla Camera e al Senato, 1848-1870, come le scrive il resoconto.</p><ul class="elenco-frasi" id="frasi-fr"></ul><p><button class="bottone" id="altre-fr" type="button">Altre frasi</button></p></section>
@@ -29,20 +29,8 @@
         <section class="sezione"><div id="g-forme"></div>${e7 ? `<p class="piccolo grigio">${G.lEsp("H7")} ${G.esc(e7.numero)} ${G.esito(e7.esito)}</p>` : ""}</section>
         <section class="sezione griglia"><div class="c6" id="g-grafie"></div><div class="c6 fil" id="g-unita"></div></section>
         <section class="sezione"><div class="testa"><h2>Le storie</h2></div>${G.tessere(storie, 6)}</section>`;
-      // francese
-      const a1 = G.figura("#g-francese", {
-        titolo: `Il francese crolla con la Savoia: dal ${G.num(fc[amax], 1)}% nel ${amax} a zero nel ${zero || 1861}`,
-        sotto: "Quota delle parole dette in francese, Camera e Senato, 1848-1870",
-        limite: "Il calo comincia prima della cessione della Savoia (1860).",
-        csv: () => [["anno", "camera_%", "senato_%"]].concat(anni.map((a) => [a, fc[a], (L.francese.senato || {})[a]])), nomeCSV: "francese",
-      });
-      G.grafico(a1, (a, w) => {
-        const fs = L.francese.senato || {};
-        const pc = anni.filter((y) => y <= 1875).map((y) => [y, fc[y]]), ps = Object.keys(fs).map(Number).filter((y) => y <= 1875).sort().map((y) => [y, fs[y]]);
-        G.linee(a, w, { x: [1848, 1875], y: [0, d3.max(pc, (p) => p[1]) * 1.15], h: 280, yFmt: (v) => G.num(v, 0) + "%",
-          fasce: [{ da: 1860, a: 1860.99, colore: "#A9BBFF", testo: "1860: la Savoia alla Francia" }],
-          serie: [{ punti: pc, colore: G.SEZ, sp: 3, etich: "Camera", piccoEtich: { x: amax, y: fc[amax], testo: amax + ": " + G.num(fc[amax], 1) + "%" } }, { punti: ps, colore: G.SEZ_S, sp: 2, tratt: "8 4", etich: "Senato" }] });
-      });
+      const scFR = G.Scena.francese("#scena-fr", L);
+      G.bottoniStati("#bottoni-fr", scFR, ["vuoto", "1848-49", "attenuato", "fino al 1859", "1860-62", "tutto"]);
       // frasi
       let mostrate = 24;
       const F = L.frasi_francese;

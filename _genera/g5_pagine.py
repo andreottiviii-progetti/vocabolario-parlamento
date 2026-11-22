@@ -31,7 +31,8 @@ SEZIONE = {"parole": "parole", "parola": "parole", "primevolte": "parole", "ling
 
 def guscio(titolo, descrizione, js, corpo, attivo=None, dove=False, home=False, sezione="neutra"):
     menu = "".join('<a href="%s"%s>%s</a>' % (h, ' class="attivo"' if t == attivo else "", t) for t, h in MENU)
-    scripts = "".join('<script defer src="js/%s"></script>' % s for s in (["d3.min.js", "comune.js"] + ([js] if js else [])))
+    pre = ["scene.js"] if js in ("capitolo.js", "esteri.js", "lingue.js", "fascismo.js", "percorso.js") else []
+    scripts = "".join('<script defer src="js/%s"></script>' % s for s in (["d3.min.js", "comune.js"] + pre + ([js] if js else [])))
     return f"""<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -229,7 +230,7 @@ def scarica():
         scrivi("conteggi_%02d.csv" % (k // passo + 1), righe, "Volte per anno e ramo, parole da «%s» a «%s»" % (B["parole"][k], B["parole"][min(P, k + passo) - 1]))
     e = json.load(open(os.path.join(DATI, "esperimenti.json"), encoding="utf-8"))
     scrivi("esperimenti.csv", [["filone", "codice", "titolo", "cosa_ci_aspettavamo", "esito", "numero_chiave"]] +
-           [[x["filone"], x["cod"], x["titolo"], x["attesa"], x["esito"], x["numero"]] for x in e["elenco"]], "I 153 esperimenti con l'esito")
+           [[x["filone"], x["cod"], x["titolo"], x["attesa"], x["esito"], x["numero"]] for x in e["elenco"]], "I %d esperimenti con l'esito" % len(e["elenco"]))
     righe = [["partito", "legislatura", "anno_medio", "quota_parole", "oratori", "famiglia", "quota_governo", "posizione_sinistra_destra"]]
     for r in leggi_csv("mappa_partiti_mappa_unica_relativa.csv"):
         righe.append([r["partito"].replace("Unita'", "Unità"), r["leg"], r["anno"], r["quota"], r["n_orat"], r["famiglia"], r["governo_quota"], r["dim2"]])
@@ -246,6 +247,7 @@ def scarica():
 
 
 def main():
+    ESP = json.load(open(os.path.join(DATI, "esperimenti.json"), encoding="utf-8"))
     pagine = {
         "index.html": home(),
         "parole.html": semplice("parole", "Parole · Il vocabolario del Parlamento", "Tutte le 23.842 parole dette almeno mille volte a Camera e Senato, 1848-2022.", "parole.js", "Parole", "Parole"),
@@ -262,9 +264,10 @@ def main():
         "tema.html": semplice("tema", "Tema · Il vocabolario del Parlamento", "Un tema dell'aula, anno per anno, dal 1848 al 2022.", "tema.js", "Temi", '<a href="temi.html">Temi</a> › <span id="bric">tema</span>', dove=True),
         "storie.html": semplice("storie", "Storie · Il vocabolario del Parlamento", "Le storie: un risultato per volta, con il grafico, le frasi vere e il limite.", "storie.js", "Storie", "Storie"),
         "storia.html": semplice("storia", "Storia · Il vocabolario del Parlamento", "Una storia del Parlamento italiano raccontata con le parole dell'aula.", "storia.js", "Storie", '<a href="storie.html">Storie</a> › <span id="bric">storia</span>', dove=True),
-        "esperimenti.html": semplice("esperimenti", "Esperimenti · Il vocabolario del Parlamento", "I 153 esperimenti su 78 ipotesi, con l'esito: regge, in parte, smentita.", "esperimenti.js", "Esperimenti", "Esperimenti"),
+        "esperimenti.html": semplice("esperimenti", "Esperimenti · Il vocabolario del Parlamento", "I %d esperimenti su %d ipotesi, con l'esito: regge, in parte, smentita." % (len(ESP["elenco"]), ESP["n_ipotesi"]), "esperimenti.js", "Esperimenti", "Esperimenti"),
         "esperimento.html": semplice("esperimento", "Esperimento · Il vocabolario del Parlamento", "Un esperimento: che cosa ci aspettavamo, l'esito, il numero chiave.", "esperimento.js", "Esperimenti", '<a href="esperimenti.html">Esperimenti</a> › <span id="bric">esperimento</span>'),
-        "percorsi.html": semplice("percorsi", "Percorsi · Il vocabolario del Parlamento", "Quattro percorsi: il fascismo in aula, le lingue dell'aula, risate e insulti, amici e nemici dell'Italia.", "percorsi.js", "Percorsi", "Percorsi"),
+        "percorsi.html": semplice("percorsi", "Percorsi · Il vocabolario del Parlamento", "Otto percorsi: le lingue dell'aula, il fascismo in aula, la Prima Repubblica, i partiti, amici e nemici, risate e insulti, parole che nascono e muoiono, il resoconto che inganna.", "percorsi.js", "Percorsi", "Percorsi"),
+        "percorso.html": semplice("percorso", "Percorso · Il vocabolario del Parlamento", "Un percorso dentro l'archivio dei resoconti: una domanda, un grafico e una fila di storie.", "percorso.js", "Percorsi", '<a href="percorsi.html">Percorsi</a>'),
         "fascismo.html": semplice("fascismo", "Il fascismo in aula · Il vocabolario del Parlamento", "Il fascismo in aula, 1922-1943: il dissenso che sparisce, le parole del regime, le legislature XXVI-XXX.", "fascismo.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Il fascismo in aula', dove=True),
         "lingue.html": semplice("lingue", "Le lingue dell'aula · Il vocabolario del Parlamento", "Il francese del Parlamento subalpino, il latino, l'inglese, le forme e le grafie antiche.", "lingue.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Le lingue dell&#39;aula', dove=True),
         "risate.html": semplice("risate", "Risate e insulti · Il vocabolario del Parlamento", "Le risate annotate dallo stenografo e gli insulti detti in aula, 1848-2022.", "risate.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Risate e insulti', dove=True),
