@@ -32,8 +32,6 @@
     const voci = pa.map((a) => { const w = (B.parole_anno[a] || []).find((x) => x[0].length >= 5); return w ? `<a href="anno.html?a=${a}">${a} <b>${G.esc(w[3] || w[0])}</b></a>` : ""; }).filter(Boolean);
     document.getElementById("scorre").innerHTML = voci.join("") + voci.join("");
     G.carica("capitoli/indice.json").then((IX) => {
-      document.getElementById("prologo").textContent = "«" + IX.prologo + "»";
-      document.getElementById("riga-prologo").textContent = IX.riga;
       G.filoDelTempo("#filo-home", IX.capitoli, 0);
       document.getElementById("capitoli-home").innerHTML = IX.capitoli.map((c) => `<li><span class="n">${c.n}</span><div><h3><a href="capitolo.html?n=${c.n}">${G.esc(c.titolo)}</a> <small class="grigio">(${(c.anni || []).join("-")})</small></h3>${c.simbolo ? `<p class="chi">«${G.esc(c.simbolo)}»</p>` : ""}<p>${G.esc(c.sommario)} <a class="leggi" href="capitolo.html?n=${c.n}">Leggi il capitolo</a></p></div></li>`).join("");
       if (IX.chiusa) { document.getElementById("chiusa-frase").textContent = "«" + IX.chiusa + "»"; document.getElementById("chiusa-chi").innerHTML = 'Camera, 20 luglio 2022, l\'ultima legislatura dell\'archivio. <a class="lk" href="parole.html">Entra nell\'archivio</a>'; }

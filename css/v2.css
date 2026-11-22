@@ -204,3 +204,5 @@ body[data-sezione="fascismo"] .multipli .mul::before{border-left-color:#2A2D33}
 .capitoli-home li{padding:20px 0}
 .capitoli-home .n{font-size:72px}
 @media (max-width:759px){.cursore{flex-wrap:wrap}.cursore output{min-width:0;flex-basis:100%}}
+
+.asse-tempo{margin-top:32px}

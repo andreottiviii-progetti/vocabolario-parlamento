@@ -257,6 +257,7 @@ def risolvi(g, rapporto, sid):
 # («Messieurs», «Adunque»...) non va nel titolo: resta come citazione piccola nella pagina riassunto.
 TITOLI_CAPITOLI = {1: "Due lingue in aula", 2: "L'Italia unita accorcia le frasi", 3: "La guerra e il regime", 4: "Amici e nemici",
                    5: "Il PCI va verso la DC", 6: "Tangentopoli arriva in aula", 7: "La lingua di oggi"}
+ANNI_CAPITOLI = {3: [1915, 1943]}  # anni del titolo deciso il 22/11
 
 
 def porte_html(t):
@@ -391,7 +392,7 @@ def main():
         simbolo = (re.match(r"\s*«([^»]+)»", d.get("titolo", "")) or [None, ""])[1]
         breve = re.split(r"(?<=[.!?])\s", d.get("sommario", ""), maxsplit=1)[0]
         cap = {"n": d.get("capitolo"), "id": d.get("id"), "titolo": TITOLI_CAPITOLI.get(int(d.get("capitolo") or 0), d.get("titolo")), "simbolo": simbolo,
-               "sommario": breve, "anni": [int(x) for x in (d.get("anni") or []) if str(x).isdigit()],
+               "sommario": breve, "anni": ANNI_CAPITOLI.get(int(d.get("capitolo") or 0), [int(x) for x in (d.get("anni") or []) if str(x).isdigit()]),
                "frase": "" if any(q in d.get("frase_gigante", "") for q in in_verifica) else d.get("frase_gigante", ""),
                "chi": "" if any(q in d.get("frase_gigante", "") for q in in_verifica) else d.get("frase_gigante_chi", ""), "storie": d.get("storie") or [], "ipotesi": d.get("ipotesi") or [],
                "parole": d.get("parole") or [], "persone": d.get("persone") or [], "legislature": d.get("legislature") or [], "passi": passi,
