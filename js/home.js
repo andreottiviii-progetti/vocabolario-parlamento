@@ -8,8 +8,6 @@
     G.testata({ compatta: false });
     G.piede();
     return Promise.all([G.carica("home.json"), G.carica("base.json"), G.indiceParole()]).then(([H, B, IX]) => {
-      G.conti.persone = G.num(B.conti.persone); G.conti.storie = G.num(B.conti.storie);
-      G.testata({ compatta: false });
       asse(H, B, IX);
       const ap = apertura(H);
       multipli(H);

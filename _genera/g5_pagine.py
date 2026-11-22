@@ -27,7 +27,7 @@ MENU = [("Parole", "parole.html"), ("Anni", "anni.html"), ("Legislature", "legis
 def guscio(titolo, descrizione, js, corpo, attivo=None, dove=False, home=False):
     menu = "".join('<a href="%s"%s>%s</a>' % (h, ' class="attivo"' if t == attivo else "", t) for t, h in MENU)
     scripts = "".join('<script defer src="js/%s"></script>' % s for s in (["d3.min.js", "comune.js"] + ([js] if js else [])))
-    return f"""<!doctype html>
+    return f"""<!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="utf-8">
