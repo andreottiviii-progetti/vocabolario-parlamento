@@ -1,0 +1,104 @@
+/* Pagina di un partito: partito.html?id=PCI */
+(function () {
+  "use strict";
+  const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  G.avvia(function () {
+    G.testata({ attivo: "Partiti" });
+    G.piede();
+    const el = document.getElementById("contenuto");
+    const id = G.param("id") || "PCI";
+    return Promise.all([G.carica("partiti/" + slug(id) + ".json"), G.carica("partiti/indice.json"), G.carica("base.json"), G.carica("esperimenti.json"), G.carica("storie/indice.json").catch(() => ({ storie: [] }))])
+      .then(([P, IX, B, E, S]) => pagina(el, P, IX, B, E, S))
+      .catch((e) => { console.error(e); G.nonTrovato(el, "Questo partito non c'è nella mappa della Camera."); });
+  });
+
+  function pagina(el, P, IX, B, E, S) {
+    const nome = P.nome;
+    document.title = nome + " · Il vocabolario del Parlamento";
+    document.getElementById("bric").textContent = nome;
+    const U = P.unita;
+    const da = Math.round(U[0].anno - 2.5), a = Math.min(2022, Math.round(U[U.length - 1].anno + 2.5));
+    G.dove([da, a, nome + ", " + da + "-" + a]);
+    const max = U.reduce((p, q) => (q.quota > p.quota ? q : p));
+    const legId = (n) => "repubblica-" + n;
+    const gov = P.governi.filter((g) => g[3] === "G").length;
+    const storie = (S.storie || []).filter((s) => (s.partiti || []).some((x) => x === P.id || x === nome));
+    const esp = E.elenco.filter((e) => (P.esperimenti || []).includes(e.cod));
+    el.innerHTML = `
+      <h1 class="titolo-pagina">${G.esc(nome)}</h1>
+      <p class="sommario">Alla Camera in ${U.length} ${U.length === 1 ? "legislatura" : "legislature"}, ${U.length === 1 ? "la " + G.romano(U[0].leg) : "dalla " + G.romano(U[0].leg) + " alla " + G.romano(U[U.length - 1].leg)}. Il massimo è nella <a class="lk" href="legislatura.html?id=${legId(max.leg)}">${G.romano(max.leg)} legislatura</a>: ${G.pct(max.quota)} delle parole dei deputati, con ${G.num(max.n_orat)} oratori. Famiglia: ${G.esc(P.famiglia)}.${gov ? ` Al governo in ${gov} governi.` : ""}</p>
+      <section class="griglia"><div class="c8" id="g-quota"></div><aside class="c4 fil"><h3 class="titolo-piccolo">Legislatura per legislatura</h3><ul class="fatti" id="fatti"></ul></aside></section>
+      <section class="sezione griglia"><div class="c8" id="g-linea"></div><div class="c4 fil"><h3 class="titolo-piccolo">A chi somiglia</h3><p class="fig-sotto">Il partito di un'altra famiglia con la lingua più simile, legislatura per legislatura (somiglianza più alta = più simile)</p><ul class="elenco-n" id="somiglia"></ul></div></section>
+      <section class="sezione"><div class="testa"><h2>Le parole più sue</h2></div><p class="sotto-titolo">Le parole che il partito dice più del resto dell'aula, in ogni legislatura, Camera. Tra queste ci sono anche i nomi dei suoi oratori.</p><div class="tab-scorre" id="t-tipiche"></div></section>
+      <section class="sezione"><div class="testa"><h2>Che cosa guadagna e che cosa perde a ogni passaggio</h2></div><p class="sotto-titolo">Parole che salgono o scendono da una legislatura all'altra, misurate rispetto al resto dell'aula: una parola «persa» può crescere in valore assoluto se il resto dell'aula cresce di più. Accanto: volte per milione prima e dopo.</p><div class="tab-scorre" id="t-passaggi"></div></section>
+      <section class="sezione griglia">
+        <div class="c5"><h3 class="titolo-piccolo">Chi parla di più</h3><p class="fig-sotto">Parole dette alla Camera da deputati del partito, tutte le legislature</p><div id="oratori"></div></div>
+        <div class="c4 fil"><h3 class="titolo-piccolo">I governi</h3><p class="fig-sotto">G al governo, A appoggio o astensione (fonte: ParlGov)</p><div class="tab-scorre" id="t-gov"></div></div>
+        <div class="c3 fil"><h3 class="titolo-piccolo">Collegamenti</h3><ul class="fatti" id="colleg"></ul></div>
+      </section>`;
+    // quota per legislatura: colonne sul tempo
+    const area = G.figura("#g-quota", {
+      titolo: `${G.esc(nome)} arriva al ${G.pct(max.quota)} delle parole dei deputati nella ${G.romano(max.leg)} legislatura`,
+      sotto: "Quota delle parole dette dai deputati come parlamentari (senza ministri e relatori), Camera, una colonna per legislatura",
+      limite: "La quota non somma a 100 tra i partiti della mappa: mancano i gruppi minori.",
+      csv: () => [["legislatura", "anno_medio", "quota", "oratori", "quota_governo"]].concat(U.map((u) => [u.leg, u.anno, u.quota, u.n_orat, u.gov])), nomeCSV: "quota_" + P.slug,
+    });
+    G.grafico(area, (ar, w) => {
+      const h = w < 560 ? 220 : 280, m = { t: 26, r: 8, b: 24, l: 0 };
+      const svg = ar.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "Quota di parole per legislatura");
+      const x = d3.scaleLinear().domain([1946, 2023]).range([m.l, w - m.r]);
+      const y = d3.scaleLinear().domain([0, Math.max(0.1, max.quota * 1.15)]).range([h - m.b, m.t]);
+      const g = svg.append("g").attr("class", "asse");
+      y.ticks(4).forEach((v, i, arr) => { g.append("line").attr("x1", 0).attr("x2", w).attr("y1", y(v)).attr("y2", y(v)).attr("class", v === 0 ? "zero" : null); g.append("text").attr("x", 0).attr("y", y(v) - 4).text(G.pct(v, 0) + (i === arr.length - 1 ? " delle parole" : "")); });
+      U.forEach((u) => {
+        const lg = B.legislature.find((l) => l.id === legId(u.leg));
+        const x0 = x(lg ? lg.da : u.anno - 2), x1 = x(lg ? lg.a + 1 : u.anno + 2) - 2;
+        const lk = svg.append("a").attr("href", "legislatura.html?id=" + legId(u.leg));
+        lk.append("rect").attr("x", x0).attr("width", Math.max(2, x1 - x0)).attr("y", y(u.quota)).attr("height", y(0) - y(u.quota)).attr("fill", u === max ? G.ROSSO : G.NERO);
+        if (x1 - x0 > 26) lk.append("text").attr("x", (x0 + x1) / 2).attr("y", y(u.quota) - 4).attr("text-anchor", "middle").attr("font-size", 12).attr("font-weight", 700).text(G.romano(u.leg));
+      });
+      [1950, 1970, 1990, 2010].forEach((v) => g.append("text").attr("x", x(v)).attr("y", h - 6).attr("text-anchor", "middle").text(v));
+    });
+    document.getElementById("fatti").innerHTML = U.map((u) => `<li><a href="legislatura.html?id=${legId(u.leg)}">${G.romano(u.leg)} legislatura</a>: <b>${G.pct(u.quota)}</b><span class="et">${G.num(u.n_orat)} oratori; al governo ${u.gov == null ? "–" : G.pct(u.gov, 0)} dei giorni</span></li>`).join("");
+    // linea della famiglia nel tempo, con le altre in grigio
+    const area2 = G.figura("#g-linea", {
+      titolo: `Dove sta la lingua della famiglia ${G.esc(P.famiglia)} rispetto alle altre`,
+      sotto: "Posizione ricavata dalle parole, Camera, 1948-2022: in basso le parole della sinistra, in alto quelle della destra. Più due linee sono vicine, più le famiglie usano le stesse parole. In rosso la famiglia di questo partito." + (P.asse && P.asse.length ? " Sotto, la scala DC-PCI con il suo margine di incertezza." : ""),
+      limite: "La posizione viene dalle parole, non dai voti.",
+      csv: () => [["famiglia", "anno", "posizione", "scheda"]].concat([].concat(...Object.entries(IX.linee).map(([f, l]) => l.map((p) => [f, p[0], p[1], p[2]])))), nomeCSV: "linee_famiglie",
+    });
+    G.grafico(area2, (ar, w) => {
+      const L = IX.linee, tutti = [].concat(...Object.values(L)).map((p) => p[1]), ext = d3.extent(tutti);
+      const fam = P.famiglia;
+      const r = G.linee(ar, w, {
+        x: [1948, 2022], y: [ext[0] - 0.005, ext[1] + 0.005], yTicks: [], h: w < 560 ? 240 : 300, m: { r: w < 560 ? 60 : 120 }, etichSopra: false,
+        serie: Object.keys(L).filter((f) => f !== fam).map((f) => ({ punti: L[f].map((p) => [p[0], p[1]]), colore: G.GDATI, sp: 1, etich: f })).concat(L[fam] ? [{ punti: L[fam].map((p) => [p[0], p[1]]), colore: G.ROSSO, sp: 2.5, punto: 2.5, etich: fam }] : []),
+      });
+      r.svg.append("text").attr("x", 0).attr("y", r.y(ext[1]) + 4).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di destra");
+      r.svg.append("text").attr("x", 0).attr("y", r.y(ext[0]) - 4).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di sinistra");
+      if (P.asse && P.asse.length) {
+        const div = ar.append("div").style("margin-top", "16px");
+        div.append("p").attr("class", "fig-sotto").text("Scala DC-PCI: 0 è la lingua della DC, 1 quella del PCI; anno per anno, con il margine di incertezza in grigio.");
+        G.linee(div, w, { x: [1948, 1994], y: [-0.2, 1.2], yTicks: [0, 0.5, 1], h: 200, serie: [{ punti: P.asse.map((p) => [p[0], p[1]]), banda: P.asse.map((p) => [p[0], p[2], p[3]]), colore: G.ROSSO, sp: 2.5, etich: nome }] });
+      }
+    });
+    // somiglianze
+    document.getElementById("somiglia").innerHTML = U.map((u) => { const s = (P.somiglianze || {})[u.leg]; const x = s && s.altro_partito && s.altro_partito[0]; return x ? `<li><span>${G.romano(u.leg)}: ${G.lPartito(x[0], x[0].replace("Unita'", "Unità"))} (${x[1]})</span><span>${G.num(x[2], 2)}</span></li>` : ""; }).join("") || '<li class="grigio">Nessun dato</li>';
+    // parole tipiche
+    const legs = Object.keys(P.tipiche || {}).sort((a, b) => a - b);
+    document.getElementById("t-tipiche").innerHTML = legs.length ? '<table class="fitta"><thead><tr><th>legislatura</th><th>parole più sue</th></tr></thead><tbody>' + legs.map((l) => `<tr><td><a href="legislatura.html?id=${legId(l)}">${G.romano(+l)}</a></td><td>${P.tipiche[l].slice(0, 12).map((x) => G.lParola(x[0], x[1])).join(", ")}</td></tr>`).join("") + "</tbody></table>" : '<p class="grigio">Troppe poche parole per calcolarle.</p>';
+    // passaggi
+    const pas = Object.entries(P.passaggi || {}).sort((a, b) => +a[0].split("-")[0] - +b[0].split("-")[0]);
+    const cont = new Map((P.continuita || []).map((c) => [c[0] + "-" + c[1], c]));
+    document.getElementById("t-passaggi").innerHTML = pas.length ? '<table class="fitta"><thead><tr><th>passaggio</th><th class="n">somiglianza con la legislatura prima</th><th>guadagnate</th><th>perse</th></tr></thead><tbody>' +
+      pas.map(([k, v]) => { const [x, y] = k.split("-").map(Number); const c = cont.get(k); return `<tr><td>${G.romano(x)} → ${G.romano(y)}</td><td class="n">${c ? G.num(c[2], 2) + " (tra " + G.num(c[3], 2) + " e " + G.num(c[4], 2) + ")" : "–"}</td><td>${v.guadagnata.slice(0, 6).map((p) => G.lParola(p[0], p[1]) + ' <span class="grigio">' + G.num(p[2]) + "→" + G.num(p[3]) + "</span>").join(", ")}</td><td>${v.persa.slice(0, 6).map((p) => G.lParola(p[0], p[1]) + ' <span class="grigio">' + G.num(p[2]) + "→" + G.num(p[3]) + "</span>").join(", ")}</td></tr>`; }).join("") + "</tbody></table>" : '<p class="grigio">Il partito è in una sola legislatura: non ci sono passaggi.</p>';
+    document.getElementById("oratori").innerHTML = P.oratori.length ? G.barre(P.oratori.slice(0, 12).map((o, i) => [G.lPersona(o[0], G.oratore(o[1])), o[2], i === 0])) : '<p class="grigio">Nessun dato</p>';
+    const govS = P.governi.filter((g) => g[3] === "G" || g[3] === "A");
+    document.getElementById("t-gov").innerHTML = govS.length ? '<table class="fitta"><tbody>' + govS.map((g) => `<tr><td>${G.esc(g[0])}</td><td>${g[1].slice(0, 4)}</td><td><b>${g[3]}</b></td></tr>`).join("") + "</tbody></table>" : '<p class="grigio">Mai al governo né in appoggio.</p>';
+    const col = [];
+    storie.forEach((s) => col.push(`<a href="storia.html?id=${s.id}">${G.esc(s.titolo)}</a><span class="et">storia</span>`));
+    esp.slice(0, 10).forEach((e) => col.push(`${G.lEsp(e.cod)} ${G.esc(e.titolo)}<span class="et">${G.esito(e.esito)}</span>`));
+    col.push(`<a href="partiti.html">Tutti i partiti</a>`);
+    document.getElementById("colleg").innerHTML = col.map((x) => `<li>${x}</li>`).join("");
+  }
+})();

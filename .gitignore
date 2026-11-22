@@ -1,0 +1,7 @@
+# materiali di lavoro e file intermedi: non vanno nel repository
+_progetto/
+_schermate/
+_genera/cache/
+__pycache__/
+*.pyc
+RIFAI_SITO.bat
