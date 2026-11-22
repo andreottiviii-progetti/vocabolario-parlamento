@@ -15,6 +15,7 @@ USCITA  dati/parole/indice.json, dati/parole/c/NNN.json (conteggi), dati/parole/
 USO     python -I _genera/g4_parole.py
 """
 import glob
+import json
 import os
 import pickle
 import sys
@@ -26,6 +27,7 @@ from comune import *  # noqa
 import numpy as np
 
 PEZZO = 400
+SCARTATE = {"n": 0, "esempi": []}
 SCAN = os.path.join(CACHE, "scan")
 
 
@@ -180,13 +182,22 @@ def main():
         d = {}
         if w in prime:
             v = prime[w]
-            d["pv"] = [v[0], v[3], nome_or(v[5] or "%s:%s" % (v[3], v[4])), v[5] or "", v[6] or ""]
+            fr_pv = v[6] or ""
+            if fr_pv and not frase_pulita(fr_pv):
+                SCARTATE["n"] += 1
+                fr_pv = ""
+            d["pv"] = [v[0], v[3], nome_or(v[5] or "%s:%s" % (v[3], v[4])) if (v[5] or oratore_valido(v[4])) else "", v[5] or "", fr_pv]
         if B["prima_sparse"][i]:
             d["sp"] = [B["prima_sparse"][i], B["anni_sparsi"][i]]
         fr = sorted(frasi.get(w, []), key=lambda x: x[0])
         scelte, visti = [], set()
         for x in fr:
             if x[2] in visti:
+                continue
+            if not frase_pulita(x[4]):  # filtro di qualita' (comune.py, regole in LEGGIMI.md)
+                SCARTATE["n"] += 1
+                if len(SCARTATE["esempi"]) < 30:
+                    SCARTATE["esempi"].append([x[0], x[4][:160]])
                 continue
             visti.add(x[2])
             scelte.append([x[0], x[1], nome_or(x[3] or "%s:%s" % (x[1], x[2])), x[3] or "", x[4]])
@@ -195,8 +206,8 @@ def main():
         if scelte:
             d["fr"] = scelte
         if i in or_top:
-            d["or"] = [[kk if ":p" in kk else "", nome_or(kk), n] for kk, n in or_top[i].most_common(12)
-                       if kk and not kk.endswith(":") and "NON RICONOSCIUTO" not in kk][:8]
+            d["or"] = [[kk if ":p" in kk else "", nome_or(kk), n] for kk, n in or_top[i].most_common(14)
+                       if kk and not kk.endswith(":") and "NON RICONOSCIUTO" not in kk and (":p" in kk or oratore_valido(nome_or(kk)))][:8]
         if grandi and tutti_rep[i] >= 20:
             base = tutti_rep[i] / tok_rep * 1e6
             pa = []
@@ -215,6 +226,8 @@ def main():
     n += scrivi_json("parole/indice.json", {"pezzo": PEZZO, "p": indice})
     print("parole:", len(indice), "byte:", n, "pezzi:", len(pezzi_c), flush=True)
     agg["par_tok"] = dict(par_tok)
+    json.dump(SCARTATE, open(os.path.join(CACHE, "scartate_g4.json"), "w", encoding="utf-8"), ensure_ascii=False)
+    print("frasi scartate dal filtro di qualita':", SCARTATE["n"], flush=True)
     with open(os.path.join(CACHE, "aggregati.pkl"), "wb") as f:
         pickle.dump(agg, f, protocol=4)
     for w in ("spread", "tangentopoli", "liberta", "aborto"):

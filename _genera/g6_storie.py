@@ -253,6 +253,24 @@ def risolvi(g, rapporto, sid):
     return {"forma": "barre", "x": [r[etich[0]] for r in rr], "serie": [{"nome": c, "v": [numero(r[c]) for r in rr]} for c in numc[:3]]}
 
 
+# Titoli dei capitoli decisi il 22/11/2026: brevi ed esplicativi. La parola-simbolo del titolo della redazione
+# («Messieurs», «Adunque»...) non va nel titolo: resta come citazione piccola nella pagina riassunto.
+TITOLI_CAPITOLI = {1: "Due lingue in aula", 2: "L'Italia unita accorcia le frasi", 3: "La guerra e il regime", 4: "Amici e nemici",
+                   5: "Il PCI va verso la DC", 6: "Tangentopoli arriva in aula", 7: "La lingua di oggi"}
+
+
+def porte_html(t):
+    """«Storia `id`; H25: smentita; Scheda di «patria»» -> collegamenti."""
+    if not t:
+        return ""
+    h = md_inline(re.sub(r"`([a-z0-9-]+)`", r"[[\1]]", t))
+    h = re.sub(r"[Ss]tori[ae]\s+(?=\[\[)", "", h)
+    h = re.sub(r"\[\[([a-z0-9-]+)\]\]", r'<a class="lk" href="storia.html?id=\1">la storia</a>', h)
+    h = re.sub(r"\b(H\d+[a-z]?)\b", r'<a class="lk" href="esperimento.html?cod=\1">\1</a>', h)
+    h = re.sub(r"«([^»]{2,40})»", lambda m: '«<a class="lk" href="parola.html?p=%s">%s</a>»' % (m.group(1).lower(), m.group(1)), h)
+    return h
+
+
 def main():
     files = [p for p in sorted(glob.glob(os.path.join(STORIE, "*.md"))) if not os.path.basename(p).startswith("_") and os.path.basename(p) != "INDICE.md"]
     ordine = []
@@ -293,14 +311,14 @@ def main():
         coll = {}
         for mm in re.finditer(r"^- \*\*(.+?)\*\*:\s*(.*)$", s.get("collegamenti", ""), re.M):
             coll[mm.group(1).strip().lower()] = mm.group(2).strip()
-        storia = {"id": sid, "titolo": d.get("titolo"), "sottotitolo": d.get("sottotitolo", ""), "occhiello": d.get("occhiello", ""),
+        storia = {"id": sid, "filone": d.get("filone", ""), "titolo": d.get("titolo"), "sottotitolo": d.get("sottotitolo", ""), "occhiello": d.get("occhiello", ""),
                   "ipotesi": d.get("ipotesi") or [], "verdetto": d.get("verdetto", ""), "forza": d.get("forza"), "interesse": d.get("interesse"),
                   "parole": d.get("parole") or [], "partiti": d.get("partiti") or [], "legislature": d.get("legislature") or [],
                   "anni": d.get("anni") or [], "persone": d.get("persone") or [], "temi": d.get("temi") or [],
                   "testo": md_blocchi(s.get("testo", "")), "grafici": gr, "verdetto_testo": md_blocchi(s.get("verdetto e limiti", "")),
                   "storie_collegate": re.findall(r"\b([a-z0-9]+(?:-[a-z0-9]+)+)\b", coll.get("storie ed esperimenti", ""))}
         scrivi_json("storie/%s.json" % sid, storia)
-        indice.append({k: storia[k] for k in ("id", "titolo", "sottotitolo", "occhiello", "ipotesi", "verdetto", "forza", "interesse", "parole", "partiti", "legislature", "anni", "persone", "temi")})
+        indice.append({k: storia[k] for k in ("id", "filone", "titolo", "sottotitolo", "occhiello", "ipotesi", "verdetto", "forza", "interesse", "parole", "partiti", "legislature", "anni", "persone", "temi")})
     pos = {s: i for i, s in enumerate(ordine)}
     indice.sort(key=lambda x: (pos.get(x["id"], 9999), -(x["interesse"] or 0) if isinstance(x["interesse"], int) else 0, -(x["forza"] or 0) if isinstance(x["forza"], int) else 0))
     for i, x in enumerate(indice):
@@ -311,6 +329,84 @@ def main():
     b = json.load(open(bp, encoding="utf-8"))
     b["conti"]["storie"] = len(indice)
     scrivi_json("base.json", b)
+    # capitoli del racconto (_progetto/racconto/capitoli/*.md): passi di testo, porte, verdetti.
+    # Le righe «Grafico», «Stato» e «Dati» sono istruzioni di lavoro e non vanno in pagina.
+    cap_dir = os.path.join(SITO, "_progetto", "racconto", "capitoli")
+    # frasi ancora da ricontrollare secondo _progetto/racconto/FRASI_VERE.md («Che cosa resta da controllare»): non si pubblicano
+    fv_path = os.path.join(SITO, "_progetto", "racconto", "FRASI_VERE.md")
+    in_verifica = []
+    if os.path.exists(fv_path):
+        fv = open(fv_path, encoding="utf-8").read()
+        coda = fv.split("## Che cosa resta da controllare", 1)[-1] if "## Che cosa resta da controllare" in fv else ""
+        numeri = set(re.findall(r"\b(\d{1,3})\b", re.sub(r"(?m)^\s*\d+\.\s", "", re.sub(r"«[^»]*»", "", coda))))
+        for riga in fv.splitlines():
+            m = re.match(r"\|\s*(\d+)\s*\|\s*«([^»]+)»", riga)
+            if m and m.group(1) in numeri:
+                in_verifica.append(m.group(2)[:28])
+
+    # le citazioni in pagina devono stare nel registro FRASI_VERE.md (forma controllata): le altre restano fuori
+    registro = ""
+    if os.path.exists(fv_path):
+        registro = re.sub(r"\s+", " ", html.unescape(open(fv_path, encoding="utf-8").read()))
+
+    def nel_registro(q):
+        q = re.sub(r"\s+", " ", q).strip()
+        return len(q) < 30 or q[:25] in registro
+
+    def senza_frasi_in_verifica(html_):
+        tolte = 0
+        pezzi = re.split(r"(?=<p>)|(?=<ul>)", html_)
+        tenuti = []
+        for pz in pezzi:
+            pulito = html.unescape(re.sub(r"<[^>]+>", "", pz))
+            if any(q in pulito for q in in_verifica) or any(not nel_registro(c) for c in re.findall(r"«([^»]{30,})»", pulito)):
+                tolte += 1
+                continue
+            tenuti.append(pz)
+        return "".join(tenuti), tolte
+    capitoli = []
+    for pc in sorted(glob.glob(os.path.join(cap_dir, "*.md"))):
+        grezzo = open(pc, encoding="utf-8").read()
+        if "DA VERIFICARE" in grezzo:
+            rapporto.append("capitolo %s: contiene [DA VERIFICARE], non pubblicato" % os.path.basename(pc))
+            continue
+        d, corpo = testa(grezzo)
+        sez = sezioni(corpo)
+        passi = []
+        for blocco in re.split(r"^### ", sez.get("testo e passi", ""), flags=re.M)[1:]:
+            righe = blocco.split("\n")
+            tit = re.sub(r"^Passo\s+\d+\s*[—-]\s*", "", righe[0]).strip()
+            testo, porte = [], ""
+            for r in righe[1:]:
+                if r.startswith(">"):
+                    m = re.match(r">\s*\*\*Porte\.\*\*\s*(.*)", r)
+                    if m:
+                        porte = m.group(1)
+                    continue
+                testo.append(r)
+            corpo_passo, tolte = senza_frasi_in_verifica(md_blocchi("\n".join(testo)))
+            if tolte:
+                rapporto.append("capitolo %s, passo «%s»: %d capoversi tolti perche' citano frasi ancora da ricontrollare" % (d.get("capitolo"), tit, tolte))
+            passi.append({"titolo": md_inline(tit), "testo": corpo_passo, "porte": porte_html(porte)})
+        simbolo = (re.match(r"\s*«([^»]+)»", d.get("titolo", "")) or [None, ""])[1]
+        breve = re.split(r"(?<=[.!?])\s", d.get("sommario", ""), maxsplit=1)[0]
+        cap = {"n": d.get("capitolo"), "id": d.get("id"), "titolo": TITOLI_CAPITOLI.get(int(d.get("capitolo") or 0), d.get("titolo")), "simbolo": simbolo,
+               "sommario": breve, "anni": [int(x) for x in (d.get("anni") or []) if str(x).isdigit()],
+               "frase": "" if any(q in d.get("frase_gigante", "") for q in in_verifica) else d.get("frase_gigante", ""),
+               "chi": "" if any(q in d.get("frase_gigante", "") for q in in_verifica) else d.get("frase_gigante_chi", ""), "storie": d.get("storie") or [], "ipotesi": d.get("ipotesi") or [],
+               "parole": d.get("parole") or [], "persone": d.get("persone") or [], "legislature": d.get("legislature") or [], "passi": passi,
+               "stenografo": md_blocchi(sez.get("il momento dello stenografo", "")), "porte_fondo": md_blocchi(sez.get("tre porte in fondo al capitolo", "")),
+               "verdetti": md_blocchi(sez.get("verdetti toccati", "")), "verso": md_blocchi(next((v for k, v in sez.items() if k.startswith("verso")), ""))}
+        scrivi_json("capitoli/%s.json" % cap["n"], cap)
+        capitoli.append({k: cap[k] for k in ("n", "id", "titolo", "simbolo", "sommario", "anni", "frase", "chi")})
+    capitoli.sort(key=lambda c: int(c["n"] or 0))
+    rac = open(os.path.join(SITO, "_progetto", "racconto", "RACCONTO.md"), encoding="utf-8").read()
+    m1 = re.search(r"Prologo:[^«]*«([^»]+)»", rac)
+    m2 = re.search(r"Chiusa:[^«]*«([^»]+)»", rac)
+    m3 = re.search(r"Sotto, la riga: «([^»]+)»", rac)
+    scrivi_json("capitoli/indice.json", {"capitoli": capitoli, "prologo": m1.group(1) if m1 else "", "riga": m3.group(1) if m3 else "",
+                                         "chiusa": m2.group(1) if m2 else ""})
+    print("capitoli:", len(capitoli))
     # testi fissi
     tp = os.path.join(SITO, "_progetto", "TESTI_PAGINE.md")
     if os.path.exists(tp):

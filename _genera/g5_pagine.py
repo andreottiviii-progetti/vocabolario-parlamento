@@ -14,17 +14,22 @@ import io
 import json
 import os
 import pickle
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comune import *  # noqa
 
-MENU = [("Parole", "parole.html"), ("Anni", "anni.html"), ("Legislature", "legislature.html"), ("Partiti", "partiti.html"),
-        ("Persone", "persone.html"), ("Temi", "temi.html"), ("Storie", "storie.html"), ("Esperimenti", "esperimenti.html"),
+MENU = [("Parole", "parole.html"), ("Prime volte", "primevolte.html"), ("Anni", "anni.html"), ("Legislature", "legislature.html"), ("Partiti", "partiti.html"),
+        ("Persone", "persone.html"), ("Temi", "temi.html"), ("Storie", "storie.html"), ("Percorsi", "percorsi.html"), ("Esperimenti", "esperimenti.html"),
         ("Metodo e limiti", "metodo.html"), ("Dati", "dati.html"), ("Paper", "paper.html")]
+SEZIONE = {"parole": "parole", "parola": "parole", "primevolte": "parole", "lingue": "parole", "anni": "anni", "anno": "anni",
+           "legislature": "legislature", "legislatura": "legislature", "partiti": "partiti", "partito": "partiti",
+           "persone": "persone", "persona": "persone", "risate": "persone", "temi": "temi", "tema": "temi", "storie": "storie",
+           "storia": "storie", "fascismo": "fascismo", "esteri": "esteri"}
 
 
-def guscio(titolo, descrizione, js, corpo, attivo=None, dove=False, home=False):
+def guscio(titolo, descrizione, js, corpo, attivo=None, dove=False, home=False, sezione="neutra"):
     menu = "".join('<a href="%s"%s>%s</a>' % (h, ' class="attivo"' if t == attivo else "", t) for t, h in MENU)
     scripts = "".join('<script defer src="js/%s"></script>' % s for s in (["d3.min.js", "comune.js"] + ([js] if js else [])))
     return f"""<!DOCTYPE html>
@@ -37,10 +42,11 @@ def guscio(titolo, descrizione, js, corpo, attivo=None, dove=False, home=False):
 <meta name="description" content="{descrizione}">
 <link rel="preload" href="caratteri/Archivo-variabile.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/stile.css">
+<link rel="stylesheet" href="css/v2.css">
 <link rel="icon" href="data:,">
 {scripts}
 </head>
-<body>
+<body data-sezione="{sezione}">
 <div class="anteprima" role="note">Anteprima, non ancora pubblicato</div>
 <div class="pagina">
 <header id="testata" class="testata{'' if home else ' compatta'}">
@@ -63,33 +69,43 @@ NOSCRIPT = '<noscript><p class="segnaposto"><b>Questa pagina si costruisce con J
 
 
 def home():
-    corpo = f"""<section class="asse-tempo" id="asse" aria-label="Parole a confronto sull'asse del tempo">
-<h2 class="titolo-asse">Parole a confronto, dal 1848 al 2022</h2>
-{NOSCRIPT}
+    corpo = f"""<section class="apertura-v2" aria-label="Prologo">
+<p class="occhiello">8 maggio 1848, il primo resoconto della Camera</p>
+<blockquote class="citazione-gigante" id="prologo"></blockquote>
+<p class="chi"><b data-conto="interventi"></b> interventi e <b data-conto="parole_milioni"></b> milioni di parole, Camera e Senato, 1848-2022. <span id="riga-prologo"></span></p>
+<div class="scorre-box" aria-label="La parola di ogni anno"><div class="scorre" id="scorre"></div></div>
 </section>
+<section class="sezione" id="racconto" aria-label="Il racconto in sette capitoli"><div class="testa"><h2>Il racconto, in sette capitoli</h2></div>
+<div id="filo-home"></div><ol class="capitoli-home" id="capitoli-home"></ol></section>
+<section class="sezione" id="percorsi" aria-label="Percorsi"><div class="testa"><h2>Quattro percorsi</h2><span class="a-destra"><a href="percorsi.html">Tutti i percorsi</a></span></div><div id="ingressi"></div></section>
+<section class="sezione" id="archivio" aria-label="L'archivio"><div class="testa"><h2>L'archivio: scrivi una parola</h2><span class="a-destra"><a href="parole.html">Parole</a> · <a href="persone.html">Persone</a> · <a href="partiti.html">Partiti</a> · <a href="legislature.html">Legislature</a> · <a href="anni.html">Anni</a></span></div>
+<div class="asse-tempo" id="asse"><h2 class="titolo-asse">Parole a confronto, dal 1848 al 2022</h2>{NOSCRIPT}</div></section>
 <section class="griglia sezione" aria-label="Apertura">
 <article class="c8 apertura" id="apertura"></article>
 <aside class="c4 fil breve"><h3>In breve</h3><ol id="in-breve"></ol></aside>
 </section>
-<section class="sezione" id="parole">
-<div class="testa"><h2>Venti parole, 175 anni</h2><span class="a-destra"><a href="parole.html">Tutte le <span data-conto="parole"></span> parole</a></span></div>
-<p class="sotto-titolo">Volte ogni milione di parole, anno per anno, Camera e Senato. Ogni curva ha la sua scala: si confronta la forma, non l'altezza. In rosso l'anno di punta. Le parole sono in ordine di anno di punta, dalle ferrovie alla pandemia.</p>
+<section class="sezione" id="esteri-home" style="--sez:#00A3AD"><div class="testa"><h2>Amici e nemici dell'Italia</h2><span class="a-destra"><a href="esteri.html">Il percorso completo</a></span></div>
+<p class="sotto-titolo">Il tono dell'aula verso un paese, anno per anno (sopra lo zero da nemico, sotto da amico), con le alleanze (turchese) e le guerre vere (rosa).</p>
+<div class="multipli" id="esteri-mini" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div></section>
+<section class="sezione" id="partiti" style="--sez:#E5007D"><div class="griglia">
+<div class="c8" id="m-mappa"><h2 class="titolo-medio"><a href="storia.html?id=mappa-partiti-governo-opposizione">La mappa dei partiti</a></h2>
+<p class="sommario" style="font-size:18px"><span class="somm-media"></span> <a class="lk" href="storia.html?id=mappa-partiti-governo-opposizione">Leggi la storia</a> · <a class="lk" href="partiti.html">Tutti i partiti</a></p><div id="g-scie-home"></div></div>
+<div class="c4 fil" id="m-guerra"><h2 class="titolo-medio"><a href="storia.html?id=missione-o-guerra">Missione o guerra</a></h2>
+<p style="font-size:15.5px"><span class="somm-media"></span> <a class="lk" href="storia.html?id=missione-o-guerra">Leggi la storia</a></p>
+<div id="g-manubri"></div></div></div>
+<div id="g-mappa" hidden></div></section>
+<section class="sezione" id="storie-home" style="--sez:#E3120B"><div class="testa"><h2>Le storie</h2><span class="a-destra"><a href="storie.html">Tutte le <span data-conto="storie"></span> storie</a></span></div><div id="muro"></div></section>
+<section class="sezione" id="parole" style="--sez:#2454FF">
+<div class="testa"><h2>Venti parole, 175 anni</h2><span class="a-destra"><a href="parole.html">Tutte le <span data-conto="parole"></span> parole</a> · <a href="primevolte.html">Prime volte</a></span></div>
+<p class="sotto-titolo">Volte ogni milione di parole, anno per anno, Camera e Senato. Ogni curva ha la sua scala: si confronta la forma, non l'altezza. Le parole sono in ordine di anno di punta, dalle ferrovie alla pandemia.</p>
 <div class="multipli" id="multipli"></div>
 </section>
-<section class="sezione griglia" id="partiti">
-<div class="c7" id="m-mappa"><h2 class="titolo-medio"><a href="storia.html?id=mappa-partiti-governo-opposizione">La mappa dei partiti</a></h2>
-<p class="sommario" style="font-size:17px"><span class="somm-media"></span> <a class="lk" href="storia.html?id=mappa-partiti-governo-opposizione">Leggi la storia</a> · <a class="lk" href="partiti.html">Tutti i partiti</a></p>
-<div id="g-mappa"></div></div>
-<div class="c5 fil" id="m-guerra"><h2 class="titolo-medio"><a href="storia.html?id=missione-o-guerra">Missione o guerra</a></h2>
-<p style="font-size:15.5px"><span class="somm-media"></span> <a class="lk" href="storia.html?id=missione-o-guerra">Leggi la storia</a></p>
-<div id="g-manubri"></div></div>
-</section>
-<section class="sezione" id="anni">
+<section class="sezione" id="anni" style="--sez:#00A3AD">
 <div class="testa"><h2>La parola dell'anno, dal 1848 al 2022</h2><span class="a-destra"><a href="anni.html">Tutti i 175 anni</a></span></div>
 <p class="sotto-titolo">Per ogni anno la parola detta molto più del solito. Le sceglie un programma tra le parole di almeno cinque lettere: solo una su quindici racconta un evento, le altre sono leggi, procedure, nomi. Restano alcuni errori dello scanner.</p>
 <div class="anni-blocco" id="anni-blocco"></div>
 </section>
-<section class="sezione" id="legislature">
+<section class="sezione" id="legislature" style="--sez:#7B3FE4">
 <div class="testa"><h2>Le <span data-conto="legislature"></span> legislature</h2><span class="a-destra"><a href="legislature.html">Tutte le legislature</a></span></div>
 <div id="g-legislature"></div>
 </section>
@@ -98,9 +114,10 @@ def home():
 <div class="c4 fil"><h3 class="titolo-piccolo">Le smentite che fanno notizia</h3><ul class="smentite" id="smentite"></ul>
 <p style="margin-top:10px"><a class="leggi" href="esperimenti.html">Tutti i <span data-conto="esperimenti"></span> esperimenti</a></p></div>
 </section>
-<section class="sezione" id="temi"><div id="g-temi"></div><p style="margin-top:10px"><a class="leggi" href="temi.html">I <span data-conto="temi"></span> temi e gli atlanti</a></p></section>
+<section class="sezione" id="temi" style="--sez:#00A85A"><div id="g-temi"></div><p style="margin-top:10px"><a class="leggi" href="temi.html">I <span data-conto="temi"></span> temi e gli atlanti</a></p></section>
+<section class="sezione sottile" id="chiusa" aria-label="Chiusa"><blockquote class="citazione-gigante" id="chiusa-frase"></blockquote><p class="chi" id="chiusa-chi"></p></section>
 <section class="sezione griglia" id="elenchi">
-<div class="c3"><h3 class="titolo-piccolo">Chi parla di più</h3><p class="fig-sotto">Interventi alla Camera, 1948-2022. In rosso i deputati radicali della VII legislatura.</p><div id="g-oratori"></div><p class="fig-fonte">Si contano gli interventi, non le parole. Chi fa ostruzionismo o interrompe spesso sale in classifica. <a href="persone.html">Tutte le persone</a></p></div>
+<div class="c3"><h3 class="titolo-piccolo">Chi parla di più</h3><p class="fig-sotto">Interventi alla Camera, 1948-2022. In evidenza i deputati radicali della VII legislatura.</p><div id="g-oratori"></div><p class="fig-fonte">Si contano gli interventi, non le parole. Chi fa ostruzionismo o interrompe spesso sale in classifica. <a href="persone.html">Tutte le persone</a></p></div>
 <div class="c3 fil"><h3 class="titolo-piccolo">Le parole nate dopo il 1990</h3><p class="fig-sotto">Volte per milione di parole</p><div class="tab-scorre"><table class="fitta" id="t-nate"></table></div></div>
 <div class="c3 fil"><h3 class="titolo-piccolo">Le parole morte con l'Ottocento</h3><p class="fig-sotto">Volte per milione di parole</p><div class="tab-scorre"><table class="fitta" id="t-morte"></table></div></div>
 <div class="c3 fil"><h3 class="titolo-piccolo">L'anno di punta di quaranta parole</h3><p class="fig-sotto">Anno di massimo, media di Camera e Senato</p><div id="l-picchi"></div></div>
@@ -110,7 +127,7 @@ def home():
 
 def semplice(nome, titolo, desc, js, attivo, briciola, dove=False, extra=""):
     corpo = f'<div class="briciole"><a href="index.html">Home</a> › {briciola}</div>{extra}<div id="contenuto"><p class="carica">Carico i dati…</p>{NOSCRIPT}</div>'
-    return guscio(titolo, desc, js, corpo, attivo=attivo, dove=dove)
+    return guscio(titolo, desc, js, corpo, attivo=attivo, dove=dove, sezione=SEZIONE.get(nome, "neutra"))
 
 
 METODO = """<div class="briciole"><a href="index.html">Home</a> › Metodo e limiti</div>
@@ -165,7 +182,7 @@ PAPER = """<div class="briciole"><a href="index.html">Home</a> › Paper</div>
 <article class="c7" id="aula">
 <p class="occhiello">Working paper</p>
 <h2 class="titolo-medio">Che lingua parla l'aula? L'italiano del Parlamento e il resoconto che lo scrive (1848-2022)</h2>
-<p>La lingua dell'aula si semplifica nell'Ottocento, non nella Repubblica: tra il 1850 e il 1900 la frase della Camera perde nove parole, poi resta ferma. Con la Repubblica diventa più burocratica, e nel 1994 non cambia. Ma ogni misura di stile passa da chi scrive il resoconto: il paper ricostruisce le date in cui cambia la trascrizione e separa ciò che è dell'aula da ciò che è dello stenografo.</p>
+<p>La lingua dell'aula non si semplifica con regolarità: all'Unità la frase della Camera perde sette parole di colpo, poi resta quasi ferma; quello che cambia piano e sempre è la forma, con le parole e le grafie antiche che spariscono. Con la Repubblica diventa più burocratica, e nel 1994 non cambia. Ma ogni misura di stile passa da chi scrive il resoconto: il paper ricostruisce le date in cui cambia la trascrizione e separa ciò che è dell'aula da ciò che è dello stenografo.</p>
 <p class="segnaposto"><b>PDF in preparazione.</b></p>
 <p class="vedi">Leggi anche: <a href="storia.html?id=semplificazione-ottocento">la semplificazione dell'Ottocento</a> <a href="storia.html?id=antilingua-repubblica">l'antilingua della Repubblica</a> <a href="storia.html?id=resoconto-nove-date">le date del resoconto</a> <a href="storia.html?id=salto-1994-non-ce">il salto del 1994 che non c'è</a></p>
 </article>
@@ -248,6 +265,13 @@ def main():
         "storia.html": semplice("storia", "Storia · Il vocabolario del Parlamento", "Una storia del Parlamento italiano raccontata con le parole dell'aula.", "storia.js", "Storie", '<a href="storie.html">Storie</a> › <span id="bric">storia</span>', dove=True),
         "esperimenti.html": semplice("esperimenti", "Esperimenti · Il vocabolario del Parlamento", "I 153 esperimenti su 78 ipotesi, con l'esito: regge, in parte, smentita.", "esperimenti.js", "Esperimenti", "Esperimenti"),
         "esperimento.html": semplice("esperimento", "Esperimento · Il vocabolario del Parlamento", "Un esperimento: che cosa ci aspettavamo, l'esito, il numero chiave.", "esperimento.js", "Esperimenti", '<a href="esperimenti.html">Esperimenti</a> › <span id="bric">esperimento</span>'),
+        "percorsi.html": semplice("percorsi", "Percorsi · Il vocabolario del Parlamento", "Quattro percorsi: il fascismo in aula, le lingue dell'aula, risate e insulti, amici e nemici dell'Italia.", "percorsi.js", "Percorsi", "Percorsi"),
+        "fascismo.html": semplice("fascismo", "Il fascismo in aula · Il vocabolario del Parlamento", "Il fascismo in aula, 1922-1943: il dissenso che sparisce, le parole del regime, le legislature XXVI-XXX.", "fascismo.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Il fascismo in aula', dove=True),
+        "lingue.html": semplice("lingue", "Le lingue dell'aula · Il vocabolario del Parlamento", "Il francese del Parlamento subalpino, il latino, l'inglese, le forme e le grafie antiche.", "lingue.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Le lingue dell&#39;aula', dove=True),
+        "risate.html": semplice("risate", "Risate e insulti · Il vocabolario del Parlamento", "Le risate annotate dallo stenografo e gli insulti detti in aula, 1848-2022.", "risate.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Risate e insulti', dove=True),
+        "esteri.html": semplice("esteri", "Amici e nemici dell'Italia · Il vocabolario del Parlamento", "Amici e nemici dell'Italia nelle parole dell'aula, 1848-2022, con le alleanze e le guerre vere.", "esteri.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Amici e nemici', dove=True),
+        "primevolte.html": semplice("primevolte", "Prime volte · Il vocabolario del Parlamento", "La prima volta che l'aula dice computer, televisione, telefonino, euro, spread, intelligenza artificiale.", "primevolte.js", "Prime volte", '<a href="parole.html">Parole</a> › Prime volte'),
+        "capitolo.html": semplice("capitolo", "Capitolo · Il vocabolario del Parlamento", "Un capitolo del racconto del Parlamento italiano, 1848-2022.", "capitolo.js", "", '<a href="index.html#racconto">Il racconto</a> › <span id="bric">capitolo</span>', dove=True),
         "dati.html": semplice("dati", "Dati · Il vocabolario del Parlamento", "I dati del sito da scaricare: conteggi per parola e anno, mappa dei partiti, esperimenti.", "dati.js", "Dati", "Dati"),
         "metodo.html": guscio("Metodo e limiti · Il vocabolario del Parlamento", "Come sono contate le parole, quando cambia il resoconto, il giudice automatico, i limiti dei dati.", "metodo.js", METODO, attivo="Metodo e limiti"),
         "paper.html": guscio("Paper · Il vocabolario del Parlamento", "I due working paper del progetto.", "statica.js", PAPER, attivo="Paper"),
@@ -258,6 +282,16 @@ def main():
     if os.path.exists(tp):
         T = json.load(open(tp, encoding="utf-8"))
         if T.get("metodo"):
+            # i conti dei verdetti si prendono dall'elenco degli esperimenti, non dal testo
+            E = json.load(open(os.path.join(DATI, "esperimenti.json"), encoding="utf-8"))
+            tot = next(c for c in E["conti"] if c[0] == "Totale")
+            parole_n = {1: "una", 2: "due", 3: "tre", 4: "quattro", 5: "cinque", 6: "sei", 7: "sette", 8: "otto", 9: "nove"}
+            nuovo = "I conti: %d reggono, %d in parte, %d smentite. Poi %s misur%s non valid%s, %s lavor%s solo descrittiv%s, %s esperiment%s non ancora misurat%s." % (
+                tot[1], tot[2], tot[3], parole_n.get(tot[4], tot[4]), "a" if tot[4] == 1 else "e", "a" if tot[4] == 1 else "e",
+                "un" if tot[5] == 1 else parole_n.get(tot[5], tot[5]), "o" if tot[5] == 1 else "i", "o" if tot[5] == 1 else "i",
+                "un" if tot[6] == 1 else parole_n.get(tot[6], tot[6]), "o" if tot[6] == 1 else "i", "o" if tot[6] == 1 else "i")
+            T["metodo"] = re.sub(r"I conti: \d+ reggono[^<]*", nuovo, T["metodo"])
+            T["metodo"] = re.sub(r"Le ipotesi sono \d+, gli esperimenti \d+", "Le ipotesi sono %d, gli esperimenti %d" % (E["n_ipotesi"], tot[7]), T["metodo"])
             corpo_m = T["metodo"].replace("<h2>Il calendario delle trascrizioni</h2>", '<h2>Il calendario delle trascrizioni</h2><div id="g-calendario"></div>', 1)
             testa_m, resto_m = METODO.split('<article class="c8 colonna-testo" id="testo-metodo">')
             aside_m = resto_m.split("</article>", 1)[1]

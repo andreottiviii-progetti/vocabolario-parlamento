@@ -22,7 +22,7 @@ import codecs
 PAROLE_VIETATE = [codecs.decode(w, "rot13") for w in ['pynhqr', 'naguebcvp', 'qnivqr', 'wbheany', 'snoyr', 'bchf', 'fbaarg', 'unvxh', 'erivfvbar_snoyr', 'fvgb_obmmr']]
 
 
-NOMI_PROPRI_AMMESSI = {codecs.decode(w, "rot13") for w in ["qnivqr", "wbheany"]}
+NOMI_PROPRI_AMMESSI = {codecs.decode(w, "rot13") for w in ["qnivqr", "wbheany", "pynhqr", "bchf"]}  # nomi e parole latine o francesi dette in aula
 
 
 def lancia(nome, *arg):
@@ -61,7 +61,7 @@ def controlli():
                 t = open(p, encoding="utf-8", errors="replace").read().lower()
                 nei_dati = os.sep + "dati" + os.sep in p or os.sep + "scarica" + os.sep in p
                 for w in PAROLE_VIETATE:
-                    # nei dati restano i nomi propri detti in aula (deputati che si chiamano Davide, «journal» nelle citazioni)
+                    # nei dati restano i nomi propri detti in aula (deputati che hanno quel nome di battesimo, parole inglesi nelle citazioni)
                     if nei_dati and w in NOMI_PROPRI_AMMESSI:
                         continue
                     if re.search(r"(?<![a-z])%s(?![a-z])" % re.escape(w), t):
@@ -88,6 +88,9 @@ def main():
         lancia("g2_scansione.py")
         lancia("g4_parole.py")
         lancia("g3_sito.py")
+        lancia("g7_scansione2.py")
+        lancia("g8_sezioni.py")
+        lancia("g9_prime_volte.py")
         lancia("g6_storie.py")
         lancia("g5_pagine.py")
     ok = controlli()

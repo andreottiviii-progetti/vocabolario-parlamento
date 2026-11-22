@@ -8,46 +8,57 @@
 <meta name="description" content="L'italiano parlato a Camera e Senato dal 1848 al 2022: parole, partiti, legislature, persone, esperimenti.">
 <link rel="preload" href="caratteri/Archivo-variabile.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/stile.css">
+<link rel="stylesheet" href="css/v2.css">
 <link rel="icon" href="data:,">
 <script defer src="js/d3.min.js"></script><script defer src="js/comune.js"></script><script defer src="js/home.js"></script>
 </head>
-<body>
+<body data-sezione="neutra">
 <div class="anteprima" role="note">Anteprima, non ancora pubblicato</div>
 <div class="pagina">
 <header id="testata" class="testata">
 <div class="riga-alta"><span>Camera e Senato, 1848-2022</span><span>Aggiornato al 22 novembre 2026</span></div>
 <h1><a href="index.html">Il vocabolario del Parlamento</a></h1>
-<nav class="menu" aria-label="Sezioni"><a href="parole.html">Parole</a><a href="anni.html">Anni</a><a href="legislature.html">Legislature</a><a href="partiti.html">Partiti</a><a href="persone.html">Persone</a><a href="temi.html">Temi</a><a href="storie.html">Storie</a><a href="esperimenti.html">Esperimenti</a><a href="metodo.html">Metodo e limiti</a><a href="dati.html">Dati</a><a href="paper.html">Paper</a></nav>
+<nav class="menu" aria-label="Sezioni"><a href="parole.html">Parole</a><a href="primevolte.html">Prime volte</a><a href="anni.html">Anni</a><a href="legislature.html">Legislature</a><a href="partiti.html">Partiti</a><a href="persone.html">Persone</a><a href="temi.html">Temi</a><a href="storie.html">Storie</a><a href="percorsi.html">Percorsi</a><a href="esperimenti.html">Esperimenti</a><a href="metodo.html">Metodo e limiti</a><a href="dati.html">Dati</a><a href="paper.html">Paper</a></nav>
 </header>
 
 <main id="main">
-<section class="asse-tempo" id="asse" aria-label="Parole a confronto sull'asse del tempo">
-<h2 class="titolo-asse">Parole a confronto, dal 1848 al 2022</h2>
-<noscript><p class="segnaposto"><b>Questa pagina si costruisce con JavaScript.</b> Le stesse cifre sono nei file della pagina <a class="lk" href="dati.html">Dati</a>.</p></noscript>
+<section class="apertura-v2" aria-label="Prologo">
+<p class="occhiello">8 maggio 1848, il primo resoconto della Camera</p>
+<blockquote class="citazione-gigante" id="prologo"></blockquote>
+<p class="chi"><b data-conto="interventi"></b> interventi e <b data-conto="parole_milioni"></b> milioni di parole, Camera e Senato, 1848-2022. <span id="riga-prologo"></span></p>
+<div class="scorre-box" aria-label="La parola di ogni anno"><div class="scorre" id="scorre"></div></div>
 </section>
+<section class="sezione" id="racconto" aria-label="Il racconto in sette capitoli"><div class="testa"><h2>Il racconto, in sette capitoli</h2></div>
+<div id="filo-home"></div><ol class="capitoli-home" id="capitoli-home"></ol></section>
+<section class="sezione" id="percorsi" aria-label="Percorsi"><div class="testa"><h2>Quattro percorsi</h2><span class="a-destra"><a href="percorsi.html">Tutti i percorsi</a></span></div><div id="ingressi"></div></section>
+<section class="sezione" id="archivio" aria-label="L'archivio"><div class="testa"><h2>L'archivio: scrivi una parola</h2><span class="a-destra"><a href="parole.html">Parole</a> · <a href="persone.html">Persone</a> · <a href="partiti.html">Partiti</a> · <a href="legislature.html">Legislature</a> · <a href="anni.html">Anni</a></span></div>
+<div class="asse-tempo" id="asse"><h2 class="titolo-asse">Parole a confronto, dal 1848 al 2022</h2><noscript><p class="segnaposto"><b>Questa pagina si costruisce con JavaScript.</b> Le stesse cifre sono nei file della pagina <a class="lk" href="dati.html">Dati</a>.</p></noscript></div></section>
 <section class="griglia sezione" aria-label="Apertura">
 <article class="c8 apertura" id="apertura"></article>
 <aside class="c4 fil breve"><h3>In breve</h3><ol id="in-breve"></ol></aside>
 </section>
-<section class="sezione" id="parole">
-<div class="testa"><h2>Venti parole, 175 anni</h2><span class="a-destra"><a href="parole.html">Tutte le <span data-conto="parole"></span> parole</a></span></div>
-<p class="sotto-titolo">Volte ogni milione di parole, anno per anno, Camera e Senato. Ogni curva ha la sua scala: si confronta la forma, non l'altezza. In rosso l'anno di punta. Le parole sono in ordine di anno di punta, dalle ferrovie alla pandemia.</p>
+<section class="sezione" id="esteri-home" style="--sez:#00A3AD"><div class="testa"><h2>Amici e nemici dell'Italia</h2><span class="a-destra"><a href="esteri.html">Il percorso completo</a></span></div>
+<p class="sotto-titolo">Il tono dell'aula verso un paese, anno per anno (sopra lo zero da nemico, sotto da amico), con le alleanze (turchese) e le guerre vere (rosa).</p>
+<div class="multipli" id="esteri-mini" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div></section>
+<section class="sezione" id="partiti" style="--sez:#E5007D"><div class="griglia">
+<div class="c8" id="m-mappa"><h2 class="titolo-medio"><a href="storia.html?id=mappa-partiti-governo-opposizione">La mappa dei partiti</a></h2>
+<p class="sommario" style="font-size:18px"><span class="somm-media"></span> <a class="lk" href="storia.html?id=mappa-partiti-governo-opposizione">Leggi la storia</a> · <a class="lk" href="partiti.html">Tutti i partiti</a></p><div id="g-scie-home"></div></div>
+<div class="c4 fil" id="m-guerra"><h2 class="titolo-medio"><a href="storia.html?id=missione-o-guerra">Missione o guerra</a></h2>
+<p style="font-size:15.5px"><span class="somm-media"></span> <a class="lk" href="storia.html?id=missione-o-guerra">Leggi la storia</a></p>
+<div id="g-manubri"></div></div></div>
+<div id="g-mappa" hidden></div></section>
+<section class="sezione" id="storie-home" style="--sez:#E3120B"><div class="testa"><h2>Le storie</h2><span class="a-destra"><a href="storie.html">Tutte le <span data-conto="storie"></span> storie</a></span></div><div id="muro"></div></section>
+<section class="sezione" id="parole" style="--sez:#2454FF">
+<div class="testa"><h2>Venti parole, 175 anni</h2><span class="a-destra"><a href="parole.html">Tutte le <span data-conto="parole"></span> parole</a> · <a href="primevolte.html">Prime volte</a></span></div>
+<p class="sotto-titolo">Volte ogni milione di parole, anno per anno, Camera e Senato. Ogni curva ha la sua scala: si confronta la forma, non l'altezza. Le parole sono in ordine di anno di punta, dalle ferrovie alla pandemia.</p>
 <div class="multipli" id="multipli"></div>
 </section>
-<section class="sezione griglia" id="partiti">
-<div class="c7" id="m-mappa"><h2 class="titolo-medio"><a href="storia.html?id=mappa-partiti-governo-opposizione">La mappa dei partiti</a></h2>
-<p class="sommario" style="font-size:17px"><span class="somm-media"></span> <a class="lk" href="storia.html?id=mappa-partiti-governo-opposizione">Leggi la storia</a> · <a class="lk" href="partiti.html">Tutti i partiti</a></p>
-<div id="g-mappa"></div></div>
-<div class="c5 fil" id="m-guerra"><h2 class="titolo-medio"><a href="storia.html?id=missione-o-guerra">Missione o guerra</a></h2>
-<p style="font-size:15.5px"><span class="somm-media"></span> <a class="lk" href="storia.html?id=missione-o-guerra">Leggi la storia</a></p>
-<div id="g-manubri"></div></div>
-</section>
-<section class="sezione" id="anni">
+<section class="sezione" id="anni" style="--sez:#00A3AD">
 <div class="testa"><h2>La parola dell'anno, dal 1848 al 2022</h2><span class="a-destra"><a href="anni.html">Tutti i 175 anni</a></span></div>
 <p class="sotto-titolo">Per ogni anno la parola detta molto più del solito. Le sceglie un programma tra le parole di almeno cinque lettere: solo una su quindici racconta un evento, le altre sono leggi, procedure, nomi. Restano alcuni errori dello scanner.</p>
 <div class="anni-blocco" id="anni-blocco"></div>
 </section>
-<section class="sezione" id="legislature">
+<section class="sezione" id="legislature" style="--sez:#7B3FE4">
 <div class="testa"><h2>Le <span data-conto="legislature"></span> legislature</h2><span class="a-destra"><a href="legislature.html">Tutte le legislature</a></span></div>
 <div id="g-legislature"></div>
 </section>
@@ -56,9 +67,10 @@
 <div class="c4 fil"><h3 class="titolo-piccolo">Le smentite che fanno notizia</h3><ul class="smentite" id="smentite"></ul>
 <p style="margin-top:10px"><a class="leggi" href="esperimenti.html">Tutti i <span data-conto="esperimenti"></span> esperimenti</a></p></div>
 </section>
-<section class="sezione" id="temi"><div id="g-temi"></div><p style="margin-top:10px"><a class="leggi" href="temi.html">I <span data-conto="temi"></span> temi e gli atlanti</a></p></section>
+<section class="sezione" id="temi" style="--sez:#00A85A"><div id="g-temi"></div><p style="margin-top:10px"><a class="leggi" href="temi.html">I <span data-conto="temi"></span> temi e gli atlanti</a></p></section>
+<section class="sezione sottile" id="chiusa" aria-label="Chiusa"><blockquote class="citazione-gigante" id="chiusa-frase"></blockquote><p class="chi" id="chiusa-chi"></p></section>
 <section class="sezione griglia" id="elenchi">
-<div class="c3"><h3 class="titolo-piccolo">Chi parla di più</h3><p class="fig-sotto">Interventi alla Camera, 1948-2022. In rosso i deputati radicali della VII legislatura.</p><div id="g-oratori"></div><p class="fig-fonte">Si contano gli interventi, non le parole. Chi fa ostruzionismo o interrompe spesso sale in classifica. <a href="persone.html">Tutte le persone</a></p></div>
+<div class="c3"><h3 class="titolo-piccolo">Chi parla di più</h3><p class="fig-sotto">Interventi alla Camera, 1948-2022. In evidenza i deputati radicali della VII legislatura.</p><div id="g-oratori"></div><p class="fig-fonte">Si contano gli interventi, non le parole. Chi fa ostruzionismo o interrompe spesso sale in classifica. <a href="persone.html">Tutte le persone</a></p></div>
 <div class="c3 fil"><h3 class="titolo-piccolo">Le parole nate dopo il 1990</h3><p class="fig-sotto">Volte per milione di parole</p><div class="tab-scorre"><table class="fitta" id="t-nate"></table></div></div>
 <div class="c3 fil"><h3 class="titolo-piccolo">Le parole morte con l'Ottocento</h3><p class="fig-sotto">Volte per milione di parole</p><div class="tab-scorre"><table class="fitta" id="t-morte"></table></div></div>
 <div class="c3 fil"><h3 class="titolo-piccolo">L'anno di punta di quaranta parole</h3><p class="fig-sotto">Anno di massimo, media di Camera e Senato</p><div id="l-picchi"></div></div>

@@ -8,7 +8,12 @@
     G.testata({ compatta: false });
     G.piede();
     return Promise.all([G.carica("home.json"), G.carica("base.json"), G.indiceParole()]).then(([H, B, IX]) => {
+      testa(B);
       asse(H, B, IX);
+      percorsi();
+      esteriHome();
+      G.carica("partiti/traiettorie.json").then((TR) => G.scie("g-scie-home", TR));
+      G.carica("storie/indice.json").then((S) => { document.getElementById("muro").innerHTML = G.tessere(S.storie, 8); });
       const ap = apertura(H);
       multipli(H);
       partitiEGuerra(H);
@@ -20,6 +25,42 @@
       return ap;
     });
   });
+
+  /* ---------------- apertura: una frase vera, grande, e le parole degli anni che scorrono ---------------- */
+  function testa(B) {
+    const pa = Object.keys(B.parole_anno).map(Number).sort();
+    const voci = pa.map((a) => { const w = (B.parole_anno[a] || []).find((x) => x[0].length >= 5); return w ? `<a href="anno.html?a=${a}">${a} <b>${G.esc(w[3] || w[0])}</b></a>` : ""; }).filter(Boolean);
+    document.getElementById("scorre").innerHTML = voci.join("") + voci.join("");
+    G.carica("capitoli/indice.json").then((IX) => {
+      document.getElementById("prologo").textContent = "«" + IX.prologo + "»";
+      document.getElementById("riga-prologo").textContent = IX.riga;
+      G.filoDelTempo("#filo-home", IX.capitoli, 0);
+      document.getElementById("capitoli-home").innerHTML = IX.capitoli.map((c) => `<li><span class="n">${c.n}</span><div><h3><a href="capitolo.html?n=${c.n}">${G.esc(c.titolo)}</a> <small class="grigio">(${(c.anni || []).join("-")})</small></h3>${c.simbolo ? `<p class="chi">«${G.esc(c.simbolo)}»</p>` : ""}<p>${G.esc(c.sommario)} <a class="leggi" href="capitolo.html?n=${c.n}">Leggi il capitolo</a></p></div></li>`).join("");
+      if (IX.chiusa) { document.getElementById("chiusa-frase").textContent = "«" + IX.chiusa + "»"; document.getElementById("chiusa-chi").innerHTML = 'Camera, 20 luglio 2022, l\'ultima legislatura dell\'archivio. <a class="lk" href="parole.html">Entra nell\'archivio</a>'; }
+    });
+  }
+  function percorsi() {
+    Promise.all([G.carica("sezioni/fascismo.json"), G.carica("sezioni/lingue.json"), G.carica("sezioni/risate.json"), G.carica("sezioni/esteri.json")])
+      .then(([F, L, R, X]) => { document.getElementById("ingressi").innerHTML = G.ingressi(F, L, R, X); }).catch(() => {});
+  }
+  function esteriHome() {
+    G.carica("sezioni/esteri.json").then((X) => {
+      const PA = ["Austria", "Germania", "Russia/URSS", "Stati Uniti"];
+      const media3 = (o, a) => { const v = []; for (let y = a - 1; y <= a + 1; y++) if (o[y] && o[y][0] != null) v.push(o[y][0]); return v.length ? d3.mean(v) : null; };
+      document.getElementById("esteri-mini").innerHTML = PA.map((p, i) => `<div class="mul"><h4><a href="esteri.html">${G.esc(p)}</a></h4><div id="em${i}"></div></div>`).join("");
+      PA.forEach((p, i) => G.grafico("#em" + i, (a, w) => {
+        const o = X.indice[p] || {}, al = X.alleanze[p] || {};
+        const h = 150, svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", p);
+        const x = d3.scaleLinear().domain([1848, 2022]).range([0, w]), y = d3.scaleLinear().domain([-1, 1]).range([h - 18, 6]);
+        Object.keys(al).forEach((k) => { const st = al[k][1]; if (st === "alleato" || st === "guerra") svg.append("rect").attr("x", x(+k)).attr("width", Math.max(1, x(+k + 1) - x(+k))).attr("y", 6).attr("height", h - 24).attr("fill", st === "alleato" ? "#8FD9DE" : "#F6A29F"); });
+        svg.append("line").attr("x1", 0).attr("x2", w).attr("y1", y(0)).attr("y2", y(0)).attr("stroke", G.GRIGIO);
+        const pts = G.ANNI.map((k) => [k, o[k] && (o[k][3] || 0) >= 30 ? media3(o, k) : null]);
+        svg.append("path").attr("d", d3.line().defined((d) => d[1] != null).x((d) => x(d[0])).y((d) => y(d[1]))(pts)).attr("fill", "none").attr("stroke", G.INK).attr("stroke-width", 2);
+        [1850, 1900, 1950, 2000].forEach((k) => svg.append("text").attr("x", x(k)).attr("y", h - 3).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(k));
+        svg.append("text").attr("x", 2).attr("y", y(0.8)).attr("font-size", 12).attr("fill", G.GRIGIO).text("nemico");
+      }));
+    }).catch(() => {});
+  }
 
   /* ---------------- 5. asse del tempo ---------------- */
   function asse(H, B, IX) {
@@ -85,13 +126,10 @@
       const svg = area.append("svg").attr("width", w).attr("height", HH).attr("role", "img").attr("aria-label", "Confronto di parole 1848-2022");
       const x = d3.scaleLinear().domain([1848, 2022]).range([m.l, w - m.r]);
       const y = d3.scaleLinear().domain([0, max * 1.08]).range([HH - m.b, m.t]);
-      G.EPOCHE.forEach((e) => {
-        svg.append("rect").attr("x", x(e[0])).attr("y", 2).attr("width", Math.max(0, x(Math.min(e[1], 2022.5)) - x(e[0]) - 1)).attr("height", 15).attr("fill", e[3]);
-        if (e[2] && x(e[1]) - x(e[0]) > (stretto ? 64 : 110)) svg.append("text").attr("x", x(e[0]) + 5).attr("y", 13.5).attr("fill", "#fff").attr("font-size", 12).attr("font-weight", 700).text(stretto && e[2].length > 12 ? e[2].replace("Repubblica", "Rep.") : e[2]);
-      });
+      G.bandaEpoche(svg, x, 0, 22, stretto);
       d3.range(1850, 2021, 10).forEach((a) => {
-        svg.append("line").attr("x1", x(a)).attr("x2", x(a)).attr("y1", 17).attr("y2", a % 50 === 0 ? 24 : 21).attr("stroke", G.NERO);
-        if (a % (stretto ? 50 : 20) === 0) svg.append("text").attr("x", x(a)).attr("y", 35).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(a);
+        svg.append("line").attr("x1", x(a)).attr("x2", x(a)).attr("y1", 22).attr("y2", a % 50 === 0 ? 28 : 25).attr("stroke", G.GRIGIO);
+        if (a % (stretto ? 50 : 20) === 0) svg.append("text").attr("x", x(a)).attr("y", 38).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(a);
       });
       // eventi di peso 1, su tre livelli
       if (!stretto) {
@@ -351,17 +389,17 @@
       const svg = a.append("svg").attr("width", w).attr("height", T.length * rh + 22).attr("role", "img").attr("aria-label", "Temi anno per anno");
       const x = d3.scaleLinear().domain([1848, 2023]).range([lw, w - rw]);
       const cw = Math.max(0.6, x(1849) - x(1848));
-      const passi = ["#FFFFFF", "#E6E6E6", "#BDBDBD", "#7A7A7A", "#111111"];
+      const passi = ["#FFFFFF", "#D6F2E3", "#8FDDB5", "#2FBF7A", "#007A41"];
       T.forEach((o, i) => {
         const yy = i * rh;
         svg.append("a").attr("href", "tema.html?id=" + o.t.id).append("text").attr("x", lw - 6).attr("y", yy + 11).attr("text-anchor", "end").attr("font-size", 12.5).text(stretto ? o.t.nome.slice(0, 18) : o.t.nome.slice(0, 44));
         o.t.q.forEach((q, k) => {
           if (q == null) return;
           const r = q / o.max;
-          const c = 1848 + k === o.picco ? G.ROSSO : passi[Math.min(4, Math.floor(r * 4.999))];
+          const c = 1848 + k === o.picco ? "#16181D" : passi[Math.min(4, Math.floor(r * 4.999))];
           if (c !== "#FFFFFF") svg.append("rect").attr("x", x(1848 + k)).attr("y", yy).attr("width", cw + 0.3).attr("height", rh - 1).attr("fill", c);
         });
-        if (!stretto) svg.append("text").attr("x", w - rw + 6).attr("y", yy + 11).attr("font-size", 12).attr("font-weight", 700).attr("fill", G.ROSSO).text(o.picco);
+        if (!stretto) svg.append("text").attr("x", w - rw + 6).attr("y", yy + 11).attr("font-size", 12).attr("font-weight", 700).attr("fill", "#007A41").text(o.picco);
       });
       d3.range(1860, 2021, stretto ? 50 : 20).forEach((aa) => svg.append("text").attr("x", x(aa)).attr("y", T.length * rh + 16).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(aa));
     });

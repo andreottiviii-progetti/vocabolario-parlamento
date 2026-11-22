@@ -2,7 +2,7 @@ r"""g3 - Dati di home, anni, legislature, partiti, persone, temi ed esperimenti.
 
 FONTE E METODO (tutto letto dai file del progetto, nessun numero scritto a mano tranne la tabella H68 copiata dalla nota)
   base e curve      _genera/cache/parole_base.pkl (g1); soglia di 300.000 parole per anno e ramo, come da guida del sito
-  legislature       risultati/serie_h2_legislature.csv (98 archivi), h33_tabella_partiti_governo.csv (governi),
+  legislature       risultati/serie_h2_legislature.csv (98 archivi; anni dagli anni con almeno l'1% delle parole in misure/parole/totali), h33_tabella_partiti_governo.csv (governi),
                     mappa_partiti_mappe_legislature.csv, mappa_partiti_mappa_unica_relativa.csv,
                     mappa_partiti_destra_sinistra_parole.csv, h22_parole_anno.csv, h37_quote_K40.csv;
                     oratori principali e parole tipiche di partiti e persone da _genera/cache/aggregati.pkl (g4)
@@ -122,8 +122,9 @@ def main():
             epoca = "consulta" if "consulta" in stem else "costituente"
             n, leg = 0, epoca
             nome = "Consulta nazionale" if epoca == "consulta" else "Assemblea costituente"
+        da_, a_ = anni_archivio(stem, int(float(r["anno_min"])), int(float(r["anno_max"])))
         archivi.append({"id": stem, "leg": leg, "ramo": r["ramo"], "epoca": epoca, "n": n, "nome": nome,
-                        "da": int(float(r["anno_min"])), "a": int(float(r["anno_max"])), "turni": int(float(r["turni"])),
+                        "da": da_, "a": a_, "turni": int(float(r["turni"])),
                         "parole": int(float(r["parole"])), "frase": num(r["frase_media_pesata"], 1),
                         "lettere": num(r["parola_lettere_pesata"], 2), "turno_mediana": num(r["turno_mediana"], 0)})
     ordine_ep = {"regno": 0, "consulta": 1, "costituente": 2, "repubblica": 3}
@@ -488,22 +489,38 @@ def main():
     fine()
 
 
+def anni_archivio(stem, da, a):
+    """Anni di un archivio: quelli che contengono almeno l'1% delle sue parole (misure/parole/totali/<archivio>.parquet).
+    Evita che poche sedute con la data sbagliata allunghino una legislatura (per esempio la II del Regno, 1849)."""
+    f = os.path.join(TOT, stem + ".parquet")
+    if not os.path.exists(f):
+        return da, a
+    t = pq.read_table(f, columns=["anno", "n_token"]).to_pandas()
+    t = t[t.anno > 0]
+    g = t.groupby("anno")["n_token"].sum()
+    if g.sum() <= 0:
+        return da, a
+    tenuti = g[g / g.sum() >= 0.01].index
+    return (int(min(tenuti)), int(max(tenuti))) if len(tenuti) else (da, a)
+
+
 def calendario():
-    """Anni in cui cambia la trascrizione: salti ALTA o MEDIA a inizio legislatura (401_salti_legislature.csv)
-    piu' i salti dentro una legislatura con almeno due famiglie di misure oltre il 99o percentile (401_picchi_dentro_legislatura.csv)."""
-    cart = os.path.join(RIS, "riparazione_c3")
-    out = {"camera": set(), "senato": set()}
-    for r in leggi_csv("401_salti_legislature.csv", cart):
-        if r["sicurezza"] in ("ALTA", "MEDIA"):
-            out[r["ramo"]].add(int(r["mese_inizio"][:4]))
-    fam = defaultdict(int)
-    for r in leggi_csv("401_picchi_dentro_legislatura.csv", cart):
-        if float(r["S"]) > float(r["soglia99"]):
-            fam[(r["ramo"], r["mese"])] += 1
-    for (ramo, mese), n in fam.items():
-        if n >= 2:
-            out[ramo].add(int(mese[:4]))
-    return {k: sorted(v) for k, v in out.items()}
+    """Calendario rivisto dei cambi di trascrizione (risultati/calendario_h65/590_calendario_rivisto.csv e 590_inizi_tabella.csv,
+    nota note_calendario_e_h65.md): «camera»/«senato» = cambi provati (stato RESTA); «scrittura» = cambi di punteggiatura e
+    grafie (RESTA_GP, RESTA_G_COMUNE); «incerte» = inizi di legislatura incerti (non disegnati nei grafici)."""
+    cart = os.path.join(RIS, "calendario_h65")
+    out = {"camera": set(), "senato": set(), "scrittura": {"camera": set(), "senato": set()}, "incerte": {"camera": set(), "senato": set()}}
+    for r in leggi_csv("590_calendario_rivisto.csv", cart):
+        a = int(r["mese"][:4])
+        if r["stato"] == "RESTA":
+            out[r["ramo"]].add(a)
+        elif r["stato"].startswith("RESTA_G"):
+            out["scrittura"][r["ramo"]].add(a)
+    for r in leggi_csv("590_inizi_tabella.csv", cart):
+        if r["stato"] == "INCERTA":
+            out["incerte"][r["ramo"]].add(int(r["mese"][:4]))
+    return {"camera": sorted(out["camera"]), "senato": sorted(out["senato"]),
+            "scrittura": {k: sorted(v) for k, v in out["scrittura"].items()}, "incerte": {k: sorted(v) for k, v in out["incerte"].items()}}
 
 
 def tabella_h68():

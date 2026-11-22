@@ -9,7 +9,7 @@ Tutti i numeri del sito vengono da file generati dai programmi di questa cartell
 - Alla fine il programma controlla che nessun file superi 2 MB, che ogni pagina abbia il noindex e che nei file pubblici non ci siano parole vietate. Se scrive «TUTTO A POSTO» si può pubblicare.
 - Poi: `git add -A`, `git commit`, `git push` (GitHub Pages si aggiorna da solo).
 
-Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` → `g3_sito.py` → `g6_storie.py` → `g5_pagine.py`. I file intermedi stanno in `_genera/cache/` (fuori dal repository).
+Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` → `g3_sito.py` → `g7_scansione2.py` → `g8_sezioni.py` → `g9_prime_volte.py` → `g6_storie.py` → `g5_pagine.py`; poi `g10_rapporti.py` scrive in `_progetto/` la copertura dei risultati e il conto delle frasi scartate. I file intermedi stanno in `_genera/cache/` (fuori dal repository).
 
 Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salta e le elenca in `_genera/cache/storie_rapporto.txt`. Tolto il marcatore, basta il comando «solo storie».
 
@@ -29,7 +29,7 @@ Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salt
 | Parole più sue (persone e partiti) | `dati/persone/*.json`, `dati/partiti/*.json` | scansione dei turni (g2) | g4, g3 |
 | Totali: interventi, parole, sedute | `dati/base.json` (`conti`) | `risultati/pulizia_riepilogo.csv` | g3 |
 | Archivi e legislature (interventi, parole, frasi, lettere) | `dati/base.json`, `dati/legislature/*.json`, `scarica/legislature.csv` | `risultati/serie_h2_legislature.csv` | g3 |
-| Calendario dei cambi di trascrizione | `dati/base.json` (`trascrizione`) | `risultati/riparazione_c3/401_salti_legislature.csv` (salti ALTA o MEDIA), `401_picchi_dentro_legislatura.csv` (almeno due misure oltre il 99° percentile) | g3 |
+| Calendario dei cambi di trascrizione | `dati/base.json` (`trascrizione`) | calendario rivisto: `risultati/calendario_h65/590_calendario_rivisto.csv` (provati: stato RESTA; cambi di scrittura: RESTA_GP, RESTA_G_COMUNE) e `590_inizi_tabella.csv` (incerte, non disegnate); nota `note_calendario_e_h65.md` | g3 |
 | Governi | `dati/legislature/*.json`, `dati/partiti/*.json` | `risultati/h33_tabella_partiti_governo.csv` | g3 |
 | Mappa dei partiti, quote, somiglianze | `dati/legislature/*.json`, `dati/partiti/*.json`, `scarica/mappa_partiti.csv` | `risultati/mappa_partiti_mappa_unica_relativa.csv`, `mappa_partiti_mappe_legislature.csv`, `mappa_partiti_somiglianze.csv` | g3 |
 | Quote di parole ricontate (tutti i ruoli e solo parlamentari) | `dati/legislature/*.json` | `misure/persone/turni_camera_repubblica_*.parquet` | g3 |
@@ -48,6 +48,27 @@ Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salt
 | Grafici delle storie | `dati/storie/*.json` (`grafici`) | i file indicati in ogni storia (campo «file»), letti in automatico; se non si leggono resta un segnaposto | g6 |
 | Testo della pagina del metodo | `metodo.html` | `_progetto/TESTI_PAGINE.md`, capitolo 3 | g6, g5 |
 | Pagine HTML, file scaricabili | `*.html`, `scarica/*.csv`, `dati/scarica.json` | dati qui sopra | g5 |
+
+| Anni di ogni legislatura | `dati/base.json`, `dati/legislature/*.json` | anni con almeno l'1% delle parole dell'archivio in `misure/parole/totali/*.parquet` | g3 |
+| Risate (serie, chi fa ridere, frasi) | `dati/sezioni/risate.json` | `risultati/h20_serie.csv`, `h20_periodi.csv`, `h20_oratori.csv`; frasi: `misure/governo_aula/ctx_*.json` con l'oratore dai turni | g7, g8 |
+| Insulti (serie, parole, citazioni) | `dati/sezioni/insulti.json`, `dati/sezioni/insulti/*.json` | `risultati/h13_insulti_annotazioni.csv`; lista `dati/liste/insulti_ristretta_forme.txt`; citazioni dai turni | g7, g8 |
+| Il fascismo in aula | `dati/sezioni/fascismo.json` | `risultati/h18_periodi.csv`, `h18_fascismo.csv`, `h18c_picchi_termini.csv` | g8 |
+| Le lingue dell'aula | `dati/sezioni/lingue.json` | `risultati/h8_francese.csv`, `serie_parole.csv`, `h9_contributori.csv`, `h7_forme.csv`, `392_grafie_antiche.csv` (cartella delle revisioni), `regno_due_pezzi/571_*.csv`; frasi in francese dai turni | g7, g8 |
+| Amici e nemici | `dati/sezioni/esteri.json` | `risultati/h39_serie_paese_anno.csv`, `h39_alleanze_guerre.csv`, `h39_epoche_*.csv`, `h39_prev_*.csv`, `h70_h71_h78/fase3_numeri.json`, `fase3_h39_paesi.csv` | g8 |
+| Mappa dei partiti in movimento, opposizione, frasi dei partiti | `dati/partiti/traiettorie.json`, campi `opposizione`, `frasi_tipiche`, `traiettoria` in `dati/partiti/*.json` | `risultati/mappa_partiti_mappa_unica_relativa.csv`, `h67/h67_partiti_legislature_full.csv`; frasi dai turni | g7, g8 |
+| Prime volte (parole da 10 volte in su ed espressioni) | `dati/prime/*` | `misure/parole/unigrammi`, `base_pulita/turni`, elenco ragionato `_genera/espressioni.txt` | g9 |
+| Capitoli del racconto | `dati/capitoli/*.json` | `_progetto/racconto/capitoli/*.md` (le righe Grafico, Stato e Dati non vanno in pagina; i capoversi con frasi ancora da ricontrollare in `FRASI_VERE.md` sono tolti) | g6 |
+
+## Filtro di qualità delle frasi (regole fissate prima, funzione `frase_pulita` in `comune.py`)
+
+Ogni frase mostrata nel sito (prime volte, frasi dell'anno di punta, risate, insulti, francese, frasi dei partiti, frasi degli esteri) passa queste regole. Una frase si scarta se:
+
+1. più del 20% delle sue parole di almeno 3 lettere non sta nel dizionario del progetto (`risultati/dizionario_parole.txt`); la regola non vale per le frasi in francese;
+2. i caratteri che non sono lettere, spazi o punteggiatura comune superano il 6% (cifre comprese), oppure ci sono almeno 2 simboli strani (£ € { } [ ] * ^ ~ | \ < > @ # $ % & _ = + ¦ ©);
+3. c'è una parola di almeno 4 lettere senza vocali, o una parola che mescola lettere e cifre;
+4. c'è una sequenza tipo «deo:010» o una parola con 3 o più cambi tra maiuscole e minuscole.
+
+Se la frase della prima volta è illeggibile, resta la data con la nota «testo della prima comparsa illeggibile nella scansione» e si mostra la prima frase pulita che segue. Un oratore senza persona riconosciuta si mostra solo se il nome ha la forma di un nome del resoconto (solo maiuscole, almeno tre lettere); altrimenti «oratore non riconosciuto». Il conto delle frasi tolte è in `_progetto/FRASI_SCARTATE.md`.
 
 ## Regole fisse del sito (non sono dati del progetto)
 

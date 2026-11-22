@@ -1,0 +1,229 @@
+# Espressioni di più parole indicizzate dal sito (elenco ragionato, scritto a mano: non è un conteggio di tutte le sequenze).
+# Una per riga; le righe con # sono titoli di gruppo. Si cercano come parola intera, senza accenti né maiuscole,
+# con spazio o trattino tra le parole (come script/140 e script/91 del progetto). Entrano nel sito quelle dette almeno 10 volte.
+# tecnologia e comunicazione
+intelligenza artificiale
+telefono cellulare
+telefoni cellulari
+telefonia mobile
+posta elettronica
+carta di credito
+carte di credito
+codice a barre
+banda larga
+fibra ottica
+rete internet
+social network
+reti sociali
+commercio elettronico
+firma digitale
+agenda digitale
+pubblica amministrazione digitale
+televisione via cavo
+televisione a colori
+televisioni private
+emittenti private
+servizio pubblico radiotelevisivo
+energia nucleare
+energia atomica
+bomba atomica
+centrali nucleari
+energie rinnovabili
+energia solare
+pannelli solari
+alta velocità
+treno ad alta velocità
+autostrada del sole
+aereo a reazione
+macchina da scrivere
+macchine calcolatrici
+cervello elettronico
+cervelli elettronici
+calcolatore elettronico
+calcolatori elettronici
+personal computer
+realtà virtuale
+big data
+dati personali
+tutela della privacy
+videosorveglianza
+ingegneria genetica
+organismi geneticamente modificati
+cellule staminali
+fecondazione assistita
+procreazione assistita
+# politica e istituzioni
+guerra fredda
+cortina di ferro
+compromesso storico
+solidarietà nazionale
+centro sinistra
+centro destra
+pentapartito
+seconda repubblica
+prima repubblica
+mani pulite
+questione morale
+strategia della tensione
+anni di piombo
+brigate rosse
+servizi segreti
+loggia massonica
+poteri forti
+legge elettorale
+voto di fiducia
+questione di fiducia
+decreto legge
+decreti legge
+riforma costituzionale
+corte costituzionale
+consiglio superiore della magistratura
+governo tecnico
+governo di unità nazionale
+grande coalizione
+larghe intese
+partito unico
+voto alle donne
+suffragio universale
+democrazia diretta
+democrazia rappresentativa
+casta politica
+costi della politica
+antipolitica
+scendere in campo
+discesa in campo
+conflitto di interessi
+par condicio
+federalismo fiscale
+autonomia differenziata
+questione meridionale
+cassa per il mezzogiorno
+questione romana
+questione sociale
+ce lo chiede l'europa
+patto di stabilità
+banca centrale europea
+mercato comune
+comunità europea
+unione europea
+moneta unica
+stati uniti d'europa
+patto atlantico
+alleanza atlantica
+guerra al terrorismo
+guerra umanitaria
+missione di pace
+missioni di pace
+operazione militare
+caschi blu
+nazioni unite
+società delle nazioni
+terzo mondo
+paesi in via di sviluppo
+nuovo ordine mondiale
+# economia e lavoro
+scala mobile
+statuto dei lavoratori
+cassa integrazione
+reddito di cittadinanza
+salario minimo
+lavoro nero
+lavoro precario
+lavoro flessibile
+precariato
+debito pubblico
+spesa pubblica
+pressione fiscale
+evasione fiscale
+condono fiscale
+condono edilizio
+cuneo fiscale
+legge finanziaria
+legge di bilancio
+manovra finanziaria
+patto sociale
+concertazione
+miracolo economico
+boom economico
+crisi petrolifera
+austerità
+partecipazioni statali
+privatizzazioni
+mercato del lavoro
+economia di mercato
+libero mercato
+globalizzazione dei mercati
+crisi economica
+crisi finanziaria
+bolla speculativa
+agenzie di rating
+debito sovrano
+fondo monetario internazionale
+banca mondiale
+piano marshall
+riforma agraria
+# società, diritti, ambiente
+pari opportunità
+quote rosa
+violenza sulle donne
+violenza di genere
+femminicidio
+interruzione volontaria della gravidanza
+divorzio breve
+unioni civili
+matrimonio omosessuale
+diritti civili
+diritti umani
+pena di morte
+ergastolo ostativo
+carcere duro
+lotta alla mafia
+criminalità organizzata
+voto di scambio
+concorso esterno
+pentiti di mafia
+collaboratori di giustizia
+tossicodipendenza
+droghe leggere
+lotta alla droga
+sicurezza stradale
+cinture di sicurezza
+casco obbligatorio
+fumo passivo
+inquinamento atmosferico
+effetto serra
+cambiamenti climatici
+cambiamento climatico
+riscaldamento globale
+sviluppo sostenibile
+raccolta differenziata
+terra dei fuochi
+dissesto idrogeologico
+protezione civile
+servizio sanitario nazionale
+medico di base
+sanità pubblica
+green pass
+lockdown
+distanziamento sociale
+mascherine
+vaccino
+immigrazione clandestina
+permesso di soggiorno
+extracomunitari
+richiedenti asilo
+diritto d'asilo
+ius soli
+scuola dell'obbligo
+scuola pubblica
+scuola privata
+diritto allo studio
+servizio militare
+obiezione di coscienza
+servizio civile
+leva obbligatoria
+caso moro
+piazza fontana
+strage di bologna
+terremoto del friuli
+terremoto dell'irpinia

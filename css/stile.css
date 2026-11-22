@@ -112,7 +112,8 @@ svg text{font-family:"Archivo","Arial Narrow",Arial,sans-serif;font-variant-nume
 .nota-t{font-size:12.5px;fill:var(--nero);font-stretch:92%}
 .nota-l{stroke:var(--nero);stroke-width:1}
 .alone,.nota-t,.etich{paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
-.trascrizione{stroke:var(--nero);stroke-width:1;stroke-dasharray:2 3}
+.trascrizione{stroke:#5B6470;stroke-width:1.2;stroke-dasharray:4 3}
+.scrittura{stroke:#5B6470;stroke-width:1.2;stroke-dasharray:1 3}
 
 /* ---------- asse del tempo (home) ---------- */
 .asse-tempo{margin-top:22px}

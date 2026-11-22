@@ -4,7 +4,7 @@ camera_costituente,camera,Assemblea costituente,1946,1948,29732,5859446,27.9,5.2
 camera_regno_01,camera,I legislatura del Regno,1848,1848,1837,682172,35.5,5.09
 camera_regno_02,camera,II legislatura del Regno,1849,1849,1541,344384,35.1,5.12
 camera_regno_03,camera,III legislatura del Regno,1849,1849,2814,767586,38.2,5.14
-camera_regno_04,camera,IV legislatura del Regno,1849,1853,19952,7301174,41.6,5.08
+camera_regno_04,camera,IV legislatura del Regno,1850,1853,19952,7301174,41.6,5.08
 camera_regno_05,camera,V legislatura del Regno,1853,1857,10428,5175399,40.9,5.07
 camera_regno_06,camera,VI legislatura del Regno,1857,1859,2338,1417401,37.3,5.08
 camera_regno_07,camera,VII legislatura del Regno,1860,1860,1610,653555,35.6,5.13
@@ -22,7 +22,7 @@ camera_regno_18,camera,XVIII legislatura del Regno,1892,1894,24497,5683002,29.4,
 camera_regno_19,camera,XIX legislatura del Regno,1895,1896,22083,4315377,29.0,5.08
 camera_regno_20,camera,XX legislatura del Regno,1897,1900,32040,7313367,31.0,5.1
 camera_regno_21,camera,XXI legislatura del Regno,1900,1904,52726,11201642,31.5,5.12
-camera_regno_22,camera,XXII legislatura del Regno,1904,1909,57716,11690512,31.7,5.15
+camera_regno_22,camera,XXII legislatura del Regno,1904,1908,57716,11690512,31.7,5.15
 camera_regno_23,camera,XXIII legislatura del Regno,1909,1913,52194,12352193,33.4,5.14
 camera_regno_24,camera,XXIV legislatura del Regno,1913,1919,35053,8600478,31.3,5.14
 camera_regno_25,camera,XXV legislatura del Regno,1919,1921,16412,3830146,31.8,5.19
@@ -46,18 +46,18 @@ camera_repubblica_12,camera,XII legislatura,1994,1996,27474,6055852,30.4,5.4
 camera_repubblica_13,camera,XIII legislatura,1996,2001,137015,26463244,30.7,5.37
 camera_repubblica_14,camera,XIV legislatura,2001,2006,106088,26402199,30.6,5.4
 camera_repubblica_15,camera,XV legislatura,2006,2008,32795,9303929,30.8,5.37
-camera_repubblica_16,camera,XVI legislatura,2008,2013,77427,23005839,32.4,5.3
-camera_repubblica_17,camera,XVII legislatura,2013,2018,99981,24363195,32.0,5.27
+camera_repubblica_16,camera,XVI legislatura,2008,2012,77427,23005839,32.4,5.3
+camera_repubblica_17,camera,XVII legislatura,2013,2017,99981,24363195,32.0,5.27
 camera_repubblica_18,camera,XVIII legislatura,2018,2022,63827,21457199,33.1,5.26
 senato_regno_01,senato,I legislatura del Regno,1848,1848,458,179911,39.2,5.09
-senato_regno_02,senato,II legislatura del Regno,1849,1859,220,54815,36.4,5.15
+senato_regno_02,senato,II legislatura del Regno,1849,1849,220,54815,36.4,5.15
 senato_regno_03,senato,III legislatura del Regno,1849,1849,680,167722,43.3,5.1
-senato_regno_04,senato,IV legislatura del Regno,1849,1853,3818,1284187,48.9,5.08
-senato_regno_05,senato,V legislatura del Regno,1853,1857,1362,705430,47.0,5.07
-senato_regno_06,senato,VI legislatura del Regno,1857,1859,373,239527,37.2,5.11
+senato_regno_04,senato,IV legislatura del Regno,1850,1853,3818,1284187,48.9,5.08
+senato_regno_05,senato,V legislatura del Regno,1854,1857,1362,705430,47.0,5.07
+senato_regno_06,senato,VI legislatura del Regno,1858,1859,373,239527,37.2,5.11
 senato_regno_07,senato,VII legislatura del Regno,1860,1860,87,74437,37.7,5.14
 senato_regno_08,senato,VIII legislatura del Regno,1861,1865,12177,3029443,38.2,5.05
-senato_regno_09,senato,IX legislatura del Regno,1865,1867,932,300977,39.7,5.04
+senato_regno_09,senato,IX legislatura del Regno,1865,1866,932,300977,39.7,5.04
 senato_regno_10,senato,X legislatura del Regno,1867,1870,7224,1526384,35.7,5.05
 senato_regno_11,senato,XI legislatura del Regno,1870,1874,8649,2319036,34.9,5.03
 senato_regno_12,senato,XII legislatura del Regno,1874,1876,3728,1156330,33.4,5.03
@@ -70,7 +70,7 @@ senato_regno_18,senato,XVIII legislatura del Regno,1892,1894,3635,1342173,31.3,5
 senato_regno_19,senato,XIX legislatura del Regno,1895,1897,3554,1165533,31.1,5.05
 senato_regno_20,senato,XX legislatura del Regno,1897,1900,7718,2092102,30.7,5.09
 senato_regno_21,senato,XXI legislatura del Regno,1900,1904,8630,2729772,31.0,5.08
-senato_regno_22,senato,XXII legislatura del Regno,1904,1909,12843,2989423,30.7,5.1
+senato_regno_22,senato,XXII legislatura del Regno,1904,1908,12843,2989423,30.7,5.1
 senato_regno_23,senato,XXIII legislatura del Regno,1909,1913,14661,3261003,30.6,5.14
 senato_regno_24,senato,XXIV legislatura del Regno,1913,1919,5925,1705375,35.2,5.16
 senato_regno_25,senato,XXV legislatura del Regno,1919,1921,5260,1447866,32.9,5.15
@@ -94,6 +94,6 @@ senato_repubblica_12,senato,XII legislatura,1994,1996,28575,4738357,31.1,5.4
 senato_repubblica_13,senato,XIII legislatura,1996,2001,90835,14416464,30.6,5.4
 senato_repubblica_14,senato,XIV legislatura,2001,2006,82068,14054385,29.4,5.41
 senato_repubblica_15,senato,XV legislatura,2006,2008,25472,5114947,29.5,5.32
-senato_repubblica_16,senato,XVI legislatura,2008,2013,59822,12774783,30.0,5.35
-senato_repubblica_17,senato,XVII legislatura,2013,2018,74942,15631089,27.9,5.28
+senato_repubblica_16,senato,XVI legislatura,2008,2012,59822,12774783,30.0,5.35
+senato_repubblica_17,senato,XVII legislatura,2013,2017,74942,15631089,27.9,5.28
 senato_repubblica_18,senato,XVIII legislatura,2018,2022,30840,10206805,28.4,5.23

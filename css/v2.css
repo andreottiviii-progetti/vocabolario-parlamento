@@ -1,0 +1,206 @@
+/* =====================================================================================
+   Versione 2 della guida di stile: luce, un colore per sezione, piu' spazio.
+   Queste regole vengono dopo quelle della v1 (stile.css) e le sostituiscono dove serve.
+   ===================================================================================== */
+:root{
+  --inchiostro:#16181D; --nero:#16181D; --grigio:#5B6470; --grigio-dati:#B8BEC7; --riga:#E3E6EA; --giallo:#FFE600;
+  --parole:#2454FF;      --parole-s:#1B3FCC;      --parole-m:#A9BBFF;
+  --anni:#00A3AD;        --anni-s:#00757D;        --anni-m:#8FD9DE;
+  --legislature:#7B3FE4; --legislature-s:#5B2BB5; --legislature-m:#C7AEF5;
+  --partiti:#E5007D;     --partiti-s:#B80064;     --partiti-m:#F59ACB;
+  --persone:#F56300;     --persone-s:#B84A00;     --persone-m:#FFC299;
+  --temi:#00A85A;        --temi-s:#007A41;        --temi-m:#8FDDB5;
+  --storie:#E3120B;      --storie-s:#C00F09;      --storie-m:#F6A29F;
+  --fascismo:#FFD400;    --fascismo-m:#FFE980;
+  --esteri:#00A3AD;      --esteri-s:#00757D;      --esteri-m:#8FD9DE;
+  --f-pci:#E3120B; --f-dc:#1E78E6; --f-psi:#FF7BAC; --f-msi:#1B2A7A; --f-fi:#00B4D8; --f-lega:#00A85A; --f-m5s:#F5C400; --f-altri:#B8BEC7;
+  --margine:48px; --gap:40px; --lettura:660px;
+  --sez:var(--inchiostro); --sez-s:var(--inchiostro); --sez-m:var(--grigio-dati); --sez-testo:#fff;
+}
+body[data-sezione="parole"]{--sez:var(--parole);--sez-s:var(--parole-s);--sez-m:var(--parole-m);--sez-testo:#fff}
+body[data-sezione="anni"]{--sez:var(--anni);--sez-s:var(--anni-s);--sez-m:var(--anni-m);--sez-testo:var(--inchiostro)}
+body[data-sezione="legislature"]{--sez:var(--legislature);--sez-s:var(--legislature-s);--sez-m:var(--legislature-m);--sez-testo:#fff}
+body[data-sezione="partiti"]{--sez:var(--partiti);--sez-s:var(--partiti-s);--sez-m:var(--partiti-m);--sez-testo:#fff}
+body[data-sezione="persone"]{--sez:var(--persone);--sez-s:var(--persone-s);--sez-m:var(--persone-m);--sez-testo:var(--inchiostro)}
+body[data-sezione="temi"]{--sez:var(--temi);--sez-s:var(--temi-s);--sez-m:var(--temi-m);--sez-testo:var(--inchiostro)}
+body[data-sezione="storie"]{--sez:var(--storie);--sez-s:var(--storie-s);--sez-m:var(--storie-m);--sez-testo:#fff}
+body[data-sezione="fascismo"]{--sez:var(--fascismo);--sez-s:var(--inchiostro);--sez-m:var(--fascismo-m);--sez-testo:var(--inchiostro)}
+body[data-sezione="esteri"]{--sez:var(--esteri);--sez-s:var(--esteri-s);--sez-m:var(--esteri-m);--sez-testo:var(--inchiostro)}
+body[data-sezione="neutra"]{--sez:var(--inchiostro);--sez-s:var(--inchiostro);--sez-m:var(--grigio-dati);--sez-testo:#fff}
+body{color:var(--inchiostro);font-size:17px;line-height:1.55}
+a:hover{color:var(--sez-s)}
+.anteprima{background:var(--fascismo);color:var(--inchiostro)}
+.testata h1{font-size:clamp(44px,8.2vw,118px);font-weight:800;font-stretch:66%;line-height:.88}
+.testata.compatta h1{font-size:40px}
+.testata .riga-alta,.menu{border-color:var(--riga)}
+.inventario{border-top:4px solid var(--inchiostro);border-bottom:1px solid var(--riga)}
+.menu a.attivo{color:var(--sez-s);box-shadow:inset 0 -3px 0 var(--sez)}
+.menu button,.bottone{background:var(--sez);color:var(--sez-testo)}
+body[data-sezione="neutra"] .menu button,body[data-sezione="neutra"] .bottone{background:var(--parole);color:#fff}
+.titolo-pagina{font-size:84px;font-weight:800;font-stretch:68%;line-height:.94;letter-spacing:-.005em}
+.apertura h2,.storia h1{font-size:58px;font-weight:800;font-stretch:70%;line-height:1}
+.asse-tempo h2.titolo-asse{font-size:58px;font-weight:800;font-stretch:70%;line-height:1}
+.sezione{border-top:4px solid var(--sez);margin-top:88px;padding-top:16px}
+.sezione.sottile{border-top:1px solid var(--riga)}
+.sezione > .testa h2{font-size:34px;font-weight:750;font-stretch:74%;line-height:1.02}
+.titolo-medio{font-weight:750;font-stretch:74%}
+.titolo-piccolo,.fig-tit{font-size:24px;font-weight:750;font-stretch:78%;line-height:1.1}
+.fig-sotto{margin-bottom:16px}
+.sommario{font-size:22px;line-height:1.4;font-stretch:100%}
+.colonna-testo p,.colonna-testo li{font-size:18.5px;line-height:1.6}
+.fil::before{border-left:1px solid var(--riga)}
+.occhiello{color:var(--sez-s)}
+.breve li .n{color:var(--sez-s)}
+.breve h3{border-bottom:4px solid var(--sez)}
+.asse text{font-size:13px}
+.asse .zero{stroke:var(--grigio)}
+.etich{font-size:13.5px}
+.nota-t{font-size:14px}
+.nota-l{stroke:var(--grigio)}
+.barre td.b i{background:var(--sez-m)}
+.barre tr.tesi td.b i{background:var(--sez)}
+table.fitta th{border-bottom:2px solid var(--sez)}
+.esito.regge::before{background:var(--inchiostro);border-color:var(--inchiostro)}
+.esito.parte::before{background:linear-gradient(90deg,var(--inchiostro) 50%,#fff 50%);border-color:var(--inchiostro)}
+.filtri button.attivo{border-bottom-color:var(--sez)}
+.lettere a.attivo{color:var(--sez-s)}
+.prec-succ{border-top:1px solid var(--riga)}
+.piede{border-top:4px solid var(--inchiostro)}
+.dove{border-bottom:1px solid var(--riga)}
+.segnaposto{border-color:var(--riga)}
+/* fascia del titolo */
+.fascia{background:var(--sez);color:var(--sez-testo);padding:40px var(--margine) 36px;margin:0 calc(-1 * var(--margine))}
+.fascia a,.fascia .briciole,.fascia .briciole a{color:inherit}
+.fascia .titolo-pagina{margin:8px 0 12px}
+.fascia .titolo-pagina .evid{background:none;padding:0}
+.fascia .sommario{margin:0;max-width:980px}
+.fascia .piccolo{color:inherit;opacity:.9}
+body[data-sezione="neutra"] .fascia{background:#fff;color:var(--inchiostro);padding-left:0;padding-right:0;margin:0}
+/* tessere, citazioni, numeri-illustrazione */
+.tessere{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(190px,auto);gap:16px}
+.tessera{background:var(--col,var(--sez));color:var(--col-testo,#fff);padding:22px;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.tessera:hover{color:var(--col-testo,#fff)}
+.tessera.doppia{grid-column:span 2}.tessera.alta{grid-row:span 2}
+.tessera .t-num{font-size:clamp(48px,6vw,96px);font-weight:300;font-stretch:66%;line-height:.9}
+.tessera h3{font-size:24px;font-weight:750;font-stretch:76%;line-height:1.08;margin:10px 0 6px}
+.tessera.doppia h3,.tessera.alta h3{font-size:32px}
+.tessera p{font-size:15px;margin:0}
+.tessera .t-occ{font-size:13px;font-weight:700}
+.citazione-gigante{font-size:clamp(36px,4.6vw,84px);font-weight:300;line-height:1.08;color:var(--sez-s);margin:0;max-width:1240px}
+.citazione-gigante + .chi{font-size:14px;color:var(--grigio);margin-top:14px}
+.numero-ill{font-size:clamp(110px,15vw,300px);font-weight:300;font-stretch:66%;line-height:.85;color:var(--sez)}
+.che-cosa{font-size:15px;font-weight:700;max-width:340px}
+.scorre-box{overflow:hidden;border-top:1px solid var(--riga);border-bottom:1px solid var(--riga);padding:12px 0;margin:22px 0}
+.scorre{display:flex;gap:48px;white-space:nowrap;animation:scorre 120s linear infinite;width:max-content;font-size:18px}
+.scorre:hover{animation-play-state:paused}
+.scorre b{color:var(--sez-s);font-weight:700}
+@keyframes scorre{to{transform:translateX(-50%)}}
+.ingressi{display:grid;grid-template-columns:5fr 4fr 4fr 3fr;gap:16px}
+.ingresso{display:flex;flex-direction:column;justify-content:space-between;padding:26px;min-height:300px;color:var(--col-testo);background:var(--col)}
+.ingresso:hover{color:var(--col-testo)}
+.ingresso h3{font-size:clamp(28px,3vw,46px);font-weight:800;font-stretch:70%;line-height:1;margin:6px 0 12px}
+.ingresso p{font-size:16px;max-width:520px;margin:0}
+.ingresso .grande{font-size:clamp(64px,7vw,128px);font-weight:300;font-stretch:66%;line-height:.9}
+.cursore{display:flex;align-items:center;gap:14px;margin:8px 0 12px;font-size:15px}
+.cursore input[type=range]{flex:1;accent-color:var(--sez)}
+.cursore button{font:inherit;font-weight:700;background:var(--sez);color:var(--sez-testo);border:0;padding:8px 16px;cursor:pointer}
+.cursore output{font-weight:800;min-width:150px}
+.elenco-frasi{list-style:none;margin:0;padding:0;columns:2 420px;column-gap:var(--gap)}
+.elenco-frasi li{break-inside:avoid;border-top:1px solid var(--riga);padding:12px 0}
+.elenco-frasi .quando{display:block;font-size:13px;color:var(--grigio)}
+.elenco-frasi q{quotes:"«" "»";font-size:16.5px}
+.scheda-breve{border-top:4px solid var(--sez);padding-top:12px}
+.parole-grandi a{display:inline-block;margin:0 14px 6px 0;line-height:1.05;font-weight:700;font-stretch:80%;color:var(--sez-s)}
+@media (prefers-reduced-motion:reduce){.scorre{animation:none;flex-wrap:wrap;white-space:normal;width:auto}}
+@media (max-width:1099px){:root{--margine:32px;--gap:28px}.tessere{grid-template-columns:repeat(2,minmax(0,1fr))}.ingressi{grid-template-columns:1fr 1fr}}
+@media (max-width:759px){
+  :root{--margine:20px;--gap:20px}
+  .sezione{margin-top:56px}
+  .titolo-pagina{font-size:48px}
+  .apertura h2,.storia h1,.asse-tempo h2.titolo-asse{font-size:34px}
+  .tessere{grid-template-columns:1fr}.tessera.doppia{grid-column:auto}.tessera.alta{grid-row:auto}
+  .ingressi{grid-template-columns:1fr}
+  .elenco-frasi{columns:1}
+}
+
+/* cronologia delle prime volte */
+.cronologia{list-style:none;margin:28px 0 0;padding:0}
+.cronologia li{display:grid;grid-template-columns:140px 1fr;gap:24px;border-top:1px solid var(--riga);padding:18px 0}
+.cronologia .c-anno{font-size:64px;font-weight:300;font-stretch:66%;line-height:.9;color:var(--sez)}
+.cronologia h3{font-size:28px;font-weight:750;font-stretch:76%;margin:0 0 6px}
+.cronologia h3 small{font-size:14px;font-weight:400}
+.cronologia .quando{display:block;font-size:13px;color:var(--grigio)}
+.cronologia q{quotes:"«" "»";font-size:17px}
+@media (max-width:759px){.cronologia li{grid-template-columns:1fr;gap:4px}.cronologia .c-anno{font-size:44px}}
+
+.c4 .numero-ill,.c3 .numero-ill{font-size:clamp(72px,8vw,150px)}
+
+.apertura-v2{padding:56px 0 8px}
+.apertura-v2 .citazione-gigante{font-size:clamp(34px,4.2vw,72px)}
+
+/* ===== Capitolo 10 della guida v2 (correzioni della redazione): testate bianche, colore solo dove significa qualcosa,
+   il fascismo senza colore proprio, pagina del fascismo su fondo nero ===== */
+.fascia{background:#fff;color:var(--inchiostro);border-top:4px solid var(--sez);padding:28px 0 20px;margin:0}
+.fascia a,.fascia .briciole,.fascia .briciole a{color:var(--inchiostro)}
+.fascia .briciole a{text-decoration:underline}
+.fascia .sommario a.lk{color:var(--inchiostro)}
+.fascia .titolo-pagina .evid{background:var(--giallo);padding:0 .05em}
+.anteprima{background:#16181D;color:#fff}
+.tessera{background:#fff;color:var(--inchiostro);border-top:6px solid var(--col,var(--sez));box-shadow:none;outline:1px solid var(--riga);outline-offset:-1px}
+.tessera:hover{color:var(--inchiostro);background:#FAFBFC}
+.tessera .t-num{color:var(--col-s,var(--col,var(--sez)))}
+.tessera .t-occ{color:var(--grigio)}
+.ingresso{background:#fff;color:var(--inchiostro);border-top:6px solid var(--col);outline:1px solid var(--riga);outline-offset:-1px}
+.ingresso:hover{color:var(--inchiostro);background:#FAFBFC}
+.ingresso .grande{color:var(--col-s,var(--col))}
+.ingresso.nero{background:#16181D;color:#fff;border-top-color:#16181D;outline:0}
+.ingresso.nero:hover{color:#fff;background:#000}
+.ingresso.nero .grande{color:#fff}
+.barre td.b i{background:#CDD2D8}
+.barre tr.tesi td.b i{background:var(--sez)}
+.menu button,.bottone{background:var(--inchiostro);color:#fff}
+/* la pagina del fascismo: fondo nero, testo bianco, grafici in bianco e grigi, il rosso per la cosa da guardare */
+body[data-sezione="fascismo"]{background:#0E0F12;color:#F2F3F5;--sez:#E3120B;--sez-s:#F2F3F5;--sez-m:#5B6470;--sez-testo:#fff;--riga:#2A2D33;--grigio:#A3A9B2;--inchiostro:#F2F3F5}
+body[data-sezione="fascismo"] .fascia{background:#0E0F12;color:#F2F3F5;border-top-color:#F2F3F5}
+body[data-sezione="fascismo"] .fascia a,body[data-sezione="fascismo"] .fascia .briciole a{color:#F2F3F5}
+body[data-sezione="fascismo"] a:hover{color:#FF6B66}
+body[data-sezione="fascismo"] .testata h1 a,body[data-sezione="fascismo"] .menu a{color:#F2F3F5}
+body[data-sezione="fascismo"] .menu input{color:#F2F3F5;border-bottom-color:#F2F3F5}
+body[data-sezione="fascismo"] .asse text,body[data-sezione="fascismo"] .fig-sotto,body[data-sezione="fascismo"] .fig-fonte,body[data-sezione="fascismo"] .grigio{fill:#A3A9B2;color:#A3A9B2}
+body[data-sezione="fascismo"] .asse line{stroke:#2A2D33}
+body[data-sezione="fascismo"] .alone,body[data-sezione="fascismo"] .nota-t,body[data-sezione="fascismo"] .etich{stroke:#0E0F12}
+body[data-sezione="fascismo"] .nota-t{fill:#F2F3F5}
+body[data-sezione="fascismo"] svg text{fill:#F2F3F5}
+body[data-sezione="fascismo"] .asse text{fill:#A3A9B2}
+body[data-sezione="fascismo"] table.fitta td{border-bottom-color:#2A2D33}
+body[data-sezione="fascismo"] .tessera{background:#16181D;color:#F2F3F5;outline-color:#2A2D33;border-top-color:#F2F3F5}
+body[data-sezione="fascismo"] .tessera:hover{background:#1E2026;color:#fff}
+body[data-sezione="fascismo"] .tessera .t-num{color:#F2F3F5}
+body[data-sezione="fascismo"] .esito.regge::before{background:#F2F3F5;border-color:#F2F3F5}
+body[data-sezione="fascismo"] .esito.parte::before{background:linear-gradient(90deg,#F2F3F5 50%,#0E0F12 50%);border-color:#F2F3F5}
+body[data-sezione="fascismo"] .piede{background:#0E0F12;border-top-color:#F2F3F5}
+body[data-sezione="fascismo"] .dove{background:#0E0F12}
+body[data-sezione="fascismo"] .numero-ill{color:#F2F3F5}
+body[data-sezione="fascismo"] .multipli .mul::before{border-left-color:#2A2D33}
+
+/* racconto a scorrimento: testo a sinistra, grafico fermo a destra */
+.scorrimento{display:grid;grid-template-columns:5fr 7fr;column-gap:var(--gap);margin-top:24px}
+.scena{grid-column:2;grid-row:1;position:sticky;top:24px;align-self:start}
+.passi{grid-column:1;grid-row:1}
+.passo{min-height:50vh;padding:12px 0 40px;border-top:1px solid var(--riga);opacity:.55;transition:opacity .4s cubic-bezier(.2,.7,.2,1)}
+.passo.attivo,.passo:first-child{opacity:1}
+.passo p{font-size:18.5px;line-height:1.6;max-width:520px}
+.passo .porte{font-size:14px}
+.capitoli-home{list-style:none;margin:0;padding:0}
+.capitoli-home li{display:grid;grid-template-columns:120px 1fr;gap:32px;border-top:1px solid var(--riga);padding:28px 0}
+.capitoli-home .n{font-size:96px;font-weight:300;font-stretch:66%;line-height:.85}
+.capitoli-home h3{font-size:clamp(28px,3vw,44px);font-weight:800;font-stretch:70%;line-height:1.02;margin:4px 0 10px}
+.capitoli-home blockquote{font-size:clamp(22px,2.2vw,32px);font-weight:300;line-height:1.2;margin:8px 0 6px;max-width:980px}
+.capitoli-home .chi{font-size:14px;color:var(--grigio)}
+@media (prefers-reduced-motion:reduce){.passo{transition:none;opacity:1}}
+@media (max-width:759px){.scorrimento{display:block}.scena{position:static;margin-bottom:24px}.passo{min-height:0;opacity:1}.capitoli-home li{grid-template-columns:1fr;gap:4px}.capitoli-home .n{font-size:56px}}
+
+.capitoli-home h3 small{font-size:.5em;font-weight:400}
+.capitoli-home li{padding:20px 0}
+.capitoli-home .n{font-size:72px}
+@media (max-width:759px){.cursore{flex-wrap:wrap}.cursore output{min-width:0;flex-basis:100%}}

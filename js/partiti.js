@@ -5,13 +5,15 @@
     G.testata({ attivo: "Partiti" });
     G.piede();
     const el = document.getElementById("contenuto");
-    return G.carica("partiti/indice.json").then((IX) => {
+    return Promise.all([G.carica("partiti/indice.json"), G.carica("partiti/traiettorie.json")]).then(([IX, TR]) => {
       const P = IX.partiti;
       el.innerHTML = `<h1 class="titolo-pagina" style="font-size:clamp(48px,7vw,96px)">${P.length} partiti, ${G.num(G.conti.schede_partito)} schede: a chi somiglia ognuno, legislatura per legislatura</h1>
         <p class="sommario">Ogni partito è misurato sulle parole che usa alla Camera, dal 1948 al 2022: dove sta tra sinistra e destra, a quale altro partito somiglia, quali parole guadagna e quali perde a ogni legislatura, come cambia quando passa dal governo all'opposizione.</p>
         <p class="piccolo grigio">«Parole guadagnate e perse» sono misurate rispetto al resto dell'aula: una parola può risultare persa anche se il partito la dice quanto prima, quando gli altri la dicono di più. La quota di parole non somma a cento perché mancano i gruppi minori.</p>
-        <div id="g-linee"></div>
+        <div id="g-scie"></div>
+        <section class="sezione"><div id="g-linee"></div></section>
         <section class="sezione"><div class="testa"><h2>Tutti i partiti</h2></div><div class="tab-scorre" id="tab"></div></section>`;
+      G.scie("g-scie", TR);
       const area = G.figura("#g-linee", {
         titolo: (() => {
           const L = IX.linee, pci = L["PCI-PD"] || [];

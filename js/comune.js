@@ -2,13 +2,14 @@
 (function () {
   "use strict";
   const G = (window.G = {});
-  G.ROSSO = "#E3120B"; G.NERO = "#111111"; G.GIALLO = "#FFE600"; G.GRIGIO = "#6B6B6B"; G.GDATI = "#9A9A9A"; G.RIGA = "#D9D9D9";
-  G.SERIE = ["#E3120B", "#111111", "#1437E6", "#946300", "#00796B"];
+  G.INK = "#16181D"; G.ROSSO = "#E3120B"; G.NERO = "#111111"; G.GIALLO = "#FFE600"; G.GRIGIO = "#6B6B6B"; G.GDATI = "#9A9A9A"; G.RIGA = "#D9D9D9";
+  G.SERIE = ["#2454FF", "#E3120B", "#00A85A", "#7B3FE4", "#F56300"];
+  G.FAMIGLIA = { "PCI-PD": "#E3120B", DC: "#1E78E6", PSI: "#FF7BAC", "MSI-AN-FdI": "#1B2A7A", "FI-PdL": "#00B4D8", Lega: "#00A85A", M5S: "#F5C400", altri: "#B8BEC7" };
   G.FONTE = "Fonte: resoconti stenografici di Camera e Senato.";
   G.ANNI = []; for (let a = 1848; a <= 2022; a++) G.ANNI.push(a);
   G.SOGLIA = 300000; // parole minime perché un anno di un ramo entri nelle curve
-  G.TRASCR = { camera: [1953, 1979, 1987, 1994, 2001, 2006, 2008, 2013, 2018], senato: [1968, 1987, 1996, 2000, 2018] };
-  G.EPOCHE = [[1848, 1922, "Regno liberale", "#111111"], [1922, 1943, "Fascismo", "#555555"], [1943, 1948, "", "#BDBDBD"], [1948, 1994, "Prima Repubblica", "#111111"], [1994, 2023, "Seconda Repubblica", "#555555"]];
+  G.TRASCR = { camera: [], senato: [] }; // si legge da base.json (calendario rivisto del progetto)
+  G.EPOCHE = [[1848, 1922, "Regno liberale"], [1922, 1943, "Fascismo"], [1943, 1948, ""], [1948, 1994, "Prima Repubblica"], [1994, 2023, "Seconda Repubblica"]];
 
   /* ---------- dati ---------- */
   const memo = {};
@@ -87,6 +88,7 @@
   };
   G.maiusc = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
   G.oratore = (nome) => (/non riconosciut/i.test(nome || "") ? "oratore non riconosciuto" : G.nome(nome));
+  G.alRamo = (r) => (r === "senato" ? "al Senato" : "alla Camera");
   G.ramo = (r) => (r === "senato" ? "Senato" : "Camera");
   G.esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   G.romano = (n) => ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX"][n] || String(n);
@@ -119,7 +121,7 @@
   /* ---------- testata, striscia dove sei, piede ---------- */
   G.INVENTARIO = [["parole", "parole", "parole.html"], ["anni", "anni", "anni.html"], ["legislature", "legislature", "legislature.html"], ["partiti", "partiti", "partiti.html"],
     ["persone", "persone", "persone.html"], ["temi", "temi", "temi.html"], ["storie", "storie", "storie.html"], ["esperimenti", "esperimenti", "esperimenti.html"]];
-  G.MENU = [["Parole", "parole.html"], ["Anni", "anni.html"], ["Legislature", "legislature.html"], ["Partiti", "partiti.html"], ["Persone", "persone.html"], ["Temi", "temi.html"], ["Storie", "storie.html"], ["Esperimenti", "esperimenti.html"], ["Metodo e limiti", "metodo.html"], ["Dati", "dati.html"], ["Paper", "paper.html"]];
+  G.MENU = [["Parole", "parole.html"], ["Prime volte", "primevolte.html"], ["Anni", "anni.html"], ["Legislature", "legislature.html"], ["Partiti", "partiti.html"], ["Persone", "persone.html"], ["Temi", "temi.html"], ["Storie", "storie.html"], ["Percorsi", "percorsi.html"], ["Esperimenti", "esperimenti.html"], ["Metodo e limiti", "metodo.html"], ["Dati", "dati.html"], ["Paper", "paper.html"]];
   G.testata = function (o) {
     o = o || {};
     const el = document.getElementById("testata");
@@ -133,8 +135,49 @@
     el.innerHTML = `
       <div class="riga-alta"><span>Camera e Senato, 1848-2022</span><span>Aggiornato al 22 novembre 2026</span></div>
       <h1><a href="index.html">Il vocabolario del Parlamento</a></h1>${inv}
-      <nav class="menu" aria-label="Sezioni">${menu}<form action="parola.html" method="get" role="search"><input name="p" type="search" placeholder="scrivi una parola" aria-label="Cerca una parola" autocomplete="off"><button type="submit">Cerca</button></form></nav>
+      <nav class="menu" aria-label="Sezioni">${menu}<form action="parola.html" method="get" role="search"><input name="p" type="search" placeholder="una parola o un'espressione" aria-label="Cerca una parola o un'espressione" autocomplete="off" list="sugg-ricerca"><datalist id="sugg-ricerca"></datalist><button type="submit">Cerca</button></form></nav>
       ${o.briciole ? '<div class="briciole">' + o.briciole + "</div>" : ""}`;
+    G.suggerisci(el.querySelector("input[name=p]"), el.querySelector("#sugg-ricerca"));
+  };
+  /* suggerimenti mentre si scrive: parole che cominciano cosi' (archivio delle prime volte) ed espressioni che le contengono */
+  G.suggerisci = function (inp, lista) {
+    if (!inp || !lista) return;
+    let t;
+    inp.addEventListener("input", () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const q = G.normaFrase(inp.value);
+        if (q.length < 2) { lista.innerHTML = ""; return; }
+        const ultima = q.split(" ").slice(-1)[0];
+        Promise.all([G.carica("prime/s/" + q.slice(0, 2) + ".json").catch(() => []), G.carica("prime/espressioni.json").catch(() => ({}))]).then(([S, E]) => {
+          const v = q.indexOf(" ") < 0 ? S.filter((x) => x[0].startsWith(q)).slice(0, 12).map((x) => [x[1] || x[0], x[2]]) : [];
+          const e = Object.keys(E).filter((k) => k.indexOf(q) >= 0 || (ultima.length > 2 && k.split(" ").some((p) => p.startsWith(ultima)) && q.indexOf(" ") < 0)).slice(0, 8).map((k) => [E[k].f || k, E[k].t]);
+          lista.innerHTML = v.concat(e).map((x) => `<option value="${G.esc(x[0])}">${G.esc(x[0])}, ${G.num(x[1])} volte</option>`).join("");
+        });
+      }, 120);
+    });
+  };
+  /* minuscolo, senza accenti, solo lettere e spazi singoli (le espressioni restano espressioni) */
+  G.normaFrase = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]+/g, " ").trim();
+  /* banda delle epoche, chiara; il fascismo in giallo e collegato al percorso */
+  G.bandaEpoche = function (svg, x, y, h, stretto) {
+    const g = svg.append("g");
+    g.append("line").attr("x1", x(1848)).attr("x2", x(2022.9)).attr("y1", y).attr("y2", y).attr("stroke", G.RIGA);
+    g.append("line").attr("x1", x(1848)).attr("x2", x(2022.9)).attr("y1", y + h).attr("y2", y + h).attr("stroke", G.RIGA);
+    G.EPOCHE.forEach((e) => {
+      const x0 = x(e[0]), x1 = x(Math.min(e[1], 2022.9));
+      if (e[1] === 1943) {
+        // il ventennio e' una banda di periodo come le altre, in grigio tenue (capitolo 10 della guida)
+        const a = g.append("a").attr("href", "fascismo.html");
+        a.append("title").text("Il fascismo in aula, 1922-1943: il percorso");
+        a.append("rect").attr("x", x0).attr("y", y).attr("width", Math.max(0, x1 - x0)).attr("height", h).attr("fill", document.body.dataset.sezione === "fascismo" ? "#3A3E46" : "#C9CED5");
+        if (x1 - x0 > (stretto ? 40 : 60)) a.append("text").attr("x", x0 + 4).attr("y", y + h - 6).attr("font-size", 12).attr("font-weight", 700).attr("fill", G.INK).text(stretto ? "Fasc." : (x1 - x0 > 130 ? "Fascismo 1922-1943" : "Fascismo"));
+      } else {
+        g.append("line").attr("x1", x0).attr("x2", x0).attr("y1", y).attr("y2", y + h).attr("stroke", G.INK);
+        if (e[2] && x1 - x0 > (stretto ? 64 : 110)) g.append("text").attr("x", x0 + 5).attr("y", y + h - 6).attr("font-size", 12).attr("font-weight", 700).attr("fill", G.INK).text(stretto && e[2].length > 12 ? e[2].replace("Repubblica", "Rep.") : e[2]);
+      }
+    });
+    return g;
   };
   G.conti = {};
   /* striscia «dove sei» */
@@ -142,23 +185,20 @@
     const el = document.getElementById("dove");
     if (!el) return;
     G.grafico(d3.select(el), (area, w) => {
-      const stretto = w < 700, H = 40;
+      const stretto = w < 700, H = 44;
       const svg = area.append("svg").attr("width", w).attr("height", H).attr("role", "img").attr("aria-label", finestra ? "Sei qui: " + finestra[2] : "1848-2022");
       const x = d3.scaleLinear().domain([1848, 2023]).range([0, w]);
-      G.EPOCHE.forEach((e) => {
-        svg.append("rect").attr("x", x(e[0])).attr("y", 5).attr("width", Math.max(0, x(e[1]) - x(e[0]) - 1)).attr("height", 15).attr("fill", e[3]);
-        if (e[2] && x(e[1]) - x(e[0]) > (stretto ? 70 : 110)) svg.append("text").attr("x", x(e[0]) + 5).attr("y", 16.5).attr("fill", "#fff").attr("font-size", 12).attr("font-weight", 700).text(stretto && e[2] === "Seconda Repubblica" ? "Seconda Rep." : e[2]);
-      });
+      G.bandaEpoche(svg, x, 2, 22, stretto);
       d3.range(1850, 2021, 10).forEach((a) => {
-        svg.append("line").attr("x1", x(a)).attr("x2", x(a)).attr("y1", 20).attr("y2", a % 50 === 0 ? 26 : 23).attr("stroke", G.NERO);
-        if (a % 50 === 0 || (!stretto && a % 20 === 0 && a !== 2020)) svg.append("text").attr("x", x(a) + 2).attr("y", 37).attr("font-size", 12).attr("font-weight", a % 50 === 0 ? 800 : 400).attr("fill", G.NERO).text(a);
+        svg.append("line").attr("x1", x(a)).attr("x2", x(a)).attr("y1", 24).attr("y2", a % 50 === 0 ? 30 : 27).attr("stroke", G.GRIGIO);
+        if (a % 50 === 0 || (!stretto && a % 20 === 0 && a !== 2020)) svg.append("text").attr("x", x(a) + 2).attr("y", 41).attr("font-size", 12).attr("font-weight", a % 50 === 0 ? 800 : 400).attr("fill", G.INK).text(a);
       });
       if (finestra) {
         const x0 = x(finestra[0]), x1 = Math.max(x0 + 5, x(finestra[1] + 1));
-        svg.append("rect").attr("x", x0).attr("y", 2).attr("width", x1 - x0).attr("height", 21).attr("fill", "none").attr("stroke", G.ROSSO).attr("stroke-width", 3);
+        svg.append("rect").attr("x", x0).attr("y", 1).attr("width", x1 - x0).attr("height", 24).attr("fill", "none").attr("stroke", G.ROSSO).attr("stroke-width", 3);
         const t = "Sei qui: " + finestra[2];
         const destra = x1 + 8 + t.length * 6.6 < w;
-        svg.append("text").attr("x", destra ? x1 + 6 : x0 - 6).attr("y", 37).attr("text-anchor", destra ? "start" : "end").attr("font-size", 12).attr("font-weight", 700).attr("fill", G.ROSSO).attr("class", "alone").text(t);
+        svg.append("text").attr("x", destra ? x1 + 6 : x0 - 6).attr("y", 41).attr("text-anchor", destra ? "start" : "end").attr("font-size", 12).attr("font-weight", 700).attr("fill", G.ROSSO).attr("class", "alone").text(t);
       }
     });
   };
@@ -168,7 +208,7 @@
     el.className = "piede";
     el.innerHTML = `<div class="pagina"><div class="griglia">
       <div class="c5"><h3><a href="metodo.html">Metodo e limiti</a></h3>
-        <p>Le parole vengono dai resoconti stenografici, non dalla voce: lo stenografo riordina le frasi, e il suo modo di scrivere cambia nel tempo. Alla Camera cambia nel ${G.TRASCR.camera.join(", ").replace(/, (\d+)$/, " e $1")}; al Senato nel ${G.TRASCR.senato.join(", ").replace(/, (\d+)$/, " e $1")}.</p>
+        <p>Le parole vengono dai resoconti stenografici, non dalla voce: lo stenografo riordina le frasi, e il suo modo di scrivere cambia nel tempo. Al Senato cambia di colpo nel ${G.TRASCR.senato.join(" e nel ")}; alla Camera non si sa dire con precisione in quali anni. Punteggiatura e grafie cambiano alla Camera nel ${(G.SCRITTURA || {camera: []}).camera.join(", ").replace(/, (\d+)$/, " e $1")}, al Senato nel ${(G.SCRITTURA || {senato: []}).senato.join(" e nel ")}.</p>
         <div class="fig-area" id="piede-trascr"></div>
         <p class="piccolo grigio" style="margin-top:8px">Nell'Ottocento lo scanner sbaglia più spesso. Le frasi di controllo sono state rilette da programmi, non da persone. <a href="metodo.html">Tutto il metodo</a></p></div>
       <div class="c4 fil"><h3><a href="paper.html">I due working paper</a></h3>
@@ -183,10 +223,12 @@
       const h = 64, m = { l: 56, r: 8 };
       const svg = area.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "Anni in cui cambia la trascrizione");
       const x = d3.scaleLinear().domain([1848, 2022]).range([m.l, w - m.r]);
-      [["Camera", G.TRASCR.camera, 16, G.NERO], ["Senato", G.TRASCR.senato, 40, G.NERO]].forEach(([n, anni, y, c]) => {
+      const SC = G.SCRITTURA || { camera: [], senato: [] };
+      [["Camera", "camera", 16], ["Senato", "senato", 40]].forEach(([n, k, y]) => {
         svg.append("line").attr("x1", m.l).attr("x2", w - m.r).attr("y1", y).attr("y2", y).attr("stroke", G.RIGA);
-        svg.append("text").attr("x", 0).attr("y", y + 4).attr("class", "etich").attr("fill", c).text(n);
-        anni.forEach((a) => svg.append("line").attr("x1", x(a)).attr("x2", x(a)).attr("y1", y - 6).attr("y2", y + 6).attr("stroke", c).attr("stroke-width", 2));
+        svg.append("text").attr("x", 0).attr("y", y + 4).attr("class", "etich").attr("fill", G.INK || "#16181D").text(n);
+        G.TRASCR[k].forEach((a) => svg.append("line").attr("x1", x(a)).attr("x2", x(a)).attr("y1", y - 7).attr("y2", y + 7).attr("stroke", G.NERO).attr("stroke-width", 3));
+        SC[k].forEach((a) => svg.append("circle").attr("cx", x(a)).attr("cy", y).attr("r", 3.5).attr("fill", "#fff").attr("stroke", G.NERO).attr("stroke-width", 1.5));
       });
       [1848, 1900, 1950, 2022].forEach((a) => svg.append("text").attr("x", x(a)).attr("y", h - 2).attr("text-anchor", a === 1848 ? "start" : a === 2022 ? "end" : "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(a));
     });
@@ -213,15 +255,48 @@
     const via = () => {
       G.carica("base.json").then((B) => {
         G.B = B; G.conti = B.conti; G.conti.anni = G.ANNI.length;
-        if (B.trascrizione) G.TRASCR = B.trascrizione;
+        if (B.trascrizione) { G.TRASCR = { camera: B.trascrizione.camera, senato: B.trascrizione.senato }; G.SCRITTURA = B.trascrizione.scrittura; }
         document.querySelectorAll("[data-conto]").forEach((e) => { const v = G.conti[e.dataset.conto]; if (v != null) e.textContent = G.num(v, String(v).indexOf(".") >= 0 ? 1 : 0); });
-      }).catch(() => {}).then(() => main()).catch((e) => { console.error(e); }).then(() => {
+      }).catch(() => {}).then(() => { G.colori(); return main(); }).catch((e) => { console.error(e); }).then(() => {
+        G.faiFascia();
         if (document.fonts && document.fonts.ready) document.fonts.ready.then(parti); else parti();
       });
       let t;
       window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => { if (window.innerWidth !== ultimaL) parti(); }, 150); });
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", via); else via();
+  };
+  /* colori dei segni dei grafici dal colore della sezione (guida v2: tesi nel tono pieno, seconda evidenza nel tono scuro) */
+  G.colori = function () {
+    const cs = getComputedStyle(document.body);
+    const v = (k) => (cs.getPropertyValue(k) || "").trim();
+    let pieno = v("--sez"), scuro = v("--sez-s"), mezzo = v("--sez-m");
+    if (!pieno || document.body.dataset.sezione === "neutra" || !document.body.dataset.sezione) { pieno = "#2454FF"; scuro = "#1B3FCC"; mezzo = "#A9BBFF"; }
+    G.SEZ = pieno; G.SEZ_S = scuro; G.SEZ_M = mezzo;
+    // capitolo 10 della guida: il colore solo per la cosa da guardare, il resto in grigi
+    G.ROSSO = pieno; G.NERO = "#8C939D"; G.GDATI = "#B8BEC7"; G.RIGA = "#E3E6EA"; G.GRIGIO = "#5B6470"; G.INK = "#16181D";
+    if (document.body.dataset.sezione === "fascismo") {
+      G.SEZ = G.ROSSO = "#E3120B"; G.SEZ_S = "#F2F3F5"; G.SEZ_M = "#3A3E46"; G.NERO = "#A3A9B2"; G.GDATI = "#5B6470"; G.RIGA = "#2A2D33"; G.GRIGIO = "#A3A9B2"; G.INK = "#F2F3F5";
+    }
+  };
+  /* fascia di colore pieno con briciole, titolo e sommario (guida v2, capitolo 3) */
+  G.faiFascia = function () {
+    const main = document.getElementById("main");
+    if (!main || main.querySelector(".fascia")) return;
+    const h1 = main.querySelector("h1.titolo-pagina");
+    if (!h1) return;
+    const f = document.createElement("div");
+    f.className = "fascia";
+    const b = main.querySelector(".briciole");
+    const pezzi = [];
+    let n = h1.nextElementSibling;
+    while (n && (n.classList.contains("sommario") || (n.classList.contains("piccolo") && n.classList.contains("grigio")))) { pezzi.push(n); n = n.nextElementSibling; }
+    if (b) f.appendChild(b);
+    f.appendChild(h1);
+    pezzi.forEach((p) => f.appendChild(p));
+    main.insertBefore(f, main.firstChild);
+    const dove = document.getElementById("dove");
+    if (dove) main.insertBefore(dove, f.nextSibling);
   };
   G.ridisegna = function (sel) { REG.filter((r) => r.area.node() === document.querySelector(sel)).forEach(disegna); };
 
@@ -277,12 +352,22 @@
     return g;
   };
   G.lineeTrascrizione = function (svg, x, y0, y1, ramo, scritta) {
-    const anni = ramo === "senato" ? G.TRASCR.senato : ramo === "entrambi" ? Array.from(new Set(G.TRASCR.camera.concat(G.TRASCR.senato))).sort() : G.TRASCR.camera;
+    // tratteggio: cambi di trascrizione provati (Senato 1996 e 2000); puntinato: cambi di scrittura (punteggiatura e grafie).
+    // Le date incerte del calendario rivisto non si disegnano.
+    const S = G.SCRITTURA || { camera: [], senato: [] };
+    const scegli = (o) => (ramo === "senato" ? o.senato : ramo === "entrambi" ? Array.from(new Set(o.camera.concat(o.senato))).sort() : o.camera);
+    const prov = scegli(G.TRASCR), scr = scegli(S).filter((a) => prov.indexOf(a) < 0);
     const [d0, d1] = x.domain();
     const g = svg.append("g");
-    anni.filter((a) => a >= d0 && a <= d1).forEach((a, i) => {
+    let primo = true;
+    prov.filter((a) => a >= d0 && a <= d1).forEach((a) => {
       g.append("line").attr("class", "trascrizione").attr("x1", x(a)).attr("x2", x(a)).attr("y1", y0).attr("y2", y1);
-      if (scritta && i === 0) g.append("text").attr("class", "nota-t").attr("x", x(a) + 4).attr("y", y0 + 12).text("tratteggio: cambia la trascrizione");
+      if (scritta && primo) { g.append("text").attr("class", "nota-t").attr("x", x(a) + 4).attr("y", y0 + 12).text("tratteggio: cambia la trascrizione"); primo = false; }
+    });
+    let primoS = true;
+    scr.filter((a) => a >= d0 && a <= d1).forEach((a) => {
+      g.append("line").attr("class", "scrittura").attr("x1", x(a)).attr("x2", x(a)).attr("y1", y0).attr("y2", y1);
+      if (scritta && primoS) { g.append("text").attr("class", "nota-t").attr("x", x(a) + 4).attr("y", y0 + 28).text("puntini: cambio di scrittura"); primoS = false; }
     });
   };
 
@@ -302,6 +387,7 @@
       gy.append("line").attr("x1", m.l).attr("x2", w - m.r).attr("y1", y(v)).attr("y2", y(v)).attr("class", v === 0 ? "zero" : null);
       gy.append("text").attr("x", m.l).attr("y", y(v) - 4).text((o.yFmt || G.num1)(v) + (i === ticks.length - 1 && o.unita ? " " + o.unita : ""));
     });
+    o.serie.forEach((s) => { s.punti = s.punti.filter((p) => p[0] >= o.x[0] && p[0] <= o.x[1]); if (s.banda) s.banda = s.banda.filter((p) => p[0] >= o.x[0] && p[0] <= o.x[1]); });
     const span = o.x[1] - o.x[0];
     const passo = o.xPasso || (span > 100 ? (stretto ? 50 : 20) : span > 40 ? (stretto ? 20 : 10) : span > 12 ? (stretto ? 5 : 2) : 1);
     d3.range(Math.ceil(o.x[0] / passo) * passo, o.x[1] + 0.001, passo).forEach((v) => gy.append("text").attr("x", x(v)).attr("y", h - m.b + 17).attr("text-anchor", "middle").text(o.xFmt ? o.xFmt(v) : v));
@@ -359,7 +445,8 @@
     const y = d3.scaleLinear().domain([0, max]).range([h - m.b, m.t]);
     svg.append("line").attr("x1", m.l).attr("x2", w - m.r).attr("y1", y(0)).attr("y2", y(0)).attr("stroke", G.NERO).attr("shape-rendering", "crispEdges");
     const ar = d3.area().defined((d) => d[1] != null).x((d) => x(d[0])).y0(y(0)).y1((d) => y(d[1]));
-    svg.append("path").attr("d", ar(pts)).attr("fill", o.colore || G.NERO);
+    svg.append("path").attr("d", ar(pts)).attr("fill", o.colore || G.SEZ_M || "#A9BBFF");
+    svg.append("path").attr("d", d3.line().defined((d) => d[1] != null).x((d) => x(d[0])).y((d) => y(d[1]))(pts)).attr("fill", "none").attr("stroke", o.linea || G.SEZ || "#2454FF").attr("stroke-width", 1.2);
     if (o.picco !== false) {
       const p = o.piccoAnno ? pts[o.piccoAnno - 1848] : pts.reduce((b, c) => ((c[1] || 0) > (b[1] || 0) ? c : b), pts[0]);
       const px = x(p[0]);
@@ -400,6 +487,130 @@
       el.querySelectorAll("th").forEach((th) => th.addEventListener("click", () => { const i = +th.dataset.i; if (i === ord) verso = -verso; else { ord = i; verso = colonne[i].n ? -1 : 1; } fai(); }));
     }
     fai();
+  };
+
+  /* archivio delle prime volte (parole dette almeno 10 volte) ed espressioni */
+  G.schedaPrime = function (w) {
+    return G.carica("prime/mappa.json").then((M) => {
+      const I = M.inizi;
+      let lo = 0, hi = I.length - 1, k = 0;
+      while (lo <= hi) { const m = (lo + hi) >> 1; if (I[m] <= w) { k = m; lo = m + 1; } else hi = m - 1; }
+      return G.carica("prime/d/" + G.pad(k) + ".json").then((d) => d[w] || null);
+    }).catch(() => null);
+  };
+  G.espressione = (q) => G.carica("prime/espressioni.json").then((E) => E[q] || null).catch(() => null);
+  /* voce di una prima volta: [data, ramo, nome, pid, partito, frase, forma] */
+  G.voceVolta = function (v, forme) {
+    const nome = v[2] ? (v[3] ? G.lPersona(v[3], G.oratore(v[2])) : G.esc(G.oratore(v[2]))) : "oratore non riconosciuto";
+    return `<span class="quando"><b>${G.data(v[0])}</b>, ${G.ramo(v[1])}, ${nome}${v[4] ? " (" + G.esc(v[4]) + ")" : ""}</span>` +
+      (v[5] ? `<q>${G.frase(v[5], forme)}</q>` : '<span class="grigio">Testo della comparsa illeggibile nella scansione.</span>');
+  };
+  /* colori dei filoni delle storie (guida v2, 1.3) */
+  G.FILONE = { "Parole che nascono e muoiono": ["#2454FF", "#fff"], "Esteri ed Europa": ["#00A3AD", "#16181D"], "Semplificazione e resoconto": ["#7B3FE4", "#fff"],
+    "Potere, partiti e persone": ["#E5007D", "#fff"], "Prima Repubblica": ["#F56300", "#16181D"], "Temi": ["#00A85A", "#16181D"], "Fascismo": ["#16181D", "#fff"] };
+  G.SCURO = { "#2454FF": "#1B3FCC", "#00A3AD": "#00757D", "#7B3FE4": "#5B2BB5", "#E5007D": "#B80064", "#F56300": "#B84A00", "#00A85A": "#007A41", "#16181D": "#16181D", "#E3120B": "#C00F09" };
+  /* tessere delle storie, di misura diversa */
+  G.tessere = function (storie, max) {
+    const forme = ["doppia", "", "alta", "", "", "doppia", "", ""];
+    return '<div class="tessere">' + storie.slice(0, max || 8).map((s, i) => {
+      const c = G.FILONE[s.filone] || ["#E3120B", "#fff"];
+      const num = (s.titolo.match(/\d[\d.,]*%?/) || [""])[0];
+      return `<a class="tessera ${forme[i % forme.length]}" style="--col:${c[0]};--col-s:${G.SCURO[c[0]] || c[0]}" href="storia.html?id=${s.id}"><span class="t-occ">${G.esc(s.occhiello || s.filone || "")}</span>${num && forme[i % forme.length] ? `<span class="t-num">${G.esc(num)}</span>` : ""}<div><h3>${G.esc(s.titolo)}</h3><p>${G.esito(s.verdetto || "descrittiva")}</p></div></a>`;
+    }).join("") + "</div>";
+  };
+
+  /* ingressi dei quattro percorsi, di misura diversa (guida v2, capitolo 6) */
+  G.ingressi = function (F, L, R, X) {
+    const cam = F.periodi.filter((p) => p.ramo === "camera"), d0 = cam[0], d1 = cam.find((p) => /regime/i.test(p.periodo)) || cam[cam.length - 1];
+    const fc = L.francese.camera || {}, am = Object.keys(fc).reduce((a, b) => (fc[b] > fc[a] ? b : a), Object.keys(fc)[0]);
+    const P = R.periodi;
+    return `<div class="ingressi">
+      <a class="ingresso nero" href="fascismo.html"><span class="t-occ">Percorso · 1922-1943</span><span class="grande">${G.num(d0.dissenso_100, 0)}→${G.num(d1.dissenso_100, 0)}</span><div><h3>Il fascismo in aula</h3><p>Il dissenso annotato alla Camera scende da ${G.num(d0.dissenso_100, 0)} a ${G.num(d1.dissenso_100, 0)} ogni cento interventi. Le parole del regime, il Voi al posto del Lei, le cinque legislature.</p></div></a>
+      <a class="ingresso" href="lingue.html" style="--col:#2454FF;--col-s:#1B3FCC"><span class="t-occ">Percorso · 1848-2022</span><span class="grande">${G.num(fc[am], 1)}%</span><div><h3>Le lingue dell'aula</h3><p>Nel ${am} il ${G.num(fc[am], 1)}% delle parole alla Camera è in francese. Poi l'inglese, il latino, le forme antiche che spariscono.</p></div></a>
+      <a class="ingresso" href="esteri.html" style="--col:#00A3AD;--col-s:#00757D"><span class="t-occ">Percorso · 1848-2022</span><span class="grande">${X.paesi.length}</span><div><h3>Amici e nemici dell'Italia</h3><p>Il tono dell'aula verso ${X.paesi.length} paesi, anno per anno, accanto alle alleanze e alle guerre vere.</p></div></a>
+      <a class="ingresso" href="risate.html" style="--col:#F56300;--col-s:#B84A00"><span class="t-occ">Percorso · 1848-2022</span><span class="grande">${G.num(P[0][1], 0)}→${G.num(P[P.length - 1][1], 1)}</span><div><h3>Risate e insulti</h3><p>Le risate annotate ogni mille interventi, chi fa ridere, ${G.num(R.frasi.length)} frasi da ridere e gli insulti detti in aula.</p></div></a>
+    </div>`;
+  };
+
+  /* la mappa dei partiti che si muove: un cursore con le legislature e un pulsante Avvia (guida v2, capitolo 5) */
+  G.scie = function (idBox, TR) {
+    const P = TR.partiti;
+    const tutti = [].concat(...Object.values(P));
+    const legs = [...new Set(tutti.map((q) => q[0]))].sort((a, b) => a - b);
+    let k = legs.length - 1, timer = null;
+    const box = document.getElementById(idBox);
+    const area = G.figura(box.appendChild(document.createElement("div")) && d3.select(box.lastChild), {
+      titolo: "I partiti si muovono: ogni legislatura la loro lingua si sposta sulla mappa",
+      sotto: "Ogni punto è un partito in una legislatura, Camera, 1948-2022: più due punti sono vicini, più usano le stesse parole. La scia mostra da dove viene ogni partito. L'area del punto è la sua quota di parole. Colori delle famiglie: rosso PCI-PD, blu DC, rosa PSI, blu notte MSI-AN-FdI, azzurro FI-PdL, verde Lega, giallo M5S, grigio gli altri.",
+      limite: "Le due direzioni riassumono poco più di un terzo delle differenze; la posizione viene dalle parole, non dai voti.",
+      csv: () => [["partito", "legislatura", "anno", "d1", "d2", "quota", "famiglia", "governo"]].concat([].concat(...Object.entries(P).map(([n, v]) => v.map((q) => [n].concat(q))))), nomeCSV: "traiettorie_partiti",
+    });
+    const fig = area.node().parentNode;
+    const cur = document.createElement("div");
+    cur.className = "cursore";
+    cur.innerHTML = `<button type="button" id="avvia">Avvia</button><input type="range" id="leg" min="0" max="${legs.length - 1}" value="${k}" aria-label="Legislatura"><output id="leg-out"></output>`;
+    fig.insertBefore(cur, area.node());
+    const ri = () => { document.getElementById("leg-out").textContent = G.romano(legs[k]) + " legislatura"; G.ridisegna("#" + idBox + " .fig-area"); };
+    document.getElementById("leg").addEventListener("input", (e) => { k = +e.target.value; ri(); });
+    document.getElementById("avvia").addEventListener("click", (e) => {
+      if (timer) { clearInterval(timer); timer = null; e.target.textContent = "Avvia"; return; }
+      e.target.textContent = "Ferma"; if (k >= legs.length - 1) k = 0;
+      timer = setInterval(() => { k++; document.getElementById("leg").value = k; ri(); if (k >= legs.length - 1) { clearInterval(timer); timer = null; e.target.textContent = "Avvia"; } }, 900);
+    });
+    document.getElementById("leg-out").textContent = G.romano(legs[k]) + " legislatura";
+    G.grafico(area, (a, w) => {
+      const h = w < 560 ? 340 : 520, m = 30;
+      const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "Mappa dei partiti in movimento");
+      const x = d3.scaleLinear().domain(d3.extent(tutti, (q) => q[2])).nice().range([m, w - m - 70]);
+      const y = d3.scaleLinear().domain(d3.extent(tutti, (q) => q[3])).nice().range([h - m, m]);
+      svg.append("text").attr("x", m).attr("y", 14).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di destra ↑");
+      svg.append("text").attr("x", m).attr("y", h - 6).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di sinistra ↓");
+      const L = legs[k];
+      const et = [];
+      Object.entries(P).forEach(([nome, v]) => {
+        const fino = v.filter((q) => q[0] <= L);
+        const ora = v.find((q) => q[0] === L);
+        if (!ora) return;
+        const col = G.FAMIGLIA[ora[5]] || G.GDATI;
+        const scia = fino.slice(-4);
+        if (scia.length > 1) svg.append("path").attr("d", d3.line().x((q) => x(q[2])).y((q) => y(q[3]))(scia)).attr("fill", "none").attr("stroke", col).attr("stroke-width", 2).attr("stroke-opacity", 0.55);
+        scia.slice(0, -1).forEach((q) => svg.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", 2.5).attr("fill", col).attr("fill-opacity", 0.5));
+        const r = 5 + 24 * Math.sqrt(ora[4] || 0);
+        const lk = svg.append("a").attr("href", "partito.html?id=" + encodeURIComponent(nome));
+        lk.append("circle").attr("cx", x(ora[2])).attr("cy", y(ora[3])).attr("r", r).attr("fill", col).attr("stroke", ora[5] === "M5S" ? G.INK : "#fff").attr("stroke-width", 1.2);
+        et.push({ x: x(ora[2]) + r + 4, y: y(ora[3]) + 4, t: nome.replace("Unita'", "Unità"), lk });
+      });
+      G.separa(et, 14, 14, h - 10);
+      et.forEach((e) => e.lk.append("text").attr("class", "etich").attr("x", e.x).attr("y", e.y).attr("fill", G.INK).text(e.t));
+      svg.append("text").attr("x", w - m).attr("y", 40).attr("text-anchor", "end").attr("font-size", 44).attr("font-weight", 300).attr("fill", G.SEZ).text(G.romano(L));
+    });
+  };
+
+  /* il filo del tempo: i sette capitoli del racconto sull'asse 1848-2022 (il 4 attraversa tutti gli anni) */
+  G.filoDelTempo = function (sel, capitoli, attivo) {
+    G.grafico(sel, (a, w) => {
+      const stretto = w < 700, h = stretto ? 86 : 70;
+      const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "I sette capitoli sull'asse del tempo");
+      const x = d3.scaleLinear().domain([1848, 2023]).range([0, w]);
+      const cronologici = capitoli.filter((c) => !(c.anni[0] === 1848 && c.anni[c.anni.length - 1] === 2022));
+      const trasversale = capitoli.find((c) => c.anni[0] === 1848 && c.anni[c.anni.length - 1] === 2022);
+      cronologici.forEach((c) => {
+        const x0 = x(c.anni[0]), x1 = x(Math.min(2023, c.anni[c.anni.length - 1] + 1));
+        const lk = svg.append("a").attr("href", "capitolo.html?n=" + c.n);
+        lk.append("title").text(c.titolo);
+        lk.append("rect").attr("x", x0 + 1).attr("y", 4).attr("width", Math.max(2, x1 - x0 - 2)).attr("height", 26).attr("fill", +c.n === attivo ? "#16181D" : "#EEF0F2");
+        lk.append("text").attr("x", x0 + 6).attr("y", 22).attr("font-size", 13).attr("font-weight", 800).attr("fill", +c.n === attivo ? "#fff" : "#16181D").text(c.n);
+        if (!stretto && x1 - x0 > 90) lk.append("text").attr("x", x0 + 20).attr("y", 22).attr("font-size", 12).attr("fill", +c.n === attivo ? "#fff" : "#5B6470").text(c.titolo);
+      });
+      if (trasversale) {
+        const lk = svg.append("a").attr("href", "capitolo.html?n=" + trasversale.n);
+        lk.append("title").text(trasversale.titolo);
+        lk.append("rect").attr("x", 0).attr("y", 34).attr("width", w).attr("height", 12).attr("fill", +trasversale.n === attivo ? "#16181D" : "#E3E6EA");
+        lk.append("text").attr("x", 4).attr("y", 44).attr("font-size", 11.5).attr("font-weight", 700).attr("fill", +trasversale.n === attivo ? "#fff" : "#16181D").text(trasversale.n + " · " + trasversale.titolo + ", 1848-2022");
+      }
+      svg.append("rect").attr("x", x(1941.5)).attr("y", 2).attr("width", x(1945.9) - x(1941.5)).attr("height", 46).attr("fill", "#fff").attr("stroke", "#B8BEC7").attr("stroke-dasharray", "2 2");
+      [1848, 1900, 1950, 2000].forEach((y) => svg.append("text").attr("x", x(y)).attr("y", h - 4).attr("text-anchor", y === 1848 ? "start" : "middle").attr("font-size", 12).attr("fill", "#5B6470").text(y));
+    });
   };
 
   /* errore leggibile */

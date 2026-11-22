@@ -5,21 +5,80 @@
     G.testata({ attivo: "Parole" });
     G.piede();
     const el = document.getElementById("contenuto");
-    const w = G.norma(G.param("p") || "");
+    const q = G.normaFrase(G.param("p") || "");
+    const w = q.replace(/ /g, "");
     const con = (G.param("con") || "").split(",").map(G.norma).filter((x) => x && x !== w).slice(0, 4);
     if (!w) { location.replace("parole.html"); return; }
+    if (q.indexOf(" ") >= 0) {
+      return G.espressione(q).then((S) => (S ? paginaBreve(el, q, S, true) : nonC(el, q, null)));
+    }
     return Promise.all([G.indiceParole(), G.carica("base.json"), G.carica("esperimenti.json"), G.carica("storie/indice.json").catch(() => ({ storie: [] }))]).then(([IX, B, E, S]) => {
-      if (!IX._mappa.has(w)) return nonC(el, w, IX);
-      return Promise.all([G.curvaParola(w), G.schedaParola(w)].concat(con.map((c) => G.curvaParola(c)))).then((r) => pagina(el, r[0], r[1] || {}, r.slice(2).filter(Boolean), B, E, S, IX));
+      if (!IX._mappa.has(w)) return G.schedaPrime(w).then((P) => (P ? paginaBreve(el, w, P, false) : nonC(el, w, IX)));
+      return Promise.all([G.curvaParola(w), G.schedaParola(w), G.schedaPrime(w)].concat(con.map((c) => G.curvaParola(c)))).then((r) => {
+        const D = r[1] || {};
+        // la prima volta e le frasi passano dal filtro di qualita' dell'archivio delle prime volte
+        if (r[2] && r[2].p && r[2].p.length) { const v = r[2].p[0]; D.pv = [v[0], v[1], v[2], v[3], v[5] || ""]; D.pv_illeggibile = !v[5]; D.prime = r[2].p; D.grezza = r[2].g; }
+        return pagina(el, r[0], D, r.slice(3).filter(Boolean), B, E, S, IX);
+      });
     });
   });
 
-  function nonC(el, w, IX) {
+  function nonC(el, w) {
     document.getElementById("bric").textContent = w;
-    const simili = IX.p.filter((r) => r[0].startsWith(w.slice(0, Math.max(3, w.length - 2)))).sort((a, b) => b[2] - a[2]).slice(0, 30);
-    el.innerHTML = `<h1 class="titolo-pagina">${G.esc(w)}</h1><p class="sommario">«${G.esc(w)}» non è tra le ${G.num(G.conti.parole)} parole del sito: servono almeno 1.000 volte in aula tra il 1848 e il 2022. Le parole sono scritte senza accenti e senza maiuscole.</p>` +
-      (simili.length ? `<h2 class="titolo-piccolo">Parole che cominciano allo stesso modo</h2><p class="parole-nuvola">${simili.map((r) => G.lParola(r[0], r[1] || r[0]) + "<small>" + G.num(r[2]) + "</small>").join(" ")}</p>` : "") +
-      `<p><a class="leggi" href="parole.html">Tutte le parole</a></p>`;
+    const g = G.normaFrase(w);
+    const pref = g.replace(/ /g, "").slice(0, Math.max(3, g.replace(/ /g, "").length - 3));
+    Promise.all([G.carica("prime/s/" + g.slice(0, 2) + ".json").catch(() => []), G.carica("prime/espressioni.json").catch(() => ({}))]).then(([Sg, E]) => {
+      const simili = Sg.filter((r) => r[0].startsWith(pref)).slice(0, 30);
+      const parti = g.split(" ").filter((x) => x.length > 3);
+      const espr = Object.keys(E).filter((k) => parti.some((p) => k.indexOf(p) >= 0)).slice(0, 12);
+      el.innerHTML = `<h1 class="titolo-pagina">${G.esc(w)}</h1><p class="sommario">«${G.esc(w)}» non ha una scheda: ${g.indexOf(" ") >= 0 ? "le espressioni di più parole sono un elenco scelto, e questa non c'è, o è detta meno di 10 volte" : "è detta meno di 10 volte in aula tra il 1848 e il 2022, o mai"}. Accenti e maiuscole non contano.</p>` +
+        (simili.length ? `<h2 class="titolo-piccolo">Parole vicine</h2><p class="parole-nuvola">${simili.map((r) => G.lParola(r[0], r[1] || r[0]) + "<small>" + G.num(r[2]) + "</small>").join(" ")}</p>` : "") +
+        (espr.length ? `<h2 class="titolo-piccolo" style="margin-top:18px">Espressioni con queste parole</h2><p class="parole-nuvola">${espr.map((k) => `<a class="lk" href="parola.html?p=${encodeURIComponent(k)}">${G.esc(E[k].f || k)}</a><small>${G.num(E[k].t)}</small>`).join(" ")}</p>` : "") +
+        `<p style="margin-top:18px"><a class="leggi" href="parole.html">Tutte le parole</a> · <a class="leggi" href="primevolte.html">Prime volte</a></p>`;
+    });
+  }
+
+  /* scheda breve: parole dette tra 10 e 999 volte, ed espressioni di piu' parole */
+  function paginaBreve(el, k, S, espr) {
+    const f = S.f || k;
+    document.title = f + " · Il vocabolario del Parlamento";
+    document.getElementById("bric").textContent = f;
+    const p0 = S.p[0];
+    return G.carica("base.json").then((B) => {
+      const dec = S.d, DEC = []; for (let d = 1840; d <= 2020; d += 10) DEC.push(d);
+      const totDec = DEC.map((d) => { let t = 0; for (let a = Math.max(1848, d); a <= Math.min(2022, d + 9); a++) t += (B.tot[0][a - 1848] || 0) + (B.tot[1][a - 1848] || 0); return t; });
+      const pm = dec.map((n, i) => (totDec[i] ? (n / totDec[i]) * 1e6 : 0));
+      const imax = pm.reduce((b, v, i) => (v > pm[b] ? i : b), 0);
+      el.innerHTML = `
+        <h1 class="titolo-pagina"><span class="evid">${G.esc(f)}</span></h1>
+        <p class="sommario">${espr ? "Espressione detta" : "Detta"} <b>${G.num(S.t)}</b> volte in aula tra il 1848 e il 2022. ${p0 ? `La prima volta è il ${G.data(p0[0])}, ${G.alRamo(p0[1])}${p0[2] ? ", " + G.esc(G.oratore(p0[2])) : ""}.` : ""} Il decennio in cui si dice di più sono gli anni ${DEC[imax] === 1840 ? "1848-49" : DEC[imax]}.</p>
+        <section class="griglia">
+          <div class="c7"><h2 class="titolo-medio">Le prime volte</h2><ul class="frasi" id="prime"></ul></div>
+          <div class="c5 fil" id="g-dec"></div>
+        </section>
+        <p class="piccolo grigio" style="margin-top:24px">${espr ? "Le espressioni sono un elenco scelto e dichiarato nella pagina del metodo; si contano con spazio o trattino tra le parole." : "Le parole dette meno di 1.000 volte hanno questa scheda breve; quelle più frequenti hanno la curva anno per anno, chi le dice, i partiti."} La prima volta si cerca dal primo anno in cui ${espr ? "l'espressione" : "la parola"} compare almeno tre volte in tre anni.</p>`;
+      const forme = [f, k];
+      let h = (S.p || []).map((v, i) => `<li>${i === 0 ? "<b>La prima volta</b> · " : ""}${G.voceVolta(v, forme)}${i === 0 && !v[5] ? '<br><span class="piccolo grigio">Testo della prima comparsa illeggibile nella scansione: sotto, le prime frasi pulite.</span>' : ""}</li>`).join("");
+      if (S.sp) h += '<li class="piccolo grigio">Non arriva mai a tre volte in tre anni: queste sono le prime comparse così come sono.</li>';
+      if (S.g) h += `<li class="piccolo grigio">Comparsa più vecchia, ${G.data(S.g[0])}, ${G.ramo(S.g[1])}: probabile errore di lettura del testo stampato.</li>`;
+      document.getElementById("prime").innerHTML = h;
+      const area = G.figura("#g-dec", {
+        titolo: `Si dice di più negli anni ${DEC[imax] === 1840 ? "1848-49" : DEC[imax]}`,
+        sotto: "Volte per milione di parole, decennio per decennio, Camera e Senato insieme",
+        csv: () => [["decennio", "volte", "per_milione"]].concat(DEC.map((d, i) => [d, dec[i], pm[i].toFixed(3)])), nomeCSV: "decenni_" + k.replace(/ /g, "_"),
+      });
+      G.grafico(area, (a, w) => {
+        const h2 = 240, m = { t: 20, b: 22 };
+        const svg = a.append("svg").attr("width", w).attr("height", h2).attr("role", "img").attr("aria-label", "Decenni");
+        const x = d3.scaleBand().domain(DEC).range([0, w]).paddingInner(0.15);
+        const y = d3.scaleLinear().domain([0, d3.max(pm) || 1]).range([h2 - m.b, m.t]);
+        DEC.forEach((d, i) => {
+          if (pm[i] > 0) svg.append("rect").attr("x", x(d)).attr("width", x.bandwidth()).attr("y", y(pm[i])).attr("height", y(0) - y(pm[i])).attr("fill", i === imax ? G.SEZ : G.SEZ_M);
+          if (d % 40 === 0 || d === 1840) svg.append("text").attr("x", x(d) + x.bandwidth() / 2).attr("y", h2 - 4).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(d === 1840 ? 1848 : d);
+        });
+        svg.append("text").attr("class", "etich").attr("x", x(DEC[imax]) + x.bandwidth() / 2).attr("y", y(pm[imax]) - 6).attr("text-anchor", "middle").attr("fill", G.SEZ_S).text(G.num(pm[imax], pm[imax] < 10 ? 2 : 1));
+      });
+    });
   }
 
   function pagina(el, C, D, altre, B, E, S, IX) {
@@ -30,7 +89,7 @@
     const pk = G.picco(C.pm.m);
     const pv = D.pv;
     const legPk = G.legDiAnno(pk.anno, B.legislature);
-    const prima = pv ? `La prima volta è il ${G.data(pv[0])}, al ${G.ramo(pv[1])}: ${pv[3] ? G.lPersona(pv[3], G.oratore(pv[2])) : G.esc(G.oratore(pv[2]))}.` : "";
+    const prima = pv ? `La prima volta è il ${G.data(pv[0])}, ${G.alRamo(pv[1])}: ${pv[3] ? G.lPersona(pv[3], G.oratore(pv[2])) : G.esc(G.oratore(pv[2]))}.` : "";
     const storie = (S.storie || []).filter((s) => (s.parole || []).map(G.norma).includes(w));
     const reW = new RegExp("(^|[^a-zà-ù])" + f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-zà-ù]|$)", "i");
     const esp = E.elenco.filter((e) => reW.test(e.titolo + " " + e.attesa + " " + e.numero));
@@ -63,12 +122,15 @@
     ];
     if (legPk) fatti.push([`<a href="legislatura.html?id=${legPk.id}">${G.esc(legPk.nome)}</a>`, `la legislatura dell'anno di punta (${legPk.da}-${legPk.a})`]);
     if (pv) fatti.push([`<b>${G.data(pv[0])}</b>, la prima volta`, `${G.ramo(pv[1])}, ${pv[3] ? G.lPersona(pv[3], G.oratore(pv[2])) : G.esc(G.oratore(pv[2]))}`]);
+    if (D.pv_illeggibile) fatti.push([`Testo della prima comparsa illeggibile`, "nella scansione: la data resta, le frasi sono quelle pulite che seguono"]);
+    if (D.grezza) fatti.push([`Comparsa più vecchia, ${G.data(D.grezza[0])}`, "probabile errore di lettura del testo stampato"]);
     if (D.sp) fatti.push([`<b>${G.num(D.sp[0])}</b> comparse sparse prima del ${C.y0}`, `negli anni ${D.sp[1].join(", ")}: spesso sono errori dello scanner, e non entrano nella curva`]);
     document.getElementById("fatti").innerHTML = fatti.map((x) => `<li>${x[0]}<span class="et">${x[1]}</span></li>`).join("");
     // frasi
     const forme = [f, w];
     const fr = [];
     if (pv && pv[4]) fr.push(["La prima volta", pv]);
+    (D.prime || []).slice(1).forEach((v) => { if (v[5]) fr.push(["Le prime volte", [v[0], v[1], v[2], v[3], v[5]]]); });
     (D.fr || []).forEach((x) => { if (!pv || x[4] !== pv[4]) fr.push([String(x[0]).slice(0, 4) === String(pk.anno) ? "Anno di punta" : "", x]); });
     document.getElementById("frasi").innerHTML = fr.length ? fr.map(([et, x]) => `<li><span class="quando">${et ? "<b>" + et + "</b> · " : ""}${G.data(x[0])}, ${G.ramo(x[1])}, ${x[3] ? G.lPersona(x[3], G.oratore(x[2])) : G.esc(G.oratore(x[2]))}</span><q>${G.frase(x[4], forme)}</q></li>`).join("") : '<li class="grigio">Nessuna frase breve trovata.</li>';
     // oratori
