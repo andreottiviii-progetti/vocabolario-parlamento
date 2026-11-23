@@ -1,0 +1,371 @@
+/* =====================================================================================
+   Versione 3: il vocabolario illustrato (la proposta 3 delle impaginazioni, scelta il 23/11).
+   Carattere Alegreya Sans, umanista; pagina di dizionario: testatina con le parole guida,
+   lemmi in grassetto, abbreviazioni in corsivo, tavole numerate, unghie dell'alfabeto sul bordo.
+   Un solo colore fuori dai grafici: il blu delle voci, che vuol dire «questa voce ha una pagina».
+   Nei grafici il rosso è la cosa da guardare (anno di punta, tesi, smentita); rosso e turchese
+   sono nemico e amico; i colori delle famiglie restano solo nei grafici dei partiti.
+   Queste regole vengono dopo stile.css e v2.css e le sostituiscono.
+   ===================================================================================== */
+:root{
+  --ink:#15181C; --inchiostro:#15181C; --nero:#15181C; --grigio:#5C636D; --grigio-dati:#B8BEC7;
+  --filo:#DFE2E6; --riga:#DFE2E6; --voce:#1B3FA8; --voce-s:#14307F; --rosso:#D2281F; --fondo:#fff;
+  --margine:34px; --gap:30px; --lettura:700px;
+  --sez:#1B3FA8; --sez-s:#14307F; --sez-m:#C9D3EE; --sez-testo:#fff;
+}
+/* ogni sezione ha la stessa faccia: niente colori di sezione fuori dai grafici */
+body[data-sezione]:not([data-sezione="fascismo"]){--sez:#1B3FA8;--sez-s:#14307F;--sez-m:#C9D3EE;--sez-testo:#fff}
+body{font-family:"Alegreya Sans",system-ui,sans-serif;font-size:16.5px;line-height:1.38;color:var(--ink);background:var(--fondo);font-variant-numeric:lining-nums}
+svg text{font-family:"Alegreya Sans",system-ui,sans-serif}
+h1,h2,h3,h4{font-stretch:100%;letter-spacing:-.008em}
+a:hover{color:inherit;text-decoration:underline;text-underline-offset:2px}
+p{margin:0 0 .6em}
+.pagina{max-width:1404px;padding:0 calc(var(--margine) + 20px) 0 var(--margine)}
+
+/* le voci che hanno una pagina sono blu: le parole, i capitoli, i lemmi */
+a[href^="parola.html"],a.lemma,.lemma a{color:var(--voce)}
+a[href^="parola.html"]:hover{color:var(--voce-s)}
+.lemma{font-weight:800;color:var(--voce);letter-spacing:-.008em}
+.lemma.nero{color:var(--ink)}
+.lemma.piccolo{font-weight:700}
+.gram,i.gram{font-style:italic;color:var(--grigio);font-weight:400}
+.anni{font-size:14px;color:var(--grigio);white-space:nowrap;font-weight:400}
+.sm{color:var(--rosso);font-style:normal}
+.fr{color:var(--grigio)}
+.num{font:700 13px/1 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.06em;color:var(--grigio);margin-right:6px;white-space:nowrap;vertical-align:.08em}
+.did{font-size:13.5px;line-height:1.33;color:var(--grigio);margin:5px 0 0}
+.es{font-style:italic;font-size:15px;line-height:1.3;padding-left:12px;text-indent:-12px;margin:4px 0 0}
+.es span{font-style:normal;font-size:13.5px;color:var(--grigio)}
+.rubrica{font:700 15px/1.2 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.05em;padding-bottom:4px;margin:0 0 7px;border-bottom:1px solid var(--ink)}
+.rubrica a{color:inherit}
+* + .rubrica{margin-top:14px}
+
+/* striscia di anteprima: una riga piccola, non una fascia nera */
+.anteprima{background:var(--fondo);color:var(--grigio);font-size:12.5px;font-weight:500;text-align:center;padding:3px 0;border-bottom:1px solid var(--filo)}
+
+/* ---------- le unghie dell'alfabeto, sul bordo destro ---------- */
+.unghie{position:fixed;right:0;top:96px;z-index:8;display:flex;flex-direction:column;width:24px;background:var(--fondo);border-left:1px solid var(--filo)}
+.unghie a{font:700 12.5px/1 "Alegreya Sans SC","Alegreya Sans",sans-serif;text-align:center;padding:6px 0;border-bottom:1px solid var(--filo);color:var(--ink)}
+.unghie a:nth-child(odd){background:var(--ink);color:#fff}
+.unghie a:hover,.unghie a:focus{text-decoration:none;background:var(--voce);color:#fff}
+
+/* ---------- testatina ---------- */
+.testatina{padding:0}
+.riga-guide{display:flex;align-items:baseline;justify-content:space-between;gap:18px;padding:9px 0 7px;border-bottom:1px solid var(--ink)}
+.guida{font-size:18px;font-weight:800;letter-spacing:-.005em;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:22%}
+.guida a{color:var(--ink)}
+.guida.destra{text-align:right}
+.testatina .menu{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 16px;padding:0;border:0;font:500 15px/1.3 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.02em}
+.testatina .menu a{padding:2px 0}
+.testatina .menu a.attivo{color:var(--voce);box-shadow:none;text-decoration:underline;text-underline-offset:3px}
+.riga-nome{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:7px 0 6px;border-bottom:1px solid var(--filo)}
+.marchio{font-size:23px;font-weight:800;letter-spacing:-.015em;line-height:1.1;white-space:nowrap}
+.marchio i{font-weight:400}
+.marchio:hover{text-decoration:none;color:var(--voce)}
+.cerca-testa{display:flex;flex:0 1 400px;min-width:0}
+.cerca-testa input,.cerca input{flex:1;min-width:0;font:inherit;font-size:16px;padding:5px 9px;border:1px solid var(--ink);border-right:0;border-radius:0;background:var(--fondo);color:var(--ink)}
+.cerca-testa button,.cerca button{font:inherit;font-weight:700;font-size:15px;padding:0 13px;border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:0;cursor:pointer}
+.briciole{font:500 14px/1.3 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.03em;color:var(--grigio);padding:0;margin:0 0 4px}
+.briciole a{color:var(--grigio);text-decoration:underline;text-underline-offset:2px}
+
+/* ---------- testa della voce (prima era la fascia del titolo) ---------- */
+.fascia{background:none;border:0;border-bottom:1px solid var(--ink);padding:12px 0 12px;margin:0}
+.fascia .briciole,.fascia .briciole a{color:var(--grigio)}
+.titolo-pagina,.fascia .titolo-pagina{font-size:54px !important;font-weight:800;letter-spacing:-.022em;line-height:1;margin:2px 0 8px;color:var(--ink);font-stretch:100%}
+.titolo-pagina.lungo,.fascia .titolo-pagina.lungo{font-size:38px !important;line-height:1.06;letter-spacing:-.016em;max-width:1180px}
+.titolo-pagina .evid,.fascia .titolo-pagina .evid{background:none;padding:0}
+.titolo-pagina small{font-size:.4em !important;font-weight:400 !important;letter-spacing:0;color:var(--grigio)}
+.titolo-pagina .accanto{font-size:20px;font-weight:400;letter-spacing:0;margin-left:10px;color:var(--ink);white-space:normal}
+.sommario,.fascia .sommario{font-size:19px;line-height:1.32;max-width:1120px;margin:0 0 4px}
+.fascia .sommario b{font-weight:800}
+.fascia .sommario b.n{font-weight:900;margin:0 2px 0 4px}
+.fascia .sommario b.n:first-child{margin-left:0}
+.fascia .piccolo{font-size:14px;color:var(--grigio);opacity:1;margin:4px 0 0;max-width:1120px}
+.fascia a.lk,.fascia .sommario a{color:inherit}
+.fascia .sommario a[href^="parola.html"]{color:var(--voce)}
+.nel-racconto{font-size:15px;font-weight:400;border:0;padding:6px 0;margin:0 0 4px;border-bottom:1px solid var(--filo)}
+.nel-racconto i{color:var(--grigio)}
+.dove{border-bottom:1px solid var(--filo);margin-top:0}
+
+/* ---------- sezioni: un filo sottile, titolo nero, niente vuoti grandi ---------- */
+.sezione{border-top:1px solid var(--ink);margin-top:22px;padding-top:10px}
+.sezione.sottile{border-top:1px solid var(--filo)}
+.sezione > .testa{margin-bottom:10px;gap:18px}
+.sezione > .testa h2{font-size:27px;font-weight:800;letter-spacing:-.014em;line-height:1.06}
+.sezione > .testa .a-destra{font-size:14.5px;font-weight:500}
+.sotto-titolo{font-size:14.5px;font-style:italic;color:var(--grigio);margin:-6px 0 10px}
+.griglia{column-gap:var(--gap);row-gap:16px}
+.fil::before{border-left:1px solid var(--filo)}
+.titolo-medio{font-size:25px;font-weight:800;letter-spacing:-.012em;line-height:1.08;margin:0 0 6px}
+.titolo-piccolo{font-size:19px;font-weight:800;line-height:1.12;margin:0 0 4px}
+.occhiello{font:700 13.5px/1.2 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.04em;color:var(--grigio);margin:0 0 3px}
+.leggi{font-weight:700}
+.colonna-testo p,.colonna-testo li{font-size:17.5px;line-height:1.45}
+.colonna-testo h2{font-size:25px;font-weight:800;margin:22px 0 8px;line-height:1.1}
+.colonna-testo h3{font-size:19px;font-weight:800;margin:16px 0 6px}
+.citazione{font-size:18px;font-style:italic;font-weight:400;line-height:1.3}
+.citazione .chi{font-style:normal}
+
+/* ---------- figure: tavole numerate ---------- */
+.fig-tit{font-size:20px;font-weight:800;line-height:1.15;margin:0 0 3px;letter-spacing:-.01em}
+.fig-sotto{font-size:13.5px;line-height:1.33;color:var(--grigio);margin:0 0 8px}
+.fig-fonte{font-size:12.5px;line-height:1.33;margin:5px 0 0}
+.fig-lettura{font-size:14px;min-height:19px}
+.asse text{font-size:12.5px}
+.etich{font-size:13px;font-weight:700}
+.nota-t{font-size:13.5px}
+
+/* ---------- elenchi, tabelle, barre ---------- */
+table.fitta{font-size:14.5px}
+table.fitta th{border-bottom:1px solid var(--ink);font-size:13px;font-weight:700}
+table.fitta td{border-bottom:1px solid var(--filo)}
+table.fitta tr.evid-riga td{background:none;font-weight:700}
+.barre{font-size:14.5px}
+.barre td.b i{height:9px}
+.elenco-n,.smentite li,.fatti li{font-size:15px}
+.fatti li b{font-weight:800}
+.frasi q,.elenco-frasi q{font-size:16px;line-height:1.38}
+.frasi .evid,.elenco-frasi .evid,q .evid,.cronologia .evid{background:none;font-weight:800;padding:0}
+.colonne-elenco{font-size:15px;column-rule:1px solid var(--filo)}
+.colonne-elenco a{color:var(--voce)}
+.lettere{font-size:18px;font-weight:800;gap:2px 12px;margin:4px 0 10px}
+.lettere a.attivo{color:var(--voce);text-decoration:underline;text-underline-offset:3px}
+.parole-nuvola a{color:var(--voce)}
+.filtri button{font:inherit;font-size:15px;font-weight:700;border-bottom:2px solid transparent}
+.filtri button.attivo{border-bottom-color:var(--ink)}
+.cerca-grande input{font:inherit;font-size:18px;padding:6px 9px;border:1px solid var(--ink);border-radius:0;min-width:260px}
+figure{margin:0}
+body .bottone,body[data-sezione] .bottone,body[data-sezione] .menu button{background:var(--ink);color:var(--fondo);border:1px solid var(--ink);font-weight:700}
+.segnaposto{border-color:var(--filo)}
+.prec-succ{border-top:1px solid var(--ink);margin-top:20px;font-size:19px;font-weight:800;font-stretch:100%}
+.prec-succ a{color:var(--voce)}
+.vedi{font-size:15px}
+
+/* le storie come rimandi */
+.rimandi{column-count:3;column-gap:var(--gap);column-rule:1px solid var(--filo)}
+.rimando{font-size:15px;line-height:1.3;margin:0 0 7px;break-inside:avoid;padding-left:14px;text-indent:-14px}
+.rimando a{font-weight:700}
+.rimando i{color:var(--grigio);font-size:13.5px}
+.rimando .esito{font-size:13px;margin-left:4px;text-indent:0}
+.rimando .esito::before{width:9px;height:9px}
+/* vecchie tessere, se una pagina le usa ancora */
+.tessere{display:block;column-count:3;column-gap:var(--gap)}
+.tessera{display:block;background:none;outline:0;border:0;padding:0 0 8px;break-inside:avoid;color:var(--ink)}
+.tessera .t-num{display:none}
+
+/* i quattro percorsi come voci */
+.ingressi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 var(--gap)}
+.ingresso{display:block;padding:0;min-height:0;background:none;outline:0;border:0;color:var(--ink);position:relative;font-size:15px;line-height:1.32}
+.ingresso + .ingresso::before{content:"";position:absolute;left:calc(var(--gap) / -2);top:0;bottom:0;border-left:1px solid var(--filo)}
+.ingresso .testa{margin-bottom:3px;line-height:1.15}
+.ingresso .lemma{font-size:20px}
+.ingresso b{font-weight:800}
+
+/* niente numeri giganti, niente citazioni giganti */
+.numero-ill,.c4 .numero-ill,.c3 .numero-ill{font-size:30px;font-weight:800;line-height:1.05;letter-spacing:-.01em;color:var(--ink)}
+.che-cosa{font-size:14px;font-weight:400;color:var(--grigio)}
+.citazione-gigante,.apertura-v2 .citazione-gigante{font-size:21px;font-weight:400;font-style:italic;line-height:1.3;color:var(--ink);max-width:900px}
+.citazione-gigante + .chi{font-size:13.5px;margin-top:4px}
+.t-num,.grande{font-size:24px;font-weight:800}
+.tappe .t-num{font-size:20px;font-weight:800;color:var(--grigio)}
+.tappe .tappa{padding:9px 0}
+.tappe h3{font-size:18px;font-weight:800}
+.tappe .passaggio p{font-size:16px;color:var(--ink)}
+.cronologia .c-anno{font-size:26px;font-weight:800;color:var(--ink);font-stretch:100%}
+.cronologia li{grid-template-columns:90px 1fr;gap:16px;padding:9px 0}
+.cronologia h3{font-size:20px;font-weight:800}
+.apertura{font-size:18px;line-height:1.38;border-left:0;padding:0;margin:10px 0}
+.scorre-box{border-color:var(--filo);padding:6px 0;margin:10px 0}
+.scorre{font-size:16px}
+.scorre b{color:var(--ink);font-weight:800}
+.parole-grandi a{color:var(--voce);font-weight:800}
+
+/* ---------- racconto a passi (capitoli, percorsi) ---------- */
+.scorrimento{margin-top:12px}
+.scena{top:12px}
+.passo{min-height:30vh;padding:10px 0 26px;border-top:1px solid var(--filo)}
+.passo p{font-size:17.5px;line-height:1.45;max-width:540px}
+.passo h3,.passo .tit-passo{font-size:20px;font-weight:800}
+.cursore button{background:var(--fondo);color:var(--ink);border:1px solid var(--ink);padding:5px 14px;font-weight:700}
+.cursore input[type=range]{accent-color:var(--ink)}
+.cursore output{font-weight:800}
+.scommessa{border:0;border-top:1px solid var(--ink);border-bottom:1px solid var(--filo);padding:10px 0 12px;margin:14px 0;max-width:560px}
+.scommessa .domanda{font-size:20px;font-weight:800;font-stretch:100%;margin:2px 0 10px}
+.scommessa .bottone{background:var(--fondo);color:var(--ink);border:1px solid var(--ink);font-size:16px;padding:8px 16px}
+.scommessa .bottone:hover{background:var(--ink);color:#fff}
+.scommessa .bottone.scelta{outline:0;background:var(--ink);color:#fff}
+.capitoli-home .n{font-size:28px;font-weight:800}
+
+/* ---------- piede ---------- */
+.piede{margin-top:26px;border-top:1px solid var(--ink);padding:10px 0 28px;font-size:14.5px}
+.piede h3{font-size:18px;font-weight:800;margin-bottom:4px}
+.piede a.doc{font-size:15.5px;font-weight:700;padding:5px 0;font-stretch:100%}
+.piede .ultima{border-top:1px solid var(--filo);margin-top:12px}
+
+/* ---------- la home: la pagina del vocabolario ---------- */
+.home-v main{padding-bottom:0}
+.frontespizio{display:grid;grid-template-columns:minmax(0,9fr) minmax(0,3fr);column-gap:var(--gap);align-items:end;padding:10px 0 10px;border-bottom:1px solid var(--ink)}
+.definizione h1{font-size:46px;font-weight:800;letter-spacing:-.024em;line-height:1;margin:0;display:inline;white-space:nowrap}
+.definizione h1 i{font-weight:400}
+.definizione .pron{font-size:17px;color:var(--grigio);margin-left:8px;white-space:nowrap}
+.def{font-size:17px;line-height:1.3;margin:5px 0 0}
+.def b.n{font-weight:900;margin:0 2px 0 3px}
+.cerca label{display:block;font:700 14px/1 "Alegreya Sans SC",sans-serif;letter-spacing:.04em;margin-bottom:5px}
+.cerca div{display:flex}
+.abbr{font-size:13px;line-height:1.3;color:#3B4149;margin:6px 0 0}
+.abbr b{color:var(--ink)}.abbr b.blu{color:var(--voce)}
+.blocco{padding:10px 0 12px;border-bottom:1px solid var(--ink)}
+.blocco:last-child{border-bottom:0}
+.g12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap)}
+.g12>*{position:relative;min-width:0}
+.g12>*+*::before{content:"";position:absolute;left:calc(var(--gap) / -2);top:0;bottom:0;border-left:1px solid var(--filo)}
+.s3{grid-column:span 3}.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}.s7{grid-column:span 7}.s8{grid-column:span 8}.s9{grid-column:span 9}.s12{grid-column:span 12}
+.tavola figcaption,.tav-tit{font-size:22px;font-weight:800;letter-spacing:-.012em;line-height:1.12;margin-bottom:6px}
+.tavola.media figcaption,.tav-tit.media{font-size:19px;line-height:1.15}
+.tavola .num,.tav-tit .num{font-size:14px}
+.titolo-sezione{font-size:23px;font-weight:800;letter-spacing:-.014em;line-height:1.05;margin:0 0 8px}
+.titolo-sezione span,.titolo-sezione small{font-size:15px;font-weight:400;font-style:italic;letter-spacing:0;color:var(--grigio);margin-left:8px}
+.titolo-sezione small a{color:var(--grigio);text-decoration:underline}
+.voce{font-size:15px;line-height:1.3}
+.voce + .voce{margin-top:8px}
+.voce .testa{margin:0 0 2px;line-height:1.15}
+.voce p{margin:0 0 3px}
+#tre .voce .lemma{font-size:19px}
+.brevi{list-style:none;margin:0;padding:0}
+.brevi li{font-size:14.5px;line-height:1.3;padding:4px 0;border-bottom:1px solid var(--filo)}
+.brevi li:last-child{border-bottom:0}
+.brevi a{text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
+.brevi b,.brevi .n{font-weight:800;color:var(--ink);font-size:inherit}
+/* la riga dei sette capitoli */
+.sette{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));column-gap:22px}
+.sette>*{position:relative;min-width:0}
+.sette>*+*::before{content:"";position:absolute;left:-11px;top:0;bottom:0;border-left:1px solid var(--filo)}
+.cap .guida-cap{font-size:13.5px;color:var(--grigio);margin:0 0 1px;line-height:1.2}
+.cap .guida-cap i{color:var(--ink)}
+.cap h3{font-size:19px;font-weight:800;line-height:1.08;letter-spacing:-.01em;margin:0 0 3px}
+.cap h3 a{color:var(--voce)}
+.cap .fig{height:74px;margin:4px 0 2px}
+.cap .som{font-size:14px;line-height:1.28;margin:3px 0 0}
+.cap .did{font-size:12.5px;margin:0}
+/* confronto di parole nella tavola I */
+.confronto-riga{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:14px;margin:0 0 4px}
+.confronto-riga input{font:inherit;font-size:15px;padding:3px 8px;border:1px solid var(--ink);border-radius:0;width:300px;max-width:100%}
+.confronto-riga .bottone{font-size:14px;padding:4px 10px}
+.confronto-riga .togli{font:inherit;font-size:14px;font-weight:700;background:none;border:0;border-bottom:2px solid currentColor;padding:0 1px;cursor:pointer}
+.confronto-riga .pronti a{text-decoration:underline;text-underline-offset:2px;color:var(--ink);margin-right:8px}
+.confronto-riga .avviso{color:var(--rosso);font-size:13.5px;min-height:0}
+.lettura-asse{font-size:13.5px;min-height:18px;color:var(--ink);margin:0}
+/* le parole: righe di voce con la curva */
+.voci-due{column-count:2;column-gap:var(--gap);column-rule:1px solid var(--filo)}
+.riga-voce{display:grid;grid-template-columns:118px minmax(0,1fr);align-items:end;column-gap:8px;padding:2px 0;border-bottom:1px solid var(--filo);break-inside:avoid}
+.riga-voce:hover{text-decoration:none}
+.riga-voce:hover .lemma{text-decoration:underline}
+.riga-voce .lemma{font-size:16.5px;white-space:nowrap;grid-column:1;grid-row:1;align-self:center}
+.riga-voce .anni{grid-column:1;grid-row:1;justify-self:end;font-size:12.5px;align-self:center}
+.riga-voce .fig{grid-column:2;grid-row:1;display:block}
+.lemmi p{font-size:14.5px;padding:2px 0;border-bottom:1px solid var(--filo);display:flex;gap:6px;align-items:baseline;margin:0}
+.lemmi p.did{display:block;border:0;font-size:12.5px;margin:0 0 3px}
+.lemmi .cifre{margin-left:auto;font-variant-numeric:tabular-nums;font-size:13.5px;white-space:nowrap}
+/* il listino della parola dell'anno */
+.listino{column-count:9;column-gap:20px;column-rule:1px solid var(--filo);font-size:14px;line-height:1.34}
+.listino a{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.listino a span{color:var(--grigio);display:inline-block;width:34px;font-variant-numeric:tabular-nums}
+.listino a.dieci{font-weight:800}.listino a.dieci span{color:var(--ink)}
+.sezioni{list-style:none;margin:0;padding:0;columns:2;column-gap:18px}
+.sezioni li{display:flex;justify-content:space-between;font-size:15px;padding:2px 0;border-bottom:1px solid var(--filo);break-inside:avoid}
+.sezioni a{font-weight:700}.sezioni span{color:var(--grigio)}
+.percorsi-voci p{font-size:14.5px;line-height:1.3;margin:0 0 6px}
+.percorsi-voci .lemma{font-size:16px}
+.q{display:inline-block;width:8px;height:8px;margin:0 3px 0 8px}
+.q:first-child{margin-left:0}
+.q.pieno{background:var(--ink)}.q.mezzo{background:#B8BEC7}.q.rosso{background:var(--rosso)}.q.vuoto{outline:1px solid #B8BEC7;outline-offset:-1px}
+.leg{display:flex;flex-wrap:wrap;gap:4px 20px;font-size:13.5px;color:var(--grigio);margin-bottom:6px}
+.g-leg{display:inline-flex;align-items:center;gap:6px}
+.g-scala{display:inline-flex}.g-scala i{width:11px;height:10px}
+.g-tr{width:22px;height:5px}.g-qd{width:10px;height:10px}
+.g-chiave{font-size:14px}
+.chiusa-riga{font-size:15px;margin:0}
+.chiusa-riga .es{display:inline}
+
+/* ---------- capitolo: la voce lunga ---------- */
+.cap-es{font-size:17px;margin:8px 0 6px}
+.cap-es span{font-size:14px}
+.senso{display:flex;gap:8px;align-items:baseline}
+.senso .n{font-weight:900;color:var(--grigio);min-width:18px}
+.rimandi.una{column-count:1}
+.passo .porte{color:var(--grigio)}
+
+@media (max-width:1100px){
+  .s3,.s4,.s5,.s6,.s7,.s8,.s9{grid-column:span 12}
+  .g12>*+*::before{display:none}
+  .g12>*+*{margin-top:12px;padding-top:10px;border-top:1px solid var(--filo)}
+  .frontespizio{grid-template-columns:1fr;row-gap:10px}
+  .sette{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:14px}
+  .sette>*:nth-child(4n+1)::before{display:none}
+  .listino{column-count:5}
+  .rimandi,.tessere{column-count:2}
+  .ingressi{grid-template-columns:1fr 1fr;row-gap:12px}
+  .ingresso:nth-child(odd)::before{display:none}
+}
+@media (max-width:759px){
+  :root{--margine:16px;--gap:18px}
+  .pagina{padding:0 16px}
+  .unghie{position:static;flex-direction:row;width:auto;overflow-x:auto;border-left:0;border-bottom:1px solid var(--filo)}
+  .unghie a{padding:7px 0;flex:1 0 22px;border-bottom:0}
+  .riga-guide{flex-wrap:wrap;row-gap:4px}
+  .guida{max-width:48%;font-size:16px}
+  .testatina .menu{order:3;flex:1 0 100%;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;white-space:nowrap;font-size:14.5px;padding-bottom:2px}
+  .riga-nome{flex-wrap:wrap;row-gap:6px}
+  .cerca-testa{flex:1 0 100%}
+  .marchio{font-size:20px}
+  .titolo-pagina,.fascia .titolo-pagina{font-size:38px !important}
+  .titolo-pagina.lungo,.fascia .titolo-pagina.lungo{font-size:28px !important}
+  .sommario,.fascia .sommario{font-size:17px}
+  .definizione h1{font-size:32px;white-space:normal}
+  .def{font-size:16px}
+  .sette{grid-template-columns:1fr 1fr}
+  .sette>*:nth-child(odd)::before{display:none}
+  .sette>*:nth-child(4n+1)::before{display:none}
+  .voci-due{column-count:1}
+  .listino{column-count:3}
+  .rimandi,.tessere{column-count:1}
+  .ingressi{grid-template-columns:1fr}
+  .ingresso::before{display:none}
+  .sezione{margin-top:16px}
+  .passo{min-height:0}
+}
+@media (max-width:420px){.sette{grid-template-columns:1fr}.sette>*::before{display:none}.sette>*+*{border-top:1px solid var(--filo);padding-top:8px}}
+
+/* ---------- la pagina del fascismo: fondo nero, testo bianco, il rosso per la cosa da guardare ---------- */
+body[data-sezione="fascismo"]{--ink:#F2F3F5;--inchiostro:#F2F3F5;--fondo:#0E0F12;--filo:#2A2D33;--riga:#2A2D33;--grigio:#A3A9B2;--voce:#9DB4FF;--voce-s:#C3D1FF;--rosso:#FF6B66;background:#0E0F12;color:#F2F3F5}
+body[data-sezione="fascismo"] .unghie a{color:#F2F3F5}
+body[data-sezione="fascismo"] .unghie a:nth-child(odd){background:#F2F3F5;color:#0E0F12}
+body[data-sezione="fascismo"] .cerca-testa button{background:#F2F3F5;color:#0E0F12;border-color:#F2F3F5}
+body[data-sezione="fascismo"] .cerca-testa input{border-color:#F2F3F5}
+body[data-sezione="fascismo"] .guida a,body[data-sezione="fascismo"] .marchio,body[data-sezione="fascismo"] .testatina .menu a{color:#F2F3F5}
+body[data-sezione="fascismo"] .testatina .menu a.attivo{color:#9DB4FF}
+body[data-sezione="fascismo"] .fascia{border-bottom-color:#F2F3F5}
+body[data-sezione="fascismo"] .scommessa .bottone{background:#0E0F12;color:#F2F3F5;border-color:#F2F3F5}
+body[data-sezione="fascismo"] .scommessa .bottone.scelta,body[data-sezione="fascismo"] .scommessa .bottone:hover{background:#F2F3F5;color:#0E0F12}
+body[data-sezione="fascismo"] .cursore button{background:#0E0F12;color:#F2F3F5;border-color:#F2F3F5}
+body[data-sezione="fascismo"] .q.pieno{background:#F2F3F5}
+.riga-parole input{font:inherit;font-size:16px;font-weight:400;border:1px solid var(--ink);padding:5px 9px;border-radius:0;background:var(--fondo);color:var(--ink)}
+.gettone{font:inherit;font-size:14px;font-weight:700;background:none !important;color:var(--ink) !important;border:0;border-bottom:2px solid currentColor;padding:0 2px}
+/* storia: testo e tavole affiancati */
+.storia{margin-top:10px}
+.storia .colonna-testo{max-width:none}
+.storia .colonna-testo p{font-size:17px;line-height:1.45}
+.storia .verdetto{border-top:1px solid var(--ink);padding-top:0;margin-top:16px;font-size:16px}
+.tav-storia + .tav-storia{border-top:1px solid var(--filo);margin-top:14px;padding-top:10px}
+.prec-succ{flex-wrap:wrap;gap:6px 30px;font-size:17px}
+.prec-succ span{flex:1 1 40%;min-width:0}
+.prec-succ span:last-child{text-align:right}
+.storia h1{font-size:inherit}
+.voci-riga{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px var(--gap)}
+.voci-riga .voce{margin:0;border-top:1px solid var(--filo);padding-top:6px}
+.voci-riga .lemma{font-size:18px}
+body[data-sezione="fascismo"] .tessera{background:none;outline:0}
+ol.cronologia,ul.cronologia{column-count:2;column-gap:var(--gap);column-rule:1px solid var(--filo);margin-top:10px}
+.cronologia li{break-inside:avoid}
+@media (max-width:900px){ol.cronologia,ul.cronologia{column-count:1}}
+.dove{margin-bottom:10px}

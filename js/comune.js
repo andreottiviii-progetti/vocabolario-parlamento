@@ -122,22 +122,34 @@
   G.INVENTARIO = [["parole", "parole", "parole.html"], ["anni", "anni", "anni.html"], ["legislature", "legislature", "legislature.html"], ["partiti", "partiti", "partiti.html"],
     ["persone", "persone", "persone.html"], ["temi", "temi", "temi.html"], ["storie", "storie", "storie.html"], ["esperimenti", "esperimenti", "esperimenti.html"]];
   G.MENU = [["Parole", "parole.html"], ["Prime volte", "primevolte.html"], ["Anni", "anni.html"], ["Legislature", "legislature.html"], ["Partiti", "partiti.html"], ["Persone", "persone.html"], ["Temi", "temi.html"], ["Storie", "storie.html"], ["Percorsi", "percorsi.html"], ["Esperimenti", "esperimenti.html"], ["Metodo e limiti", "metodo.html"], ["Dati", "dati.html"], ["Paper", "paper.html"]];
+  /* testatina del vocabolario: le parole guida ai due lati (come nei dizionari: la prima e l'ultima voce della pagina),
+     il menu in mezzo; nelle pagine interne, sotto, il nome del sito e la ricerca */
+  G.MARCHIO = 'vocabolàrio <i>del</i> Parlaménto';
   G.testata = function (o) {
     o = o || {};
     const el = document.getElementById("testata");
     if (!el) return;
-    el.className = "testata" + (o.compatta === false ? "" : " compatta");
-    const menu = G.MENU.map((m) => `<a href="${m[1]}"${o.attivo === m[0] ? ' class="attivo"' : ""}>${m[0]}</a>`).join("");
-    let inv = "";
-    if (o.compatta === false) {
-      inv = '<div class="inventario">' + G.INVENTARIO.map((r) => `<a href="${r[2]}"><b>${G.num(G.conti[r[0]])}</b> ${r[1]}</a>`).join("") + "</div>";
-    }
-    el.innerHTML = `
-      <div class="riga-alta"><span>Camera e Senato, 1848-2022</span><span>Aggiornato al 22 novembre 2026</span></div>
-      <h1><a href="index.html">Il vocabolario del Parlamento</a></h1>${inv}
-      <nav class="menu" aria-label="Sezioni">${menu}<form action="parola.html" method="get" role="search"><input name="p" type="search" placeholder="una parola o un'espressione" aria-label="Cerca una parola o un'espressione" autocomplete="off" list="sugg-ricerca"><datalist id="sugg-ricerca"></datalist><button type="submit">Cerca</button></form></nav>
-      ${o.briciole ? '<div class="briciole">' + o.briciole + "</div>" : ""}`;
+    const home = o.compatta === false;
+    el.className = "testatina" + (home ? " home" : "");
+    const menu = G.MENU.map((m) => `<a href="${m[1]}"${o.attivo === m[0] ? ' class="attivo" aria-current="page"' : ""}>${m[0]}</a>`).join("");
+    const g = o.guide || (home ? [G.lGuida("adunque"), G.lGuida("tangentopoli")] : [G.esc((o.attivo || "vocabolario").toLowerCase()), "1848 · 2022"]);
+    el.innerHTML = `<div class="riga-guide"><span class="guida" id="guida-a">${g[0]}</span><nav class="menu" aria-label="Sezioni">${menu}</nav><span class="guida destra" id="guida-b">${g[1]}</span></div>` +
+      (home ? "" : `<div class="riga-nome"><a class="marchio" href="index.html">${G.MARCHIO}</a><form class="cerca-testa" action="parola.html" method="get" role="search"><input name="p" type="search" placeholder="cerca una voce: parola o espressione" aria-label="Cerca una parola o un'espressione" autocomplete="off" list="sugg-ricerca"><datalist id="sugg-ricerca"></datalist><button type="submit">Cerca</button></form></div>`) +
+      (o.briciole ? '<div class="briciole">' + o.briciole + "</div>" : "");
     G.suggerisci(el.querySelector("input[name=p]"), el.querySelector("#sugg-ricerca"));
+  };
+  /* parola guida che porta alla sua voce */
+  G.lGuida = (w, testo) => `<a href="parola.html?p=${encodeURIComponent(w)}">${G.esc(testo || w)}</a>`;
+  /* cambia le parole guida quando la pagina sa qual è la sua voce (precedente e successiva) */
+  G.guide = function (a, b) {
+    const ga = document.getElementById("guida-a"), gb = document.getElementById("guida-b");
+    if (ga && a != null) ga.innerHTML = a;
+    if (gb && b != null) gb.innerHTML = b;
+  };
+  /* voce precedente e successiva come parole guida: [href, testo] */
+  G.guideVicine = function (prima, dopo) {
+    const corto = (s) => { s = String(s || ""); return s.length > 34 ? s.slice(0, 32).replace(/\s+\S*$/, "") + "…" : s; };
+    G.guide(prima ? `<a href="${prima[0]}" title="${G.esc(prima[1])}">◂ ${G.esc(corto(prima[1]))}</a>` : "", dopo ? `<a href="${dopo[0]}" title="${G.esc(dopo[1])}">${G.esc(corto(dopo[1]))} ▸</a>` : "");
   };
   /* suggerimenti mentre si scrive: parole che cominciano cosi' (archivio delle prime volte) ed espressioni che le contengono */
   G.suggerisci = function (inp, lista) {
@@ -271,10 +283,11 @@
     const cs = getComputedStyle(document.body);
     const v = (k) => (cs.getPropertyValue(k) || "").trim();
     let pieno = v("--sez"), scuro = v("--sez-s"), mezzo = v("--sez-m");
-    if (!pieno || document.body.dataset.sezione === "neutra" || !document.body.dataset.sezione) { pieno = "#2454FF"; scuro = "#1B3FCC"; mezzo = "#A9BBFF"; }
+    if (!pieno || document.body.dataset.sezione === "neutra" || !document.body.dataset.sezione) { pieno = "#1B3FA8"; scuro = "#14307F"; mezzo = "#C9D3EE"; }
     G.SEZ = pieno; G.SEZ_S = scuro; G.SEZ_M = mezzo;
-    // capitolo 10 della guida: il colore solo per la cosa da guardare, il resto in grigi
-    G.ROSSO = pieno; G.NERO = "#8C939D"; G.GDATI = "#B8BEC7"; G.RIGA = "#E3E6EA"; G.GRIGIO = "#5B6470"; G.INK = "#16181D";
+    // impianto del vocabolario: il blu della voce per la parola di cui si parla, il rosso per la cosa da guardare
+    // (anno di punta, tesi, smentita), tutto il resto in grigi
+    G.ROSSO = "#D2281F"; G.NERO = "#8C939D"; G.GDATI = "#B8BEC7"; G.RIGA = "#DFE2E6"; G.GRIGIO = "#5C636D"; G.INK = "#15181C";
     if (document.body.dataset.sezione === "fascismo") {
       G.SEZ = G.ROSSO = "#E3120B"; G.SEZ_S = "#F2F3F5"; G.SEZ_M = "#3A3E46"; G.NERO = "#A3A9B2"; G.GDATI = "#5B6470"; G.RIGA = "#2A2D33"; G.GRIGIO = "#A3A9B2"; G.INK = "#F2F3F5";
     }
@@ -293,6 +306,8 @@
     while (n && (n.classList.contains("sommario") || (n.classList.contains("piccolo") && n.classList.contains("grigio")))) { pezzi.push(n); n = n.nextElementSibling; }
     if (b) f.appendChild(b);
     f.appendChild(h1);
+    // i titoli-frase vanno più piccoli dei titoli-voce (una parola, un anno, un nome)
+    if ((h1.textContent || "").trim().length > 34) h1.classList.add("lungo");
     pezzi.forEach((p) => f.appendChild(p));
     main.insertBefore(f, main.firstChild);
     const dove = document.getElementById("dove");
@@ -510,13 +525,10 @@
     "Potere, partiti e persone": ["#E5007D", "#fff"], "Prima Repubblica": ["#F56300", "#16181D"], "Temi": ["#00A85A", "#16181D"], "Fascismo": ["#16181D", "#fff"] };
   G.SCURO = { "#2454FF": "#1B3FCC", "#00A3AD": "#00757D", "#7B3FE4": "#5B2BB5", "#E5007D": "#B80064", "#F56300": "#B84A00", "#00A85A": "#007A41", "#16181D": "#16181D", "#E3120B": "#C00F09" };
   /* tessere delle storie, di misura diversa */
+  /* le storie come rimandi di un vocabolario: → titolo, epoca in corsivo, verdetto; la smentita col quadrato rosso */
+  G.voceStoria = (s) => `<p class="rimando">${s.verdetto === "smentita" ? '<span class="sm" aria-hidden="true">■</span>' : '<span class="fr" aria-hidden="true">→</span>'} <a href="storia.html?id=${s.id}">${G.esc(s.titolo)}</a> <i>${G.esc(s.occhiello || s.filone || "")}</i>${s.verdetto ? " " + G.esito(s.verdetto) : ""}</p>`;
   G.tessere = function (storie, max) {
-    const forme = ["doppia", "", "alta", "", "", "doppia", "", ""];
-    return '<div class="tessere">' + storie.slice(0, max || 8).map((s, i) => {
-      const c = G.FILONE[s.filone] || ["#E3120B", "#fff"];
-      const num = (s.titolo.match(/\d[\d.,]*%?/) || [""])[0];
-      return `<a class="tessera ${forme[i % forme.length]}" style="--col:${c[0]};--col-s:${G.SCURO[c[0]] || c[0]}" href="storia.html?id=${s.id}"><span class="t-occ">${G.esc(s.occhiello || s.filone || "")}</span>${num && forme[i % forme.length] ? `<span class="t-num">${G.esc(num)}</span>` : ""}<div><h3>${G.esc(s.titolo)}</h3><p>${G.esito(s.verdetto || "descrittiva")}</p></div></a>`;
-    }).join("") + "</div>";
+    return '<div class="rimandi">' + storie.slice(0, max || 8).map(G.voceStoria).join("") + "</div>";
   };
 
   /* ingressi dei quattro percorsi, di misura diversa (guida v2, capitolo 6) */
@@ -525,10 +537,10 @@
     const fc = L.francese.camera || {}, am = Object.keys(fc).reduce((a, b) => (fc[b] > fc[a] ? b : a), Object.keys(fc)[0]);
     const P = R.periodi;
     return `<div class="ingressi">
-      <a class="ingresso nero" href="fascismo.html"><span class="t-occ">Percorso · 1922-1943</span><span class="grande">${G.num(d0.dissenso_100, 0)}→${G.num(d1.dissenso_100, 0)}</span><div><h3>Il fascismo in aula</h3><p>Il dissenso annotato alla Camera scende da ${G.num(d0.dissenso_100, 0)} a ${G.num(d1.dissenso_100, 0)} ogni cento interventi. Le parole del regime, il Voi al posto del Lei, le cinque legislature.</p></div></a>
-      <a class="ingresso" href="lingue.html" style="--col:#2454FF;--col-s:#1B3FCC"><span class="t-occ">Percorso · 1848-2022</span><span class="grande">${G.num(fc[am], 1)}%</span><div><h3>Le lingue dell'aula</h3><p>Nel ${am} il ${G.num(fc[am], 1)}% delle parole alla Camera è in francese. Poi l'inglese, il latino, le forme antiche che spariscono.</p></div></a>
-      <a class="ingresso" href="esteri.html" style="--col:#00A3AD;--col-s:#00757D"><span class="t-occ">Percorso · 1848-2022</span><span class="grande">${X.paesi.length}</span><div><h3>Amici e nemici dell'Italia</h3><p>Il tono dell'aula verso ${X.paesi.length} paesi, anno per anno, accanto alle alleanze e alle guerre vere.</p></div></a>
-      <a class="ingresso" href="risate.html" style="--col:#F56300;--col-s:#B84A00"><span class="t-occ">Percorso · 1848-2022</span><span class="grande">${G.num(P[0][1], 0)}→${G.num(P[P.length - 1][1], 1)}</span><div><h3>Risate e insulti</h3><p>Le risate annotate ogni mille interventi, chi fa ridere, ${G.num(R.frasi.length)} frasi da ridere e gli insulti detti in aula.</p></div></a>
+      <div class="ingresso"><p class="testa"><a class="lemma" href="fascismo.html">Il fascismo in aula</a> <span class="anni">[1922-1943]</span></p><p><b>${G.num(d0.dissenso_100, 0)} → ${G.num(d1.dissenso_100, 0)}</b> Il dissenso annotato alla Camera ogni cento interventi. Le parole del regime, il Voi al posto del Lei, le cinque legislature.</p></div>
+      <div class="ingresso"><p class="testa"><a class="lemma" href="lingue.html">Le lingue dell'aula</a> <span class="anni">[1848-2022]</span></p><p><b>${G.num(fc[am], 1)}%</b> Nel ${am} la quota delle parole in francese alla Camera. Poi l'inglese, il latino, le forme antiche che spariscono.</p></div>
+      <div class="ingresso"><p class="testa"><a class="lemma" href="esteri.html">Amici e nemici dell'Italia</a> <span class="anni">[1848-2022]</span></p><p><b>${X.paesi.length} paesi</b> Il tono dell'aula verso ognuno, anno per anno, accanto alle alleanze e alle guerre vere.</p></div>
+      <div class="ingresso"><p class="testa"><a class="lemma" href="risate.html">Risate e insulti</a> <span class="anni">[1848-2022]</span></p><p><b>${G.num(P[0][1], 0)} → ${G.num(P[P.length - 1][1], 1)}</b> Le risate annotate ogni mille interventi; chi fa ridere, ${G.num(R.frasi.length)} frasi da ridere e gli insulti detti in aula.</p></div>
     </div>`;
   };
 
@@ -582,7 +594,7 @@
       });
       G.separa(et, 14, 14, h - 10);
       et.forEach((e) => e.lk.append("text").attr("class", "etich").attr("x", e.x).attr("y", e.y).attr("fill", G.INK).text(e.t));
-      svg.append("text").attr("x", w - m).attr("y", 40).attr("text-anchor", "end").attr("font-size", 44).attr("font-weight", 300).attr("fill", G.SEZ).text(G.romano(L));
+      svg.append("text").attr("x", w - m).attr("y", 24).attr("text-anchor", "end").attr("font-size", 20).attr("font-weight", 800).attr("fill", G.INK).text(G.romano(L) + " legislatura");
     });
   };
 
@@ -598,15 +610,15 @@
         const x0 = x(c.anni[0]), x1 = x(Math.min(2023, c.anni[c.anni.length - 1] + 1));
         const lk = svg.append("a").attr("href", "capitolo.html?n=" + c.n);
         lk.append("title").text(c.titolo);
-        lk.append("rect").attr("x", x0 + 1).attr("y", 4).attr("width", Math.max(2, x1 - x0 - 2)).attr("height", 26).attr("fill", +c.n === attivo ? "#16181D" : "#EEF0F2");
-        lk.append("text").attr("x", x0 + 6).attr("y", 22).attr("font-size", 13).attr("font-weight", 800).attr("fill", +c.n === attivo ? "#fff" : "#16181D").text(c.n);
-        if (!stretto && x1 - x0 > 90) lk.append("text").attr("x", x0 + 20).attr("y", 22).attr("font-size", 12).attr("fill", +c.n === attivo ? "#fff" : "#5B6470").text(c.titolo);
+        lk.append("rect").attr("x", x0 + 1).attr("y", 4).attr("width", Math.max(2, x1 - x0 - 2)).attr("height", 26).attr("fill", "#fff").attr("stroke", +c.n === attivo ? "#15181C" : "#DFE2E6").attr("stroke-width", +c.n === attivo ? 2 : 1);
+        lk.append("text").attr("x", x0 + 6).attr("y", 22).attr("font-size", 13).attr("font-weight", 800).attr("fill", +c.n === attivo ? "#1B3FA8" : "#15181C").text(c.n);
+        if (!stretto && x1 - x0 > 90) lk.append("text").attr("x", x0 + 20).attr("y", 22).attr("font-size", 12.5).attr("font-weight", +c.n === attivo ? 700 : 400).attr("fill", +c.n === attivo ? "#15181C" : "#5C636D").text(c.titolo);
       });
       if (trasversale) {
         const lk = svg.append("a").attr("href", "capitolo.html?n=" + trasversale.n);
         lk.append("title").text(trasversale.titolo);
-        lk.append("rect").attr("x", 0).attr("y", 34).attr("width", w).attr("height", 12).attr("fill", +trasversale.n === attivo ? "#16181D" : "#E3E6EA");
-        lk.append("text").attr("x", 4).attr("y", 44).attr("font-size", 11.5).attr("font-weight", 700).attr("fill", +trasversale.n === attivo ? "#fff" : "#16181D").text(trasversale.n + " · " + trasversale.titolo + ", 1848-2022");
+        lk.append("rect").attr("x", 0).attr("y", 34).attr("width", w).attr("height", 13).attr("fill", "#fff").attr("stroke", +trasversale.n === attivo ? "#15181C" : "#DFE2E6").attr("stroke-width", +trasversale.n === attivo ? 2 : 1);
+        lk.append("text").attr("x", 4).attr("y", 44.5).attr("font-size", 12).attr("font-weight", 700).attr("fill", +trasversale.n === attivo ? "#1B3FA8" : "#15181C").text(trasversale.n + " · " + trasversale.titolo + ", 1848-2022");
       }
       svg.append("rect").attr("x", x(1941.5)).attr("y", 2).attr("width", x(1945.9) - x(1941.5)).attr("height", 46).attr("fill", "#fff").attr("stroke", "#B8BEC7").attr("stroke-dasharray", "2 2");
       [1848, 1900, 1950, 2000].forEach((y) => svg.append("text").attr("x", x(y)).attr("y", h - 4).attr("text-anchor", y === 1848 ? "start" : "middle").attr("font-size", 12).attr("fill", "#5B6470").text(y));
@@ -638,7 +650,7 @@
       const caps = IX.capitoli.filter((c) => (c[campo] || []).some((x) => String(x).toLowerCase() === v || (campo === "ipotesi" && v.startsWith(String(x).toLowerCase()))));
       const el = document.querySelector(sel);
       if (!el || !caps.length) return;
-      el.innerHTML = `<p class="nel-racconto"><b>Nel racconto:</b> ${caps.map((c) => `<a class="lk" href="capitolo.html?n=${c.n}">capitolo ${c.n}, ${G.esc(c.titolo)}</a>`).join(" · ")}</p>`;
+      el.innerHTML = `<p class="nel-racconto"><i class="gram">nel racconto</i> → ${caps.map((c) => `<i>cap.</i> ${c.n} <a class="lemma piccolo" href="capitolo.html?n=${c.n}">${G.esc(c.titolo)}</a>`).join(" · ")}</p>`;
     }).catch(() => {});
   };
 
@@ -651,9 +663,21 @@
   /* un grafico con collegamenti dentro non è un'immagine: il ruolo diventa «group» (accessibilità) */
   if (typeof MutationObserver !== "undefined") {
     let attesa = null;
-    const ruoli = () => { attesa = null; document.querySelectorAll('svg[role="img"]').forEach((s) => { if (s.querySelector("a")) s.setAttribute("role", "group"); }); };
+    const ruoli = () => { attesa = null; document.querySelectorAll('svg[role="img"]').forEach((s) => { if (s.querySelector("a")) s.setAttribute("role", "group"); }); G.numeraTavole(); };
     new MutationObserver(() => { if (!attesa) attesa = setTimeout(ruoli, 200); }).observe(document.documentElement, { childList: true, subtree: true });
   }
+
+  /* le figure sono tavole numerate, come nei vocabolari illustrati: il numero segue l'ordine nella pagina */
+  G.numeraTavole = function () {
+    let n = 0;
+    document.querySelectorAll("figure.fig > figcaption > .fig-tit").forEach((t) => {
+      n++;
+      let s = t.querySelector(":scope > .num");
+      if (!s) { s = document.createElement("span"); s.className = "num"; t.insertBefore(s, t.firstChild); t.insertBefore(document.createTextNode(" "), s.nextSibling); }
+      const r = n <= 30 ? G.romano(n) : String(n);
+      if (s.textContent !== "Tav. " + r) s.textContent = "Tav. " + r;
+    });
+  };
 
   /* errore leggibile */
   G.nonTrovato = function (el, testo) {
