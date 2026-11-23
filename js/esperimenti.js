@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   G.avvia(function () {
-    G.testata({ attivo: "Esperimenti" });
+    G.testata({ attivo: "Scoperte" });
     G.piede();
     const el = document.getElementById("contenuto");
     return Promise.all([G.carica("esperimenti.json"), G.carica("storie/indice.json").catch(() => ({ storie: [] }))]).then(([E, S]) => pagina(el, E, S));
@@ -11,11 +11,13 @@
   function pagina(el, E, S) {
     const tot = E.conti.find((c) => c[0] === "Totale");
     let filone = G.param("filone") || "", esito = G.param("esito") || "", testo = "";
-    const storiaDi = {};
-    (S.storie || []).forEach((s) => (s.ipotesi || []).forEach((c) => { storiaDi[c] = storiaDi[c] || s; }));
+    // le storie stanno sotto l'esperimento che raccontano (campo «ipotesi» dell'indice delle storie)
+    const storieDi = {}, conEsp = new Set();
+    E.elenco.forEach((e) => { storieDi[e.cod] = (S.storie || []).filter((s) => (s.ipotesi || []).some((c) => c === e.cod || (e.cod.startsWith(c) && !/\d$/.test(e.cod.slice(c.length, c.length + 1))))); storieDi[e.cod].forEach((s) => conEsp.add(s.id)); });
+    const descrittive = (S.storie || []).filter((s) => !conEsp.has(s.id));
     el.innerHTML = `
-      <h1 class="titolo-pagina" style="font-size:clamp(48px,7vw,96px)">${tot[7]} esperimenti su ${E.n_ipotesi} ipotesi: ${tot[1]} reggono, ${tot[2]} in parte, ${tot[3]} smentite</h1>
-      <p class="sommario">Ogni ipotesi è stata scritta prima di guardare i numeri, con la regola che l'avrebbe smentita. Il verdetto è quello della regola, alla lettera. Degli altri ${tot[4] + tot[5] + tot[6]}, ${tot[6]} sono in coda e non sono stati misurati, ${tot[5]} è solo descrittivo, ${tot[4]} ha una misura che non vale.</p>
+      <h1 class="titolo-pagina">Che cosa abbiamo scoperto</h1>
+      <p class="sommario"><b>${tot[7]} esperimenti su ${E.n_ipotesi} ipotesi: ${tot[1]} reggono, ${tot[2]} in parte, ${tot[3]} smentite.</b> Qui ogni voce è un esperimento: che cosa ci aspettavamo, che cosa abbiamo trovato, il verdetto e, sotto, le storie che lo raccontano (${(S.storie || []).length} in tutto). Ogni ipotesi è stata scritta prima di guardare i numeri, con la regola che l'avrebbe smentita. Il verdetto è quello della regola, alla lettera. Degli altri ${tot[4] + tot[5] + tot[6]}, ${tot[6]} sono in coda e non sono stati misurati, ${tot[5]} è solo descrittivo, ${tot[4]} ha una misura che non vale.</p>
       <p class="piccolo grigio">Quando esiste una lettura più larga del verdetto, la scheda della storia la riporta dopo e la chiama così.</p>
       <section class="griglia"><div class="c8" id="g-conti"></div>
       <aside class="c4 fil"><h3 class="titolo-piccolo">Come si legge</h3><ul class="fatti">
@@ -29,7 +31,9 @@
         <div class="filtri" id="f-esito" role="group" aria-label="Esito"></div>
         <div class="filtri" id="f-filone" role="group" aria-label="Filone"></div>
         <p class="fig-sotto" id="quanti"></p>
-        <div class="tab-scorre" id="tabella"></div>
+        <div id="voci-esp"></div>
+      </section>
+      <section class="sezione"><div class="testa"><h2>Storie senza un esperimento</h2></div><p class="sotto-titolo">Lavori descrittivi: raccontano che cosa succede, senza un'ipotesi da mettere alla prova.</p>${G.tessere(descrittive, 200)}
       </section>`;
     // grafico dei conti
     const area = G.figura("#g-conti", {
@@ -66,15 +70,11 @@
       const t = G.norma(testo) ? testo.toLowerCase() : "";
       const righe = E.elenco.filter((e) => (!filone || e.filone === filone) && (!esito || (esito === "altro" ? !["regge", "in parte", "smentita"].includes(e.esito) : e.esito === esito)) &&
         (!t || (e.cod + " " + e.titolo + " " + e.attesa + " " + e.numero).toLowerCase().includes(t)));
-      document.getElementById("quanti").textContent = righe.length + " esperimenti" + (filone ? " nel filone «" + filone + "»" : "") + ". Clicca un'intestazione per ordinare.";
-      G.tabella(document.getElementById("tabella"), [
-        { t: "codice", k: "cod", fmt: (e) => G.lEsp(e.cod), v: (e) => e.cod.replace(/\d+/, (n) => n.padStart(3, "0")) },
-        { t: "esperimento", k: "titolo", fmt: (e) => `<b>${G.esc(e.titolo)}</b>${storiaDi[e.cod] ? ` · <a href="storia.html?id=${storiaDi[e.cod].id}">la storia</a>` : ""}` },
-        { t: "che cosa ci aspettavamo", k: "attesa" },
-        { t: "esito", k: "esito", fmt: (e) => G.esito(e.esito) },
-        { t: "numero chiave", k: "numero", fmt: (e) => G.esc(/^Vedi nota/.test(e.numero) ? "Numero non riportato nell'elenco." : e.numero) },
-        { t: "filone", k: "filone" },
-      ], righe);
+      document.getElementById("quanti").textContent = righe.length + " esperimenti" + (filone ? " nel filone «" + filone + "»" : "") + ", raggruppati per filone.";
+      const voce = (e) => { const st = storieDi[e.cod] || []; return `<div class="esp"><p class="testa">${G.lEsp(e.cod)} <b>${G.esc(e.titolo)}</b> ${G.esito(e.esito)}</p>
+        <p><i class="gram">ci aspettavamo</i> ${G.esc(e.attesa)}</p>${/^Vedi nota/.test(e.numero) ? "" : `<p><i class="gram">trovato</i> ${G.esc(e.numero)}</p>`}${st.length ? `<div class="rimandi una">${st.map(G.voceStoria).join("")}</div>` : ""}</div>`; };
+      const filoni = E.filoni.filter((f) => righe.some((e) => e.filone === f));
+      document.getElementById("voci-esp").innerHTML = filoni.map((f) => `<h3 class="rubrica filone-esp">${G.esc(f)}</h3><div class="voci-esp">${righe.filter((e) => e.filone === f).map(voce).join("")}</div>`).join("");
     }
     document.getElementById("cerca").addEventListener("input", (e) => { testo = e.target.value; aggiorna(); });
     aggiorna();

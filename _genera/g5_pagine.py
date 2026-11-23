@@ -21,8 +21,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comune import *  # noqa
 
 MENU = [("Parole", "parole.html"), ("Prime volte", "primevolte.html"), ("Anni", "anni.html"), ("Legislature", "legislature.html"), ("Partiti", "partiti.html"),
-        ("Persone", "persone.html"), ("Temi", "temi.html"), ("Storie", "storie.html"), ("Percorsi", "percorsi.html"), ("Esperimenti", "esperimenti.html"),
-        ("Metodo e limiti", "metodo.html"), ("Dati", "dati.html"), ("Paper", "paper.html")]
+        ("Persone", "persone.html"), ("Temi", "temi.html"), ("Scoperte", "esperimenti.html"), ("Percorsi", "percorsi.html"), ("Fascismo", "fascismo.html"),
+        ("Metodo", "metodo.html"), ("Dati", "dati.html"), ("Paper", "paper.html"), ("Il progetto", "progetto.html")]
+ALIAS_MENU = {"Storie": "Scoperte", "Esperimenti": "Scoperte", "Metodo e limiti": "Metodo"}
 SEZIONE = {"parole": "parole", "parola": "parole", "primevolte": "parole", "lingue": "parole", "anni": "anni", "anno": "anni",
            "legislature": "legislature", "legislatura": "legislature", "partiti": "partiti", "partito": "partiti",
            "persone": "persone", "persona": "persone", "risate": "persone", "temi": "temi", "tema": "temi", "storie": "storie",
@@ -30,6 +31,7 @@ SEZIONE = {"parole": "parole", "parola": "parole", "primevolte": "parole", "ling
 
 
 def guscio(titolo, descrizione, js, corpo, attivo=None, dove=False, home=False, sezione="neutra"):
+    attivo = ALIAS_MENU.get(attivo, attivo)
     menu = "".join('<a href="%s"%s>%s</a>' % (h, ' class="attivo"' if t == attivo else "", t) for t, h in MENU)
     pre = ["scene.js"] if js in ("capitolo.js", "esteri.js", "lingue.js", "fascismo.js", "percorso.js") else []
     if js in ("home.js", "capitolo.js"):
@@ -57,8 +59,7 @@ def guscio(titolo, descrizione, js, corpo, attivo=None, dove=False, home=False, 
 <nav class="unghie" aria-label="Le parole dalla A alla Z">{UNGHIE}</nav>
 <div class="pagina">
 <header id="testata" class="testatina{' home' if home else ''}">
-<div class="riga-guide"><span class="guida" id="guida-a">{'<a href="parola.html?p=adunque">adunque</a>' if home else (attivo or 'vocabolario').lower()}</span><nav class="menu" aria-label="Sezioni">{menu}</nav><span class="guida destra" id="guida-b">{'<a href="parola.html?p=tangentopoli">tangentopoli</a>' if home else '1848 · 2022'}</span></div>
-{'' if home else '<div class="riga-nome"><a class="marchio" href="index.html">vocabolàrio <i>del</i> Parlaménto</a></div>'}
+<div class="riga-nome"><a class="marchio" href="index.html">vocabolàrio <i>del</i> Parlaménto</a><nav class="menu" aria-label="Sezioni">{menu}</nav></div>
 </header>
 {'<div id="dove" class="dove"></div>' if dove else ''}
 <main id="main">
@@ -101,28 +102,29 @@ def home():
 <section class="blocco" id="racconto" aria-label="Il racconto in sette capitoli"><h2 class="titolo-sezione">Il racconto, in sette capitoli <span id="riga-racconto"></span></h2>
 <div class="sette" id="sette"></div></section>
 <section class="blocco g12" id="esteri-home" aria-label="Tavola seconda: amici e nemici">
-<figure class="tavola s9"><figcaption><span class="num">Tav. II</span> <a href="esteri.html" id="am-titolo">Amici e nemici dell'Italia</a></figcaption><div class="leg" id="leg"></div><div id="g-strisce"></div>
-<p class="did">Come l'aula parla di sette paesi, anno per anno: il colore viene dalle parole vicine al nome del paese. Sotto ogni striscia, le alleanze e le guerre vere. <a href="esteri.html">I sedici paesi, uno per uno →</a></p></figure>
-<div class="s3" id="guerra-pace"></div>
+<figure class="tavola s8"><figcaption><span class="num">Tav. II</span> <a href="esteri.html" id="am-titolo">Amici e nemici dell'Italia</a></figcaption><div class="leg" id="leg"></div><div id="g-strisce"></div>
+<p class="did">Come l'aula parla di sette paesi, anno per anno: sopra la riga quando accanto al nome ci sono parole da nemico, sotto quando sono da amico (media di tre anni). Per la Jugoslavia il segno lo dà il giudice automatico. <a href="esteri.html">I sedici paesi, uno per uno →</a></p></figure>
+<figure class="tavola media s4"><figcaption><span class="num">Tav. III</span> <a id="gu-titolo" href="storia.html?id=missione-o-guerra">Missione o guerra</a></figcaption><div id="g-manubri"></div>
+<p class="did" id="gu-did"></p></figure>
 </section>
 <section class="blocco g12" aria-label="Partiti, risate, smentite">
-<figure class="tavola media s5"><figcaption><span class="num">Tav. III</span> <a id="pa-titolo" href="storia.html?id=mappa-partiti-governo-opposizione">La mappa dei partiti</a></figcaption><div id="g-scie"></div>
-<p class="did">Una linea per famiglia di partiti, un punto per legislatura della Camera. La posizione viene dalle parole, non dai voti. <a href="partiti.html">La mappa che si muove, legislatura per legislatura →</a></p></figure>
-<div class="s4"><figure class="tavola media"><figcaption><span class="num">Tav. IV</span> <a id="ri-titolo" href="risate.html">Risate e insulti</a></figcaption><div id="g-risate"></div><p class="did">Ilarità annotata dallo stenografo ogni mille interventi, periodo per periodo.</p></figure>
-<h2 class="rubrica">Risate, insulti, lingue</h2><div id="lingue-home"></div></div>
+<figure class="tavola media s5"><figcaption><span class="num">Tav. IV</span> <a id="pa-titolo" href="storia.html?id=mappa-partiti-governo-opposizione">La mappa dei partiti</a></figcaption><div id="g-scie"></div>
+<p class="did">Una linea per famiglia di partiti, un punto per legislatura della Camera. La posizione viene dalle parole, non dai voti. <a href="partiti.html">Tutti i partiti, legislatura per legislatura →</a></p></figure>
+<figure class="tavola media s4"><figcaption><span class="num">Tav. V</span> <a id="ri-titolo" href="risate.html">Chi fa ridere più del previsto</a></figcaption><p class="voce" id="ri-spiega"></p><div id="g-risate"></div>
+<p class="did">Risate annotate durante i suoi interventi divise per quelle che ci si aspetta: 1 vuol dire come l'aula del suo tempo. Oratori con almeno 200.000 parole. <a href="risate_migliori.html">Le risate migliori, scelte leggendo →</a></p></figure>
 <div class="s3"><h2 class="rubrica">Ci aspettavamo altro</h2><ul class="brevi" id="smentite"></ul><h2 class="rubrica"><a href="esperimenti.html"><span id="n-esp"></span> esperimenti</a></h2><div id="g-verdetti"></div>
 <p class="did"><i class="q pieno"></i> regge <i class="q mezzo"></i> in parte <i class="q rosso"></i> smentita <i class="q vuoto"></i> altri</p></div>
 </section>
-<section class="blocco" id="parole" aria-label="Le parole"><h2 class="titolo-sezione">Le parole <span>venti voci in ordine di anno di punta; poi le nate dopo il 1990 e le morte con l'Ottocento</span> <small><a href="parole.html">tutte le <b data-conto="parole"></b> voci</a> · <a href="primevolte.html">prime volte</a></small></h2>
-<div class="g12"><div class="s6 voci-due" id="venti"></div><div class="s3"><h2 class="rubrica">Nate dopo il 1990</h2><div id="nate" class="lemmi"></div></div><div class="s3"><h2 class="rubrica">Morte con l'Ottocento</h2><div id="morte" class="lemmi"></div></div></div></section>
+<section class="blocco" id="parole" aria-label="Le parole"><h2 class="titolo-sezione">Le parole <span>venti voci in ordine di anno di punta; poi quelle che crescono dopo il 1990 e le morte con l'Ottocento</span> <small><a href="parole.html">tutte le <b data-conto="parole"></b> voci</a> · <a href="primevolte.html">prime volte</a></small></h2>
+<div class="g12"><div class="s6 voci-due" id="venti"></div><div class="s3"><h2 class="rubrica">Cresciute dopo il 1990</h2><div id="nate" class="lemmi"></div></div><div class="s3"><h2 class="rubrica">Morte con l'Ottocento</h2><div id="morte" class="lemmi"></div></div></div></section>
 <section class="blocco" id="anni" aria-label="La parola dell'anno"><h2 class="titolo-sezione">La parola dell'anno, dal 1848 al 2022 <span>quella detta molto più del solito; una su quindici racconta un evento, le altre sono leggi, procedure, nomi</span> <small><a href="anni.html">tutti i 175 anni</a></small></h2>
 <div class="listino" id="listino"></div></section>
-<section class="blocco g12" aria-label="Temi, percorsi, frase">
-<figure class="tavola media s7"><figcaption><span class="num">Tav. V</span> <a href="temi.html">Di che cosa parla l'aula, tema per tema</a></figcaption><div id="g-temi"></div><p class="did">Più scuro, più se ne parla quell'anno; ogni riga ha la sua scala. In rosso l'anno di punta. I temi li trova un programma leggendo i resoconti.</p></figure>
-<div class="s5"><h2 class="rubrica"><a href="percorsi.html">Otto percorsi</a></h2><div class="percorsi-voci" id="percorsi-voci"></div>
-<figure class="tavola media"><figcaption><span class="num">Tav. VI</span> <a id="fr-titolo" href="storia.html?id=repubblica-non-si-semplifica">La frase della Camera</a></figcaption><div id="g-frasi"></div><p class="did">Parole per frase alla Camera, una tacca per legislatura. In grigio il Parlamento di Torino.</p></figure></div>
+<section class="blocco g12" aria-label="Percorsi, frase, risate">
+<div class="s4"><h2 class="rubrica"><a href="percorsi.html">Otto percorsi</a></h2><div class="percorsi-voci" id="percorsi-voci"></div></div>
+<figure class="tavola media s4"><figcaption><span class="num">Tav. VI</span> <a id="fr-titolo" href="storia.html?id=repubblica-non-si-semplifica">La frase della Camera</a></figcaption><div id="g-frasi"></div><p class="did">Parole per frase alla Camera, una tacca per legislatura. In grigio il Parlamento di Torino.</p></figure>
+<div class="s4"><h2 class="rubrica"><a href="risate_migliori.html">Le risate migliori</a></h2><div id="risate-scelte"></div><p class="did"><a href="risate_migliori.html">Tutte le risate e gli insulti scelti, epoca per epoca →</a></p></div>
 </section>
-<section class="blocco" id="storie-home" aria-label="Vedi anche: le storie"><h2 class="titolo-sezione">Vedi anche <span id="n-storie"></span> <small><a href="storie.html">tutte le <b data-conto="storie"></b> storie</a></small></h2>
+<section class="blocco" id="storie-home" aria-label="Vedi anche: le storie"><h2 class="titolo-sezione">Vedi anche <span id="n-storie"></span> <small><a href="esperimenti.html">tutte le <b data-conto="storie"></b> storie, esperimento per esperimento</a></small></h2>
 <div class="g12"><div class="s9" id="muro"></div>
 <div class="s3"><h2 class="rubrica">Le sezioni</h2><ul class="sezioni" id="sezioni"></ul><h2 class="rubrica">Chi parla di più</h2><div id="g-oratori"></div><p class="did">Interventi alla Camera, 1948-2022. In rosso i deputati radicali della VII legislatura: chi fa ostruzionismo sale in classifica.</p></div></div></section>
 <section class="blocco" id="chiusa" aria-label="Lo stenografo"><p class="chiusa-riga"><span class="lemma nero">stenografo</span> <i class="gram">s. m.</i> Chi scrive quello che l'aula dice: <span id="riga-steno"></span> <span id="chiusa-frasi"></span> <a href="metodo.html">→ Metodo e limiti</a></p></section>"""
@@ -250,6 +252,167 @@ def scarica():
     return elenco
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Missione o guerra: chi governa e chi sta all'opposizione durante ogni operazione.
+# Periodi delle operazioni: gli stessi dell'esperimento H68 (script/481_h68_estrai.py del progetto, costante OPS).
+# Governi e partiti: dati/legislature/*.json (campo governi, stato di ogni partito: G governo, O opposizione), da
+# risultati/h33_tabella_partiti_governo.csv. Partiti dell'opposizione: quelli con almeno il 3% delle parole della
+# legislatura (mappa dei partiti) che stanno all'opposizione del primo governo del periodo.
+# ---------------------------------------------------------------------------------------------------------------------
+OPERAZIONI_H68 = {"Golfo 1990-91": ("1990-08-02", "1991-07-31"), "Somalia": ("1992-12-01", "1994-06-30"), "Bosnia": ("1995-06-01", "1996-12-31"),
+                  "Albania": ("1997-03-01", "1997-12-31"), "Kosovo": ("1999-02-01", "1999-12-31"), "Afghanistan": ("2001-09-12", "2021-12-31"),
+                  "Iraq 2003-06": ("2003-01-01", "2006-12-31"), "Libano 2006": ("2006-07-12", "2007-12-31"), "Libia 2011": ("2011-02-15", "2011-12-31"),
+                  "ISIS": ("2014-06-10", "2022-12-31")}
+NOME_P = {"PDS/DS/PD": "PDS-DS-PD", "FI/PdL": "FI-PdL", "UDC/CCD": "CCD-UDC", "SEL/LeU/SI": "SEL-LeU", "Unita' Socialista": None, "PSI-PSDI unificati": None,
+          "PSI-PSDI/PSIUP": None, "SEL": None, "Rosa nel Pugno": None}
+
+
+def governi_h68():
+    import glob as _g
+    gov, legs = [], []
+    for f in sorted(_g.glob(os.path.join(DATI, "legislature", "repubblica-*.json"))):
+        L = json.load(open(f, encoding="utf-8"))
+        legs.append(L)
+        for g in L.get("governi") or []:
+            gov.append((g, L))
+    out = {}
+    for op, (a, b) in OPERAZIONI_H68.items():
+        nome_g = lambda s: re.sub(r"\s*[\(\[].*$", "", s).replace("Governo ", "").strip()
+        scelti = {}
+        for g, L in sorted(gov, key=lambda x: x[0]["da"]):
+            if g["da"] <= b and g["a"] >= a:
+                k = nome_g(g["governo"])
+                # lo stesso governo può stare in due legislature: si tiene quella iniziata più tardi
+                if k not in scelti or L["da"] > scelti[k][1]["da"]:
+                    scelti[k] = (g, L)
+        gs = sorted(scelti.values(), key=lambda x: x[0]["da"])
+        if not gs:
+            continue
+        partiti_g, partiti_o = [], []
+        for g, L in gs:
+            for p, st in g["stati"].items():
+                n = NOME_P.get(p, p)
+                if st == "G" and n and n not in partiti_g:
+                    partiti_g.append(n)
+        g0, L0 = gs[0]
+        grandi = [r["p"] for r in sorted(L0.get("partiti") or [], key=lambda r: -(r.get("quota") or 0)) if (r.get("quota") or 0) >= 0.03]
+        for p in grandi:
+            n = NOME_P.get(p, p)
+            if g0["stati"].get(p) == "O" and n and n not in partiti_o:
+                partiti_o.append(n)
+        out[op] = {"da": a, "a": b, "governi": [nome_g(g["governo"]) for g, L in gs], "governo": partiti_g, "opposizione": partiti_o,
+                   "tecnico": [nome_g(g["governo"]) for g, L in gs if not any(s == "G" for s in g["stati"].values())]}
+    scrivi_json("sezioni/h68_governi.json", out)
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Le risate e gli insulti migliori: la scelta fatta leggendo le frasi (_genera/risate_migliori.json); qui si ricontrolla
+# ogni frase con il filtro di qualità e si passa al sito. Le frasi sono copiate dai dati delle risate e degli insulti.
+# ---------------------------------------------------------------------------------------------------------------------
+def risate_migliori():
+    f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "risate_migliori.json")
+    if not os.path.exists(f):
+        return
+    R = json.load(open(f, encoding="utf-8"))
+    out = {}
+    for k in ("risate", "insulti"):
+        tenute = []
+        for v in R.get(k, []):
+            testo = re.sub(r"\[[^\]]*\]", "", v.get("frase", ""))
+            if not frase_pulita(testo):
+                continue
+            tenute.append({c: v.get(c, "") for c in ("epoca", "data", "ramo", "oratore", "pid", "partito", "frase", "contesto")})
+        out[k] = tenute
+    out["nomi"] = R.get("nomi", {})
+    out["lette"] = len(json.load(open(os.path.join(DATI, "sezioni", "risate.json"), encoding="utf-8"))["frasi"])
+    scrivi_json("sezioni/risate_migliori.json", out)
+    return len(out["risate"]), len(out["insulti"])
+
+
+def progetto():
+    """La pagina «Il progetto»: la scala del lavoro (tutti i numeri dai dati del sito), i metodi, le fonti."""
+    B = json.load(open(os.path.join(DATI, "base.json"), encoding="utf-8"))["conti"]
+    E = json.load(open(os.path.join(DATI, "esperimenti.json"), encoding="utf-8"))
+    tot = next(c for c in E["conti"] if c[0] == "Totale")
+    n_prime = json.load(open(os.path.join(DATI, "prime", "mappa.json"), encoding="utf-8"))["n"]
+    n_espr = len(json.load(open(os.path.join(DATI, "prime", "espressioni.json"), encoding="utf-8")))
+    n_storie = len(json.load(open(os.path.join(DATI, "storie", "indice.json"), encoding="utf-8"))["storie"])
+    it = lambda x: "{:,}".format(int(x)).replace(",", ".")
+    numeri = [
+        (it(len(ANNI)), "anni di resoconti", "dall'8 maggio 1848, Parlamento subalpino, al 2022"),
+        (it(B["interventi"]), "interventi", "ogni volta che qualcuno prende la parola in aula"),
+        (str(B["parole_milioni"]).replace(".", ","), "milioni di parole", "dette alla Camera e al Senato e contate una per una"),
+        (it(B["sedute"]), "sedute", "in " + it(B["archivi"]) + " archivi di legislatura"),
+        (it(B["parole"]), "parole con la curva", "dette almeno mille volte: per ognuna, anno per anno, Camera e Senato"),
+        (it(n_prime), "prime volte", "le parole dette almeno dieci volte, con la data, chi la dice e la frase; più " + str(n_espr) + " espressioni"),
+        (it(B["persone"]), "persone", "gli oratori riconosciuti, con partito e legislature"),
+        (it(B["legislature"]), "legislature", "trenta del Regno, la Consulta, la Costituente, diciotto della Repubblica"),
+        (it(B["partiti"]), "partiti", "della Camera della Repubblica, in " + it(B["schede_partito"]) + " schede per legislatura"),
+        (it(tot[7]), "esperimenti", "su " + it(E["n_ipotesi"]) + " ipotesi scritte prima di guardare i dati: " + "%d reggono, %d in parte, %d smentite" % (tot[1], tot[2], tot[3])),
+        (it(n_storie), "storie", "un risultato per volta, con il grafico, le frasi vere e il limite"),
+        (it(B["temi"]), "temi", "trovati da un programma che raggruppa le parole che compaiono insieme"),
+    ]
+    celle = "".join('<li><b>%s</b> %s<span>%s</span></li>' % n for n in numeri)
+    return f"""<div class="briciole"><a href="index.html">Home</a> › Il progetto</div>
+<h1 class="titolo-pagina">Il progetto</h1>
+<p class="sommario">Il vocabolario del Parlamento legge tutti i resoconti stenografici di Camera e Senato dal 1848 al 2022 e conta le parole: quali nascono, quali muoiono, chi le dice, come cambia la lingua dell'aula con il Regno, il fascismo, la Repubblica. Non è un'antologia di discorsi: è l'archivio intero, misurato.</p>
+<section class="sezione"><div class="testa"><h2>La scala del lavoro</h2></div><ul class="scala">{celle}</ul></section>
+<section class="sezione griglia">
+<div class="c7 colonna-testo">
+<h2>Come è fatto</h2>
+<p><b>I testi.</b> Un file per seduta, ricavato in gran parte dalle scansioni delle pagine stampate. La pulizia tiene solo i discorsi: decreti letti, votazioni, elenchi e tabelle sono messi da parte; applausi, proteste e risate sono tolti dal testo ma contati. Corregge gli errori dello scanner, mai la lingua.</p>
+<p><b>Le parole.</b> Ogni parola si conta nello stesso ramo e nello stesso anno e si divide per le parole dette: le curve dicono quante volte ogni milione di parole. Un anno entra solo se il ramo ha almeno 300.000 parole.</p>
+<p><b>Le prime volte.</b> La prima volta di una parola è il primo intervento dal primo anno in cui la parola compare almeno tre volte in tre anni. Per le parole nuove le prime comparse sono state rilette, per trovare la prima nel senso di oggi.</p>
+<p><b>Chi parla.</b> Ogni intervento è legato a una persona e, alla Camera della Repubblica, al suo partito, con gli elenchi ufficiali di Camera e Senato.</p>
+<p><b>I partiti sulla mappa.</b> Ogni partito, in ogni legislatura, è un insieme di parole: una mappa mette vicini i partiti che usano le stesse parole. Le due direzioni principali sono governo e opposizione, sinistra e destra.</p>
+<p><b>Gli esperimenti.</b> Ogni ipotesi è scritta prima di guardare i dati, con la regola che la smentirebbe. Le prove con le date finte dicono se un salto è vero. Per le domande sul tono (un paese è trattato da amico o da nemico?) un giudice automatico legge le frasi intere; vale solo se supera due controlli fissati prima.</p>
+<p><b>Lo stenografo.</b> Il resoconto non è una registrazione: le regole di chi scrive cambiano nel tempo. Il calendario dei cambi di trascrizione è segnato nei grafici, e ogni capitolo dice dove il resoconto può ingannare.</p>
+<p>Tutto il metodo, con i limiti: <a class="lk" href="metodo.html">Metodo e limiti</a>. I dati da scaricare: <a class="lk" href="dati.html">Dati</a>. I due working paper: <a class="lk" href="paper.html">Paper</a>.</p>
+</div>
+<aside class="c5 fil">
+<h2 class="rubrica">Le fonti</h2>
+<ul class="fatti">
+<li><b>Archivio IPSA</b>, Fondazione Bruno Kessler<span class="et">i resoconti stenografici di Camera e Senato, 1848-2022, licenza CC BY 3.0</span></li>
+<li><b>ItaParlCorpus</b><span class="et">persona e partito degli interventi della Camera della Repubblica, licenza CC0</span></li>
+<li><b>dati.camera.it e dati.senato.it</b><span class="et">elenchi ufficiali di deputati, senatori e membri del governo</span></li>
+<li><b>Wikidata</b><span class="et">nomi, date e collegamenti delle persone</span></li>
+<li><b>Correlates of War</b><span class="et">alleanze e guerre, per il percorso Amici e nemici</span></li>
+</ul>
+<h2 class="rubrica">Dove si entra</h2>
+<ul class="fatti">
+<li><a href="index.html#racconto">Il racconto in sette capitoli</a><span class="et">dal francese del 1848 alla lingua di oggi</span></li>
+<li><a href="parole.html">Le parole</a><span class="et">ogni parola con la sua curva, le frasi vere, chi la dice</span></li>
+<li><a href="esperimenti.html">Che cosa abbiamo scoperto</a><span class="et">gli esperimenti con le loro storie</span></li>
+<li><a href="percorsi.html">I percorsi</a><span class="et">il fascismo in aula, amici e nemici, le lingue, risate e insulti, e altri quattro</span></li>
+</ul>
+</aside>
+</section>"""
+
+
+def sintesi_legislature():
+    """Che cosa distingue ogni legislatura, in poche righe, per la pagina indice: le parole più tipiche (le più frequenti
+    rispetto alle altre legislature, tra quelle dette almeno 700 volte), chi parla di più alla Camera, i temi che salgono,
+    i governi. Tutto dai file dati/legislature/*.json (scritti da g3)."""
+    import glob as _g
+    out = []
+    for f in _g.glob(os.path.join(DATI, "legislature", "*.json")):
+        if f.endswith("sintesi.json"):
+            continue
+        L = json.load(open(f, encoding="utf-8"))
+        tip = sorted([r for r in (L.get("parole_tipiche") or []) if r[2] >= 700 and len(r[0]) >= 4], key=lambda r: -(r[3] / max(r[4], 0.1)))[:7]
+        orc = (L.get("oratori") or {}).get("camera") or (L.get("oratori") or {}).get("senato") or []
+        orc = [o for o in orc if "RICONOSCIUT" not in str(o[1]).upper() and not str(o[1]).upper().startswith(("MINISTRO", "PRESIDENTE", "RELATORE"))]
+        gov = [re.sub(r"\s*[\(\[].*$", "", g["governo"]).replace("Governo ", "") for g in (L.get("governi") or [])]
+        gov = [g for k, g in enumerate(gov) if g not in gov[:k]]
+        out.append({"id": L["id"], "nome": L["nome"], "epoca": L["epoca"], "n": L["n"], "da": L["da"], "a": L["a"],
+                    "tipiche": [r[1] if isinstance(r[1], str) and r[1] else r[0] for r in tip],
+                    "oratore": [orc[0][1], orc[0][0]] if orc else None,
+                    "temi": [t[1] for t in (L.get("temi_su") or [])[:2]], "governi": gov})
+    ordine = {"regno": 0, "consulta": 1, "costituente": 2, "repubblica": 3}
+    out.sort(key=lambda x: (x["da"], ordine.get(x["epoca"], 9), x["n"]))
+    scrivi_json("legislature/sintesi.json", out)
+
+
 def main():
     ESP = json.load(open(os.path.join(DATI, "esperimenti.json"), encoding="utf-8"))
     pagine = {
@@ -266,16 +429,18 @@ def main():
         "persona.html": semplice("persona", "Persona · Il vocabolario del Parlamento", "Un oratore del Parlamento: interventi, parole, partito, le parole più sue.", "persona.js", "Persone", '<a href="persone.html">Persone</a> › <span id="bric">persona</span>', dove=True),
         "temi.html": semplice("temi", "Temi · Il vocabolario del Parlamento", "I 40 temi dell'aula anno per anno e gli atlanti degli esperimenti.", "temi.js", "Temi", "Temi"),
         "tema.html": semplice("tema", "Tema · Il vocabolario del Parlamento", "Un tema dell'aula, anno per anno, dal 1848 al 2022.", "tema.js", "Temi", '<a href="temi.html">Temi</a> › <span id="bric">tema</span>', dove=True),
-        "storie.html": semplice("storie", "Storie · Il vocabolario del Parlamento", "Le storie: un risultato per volta, con il grafico, le frasi vere e il limite.", "storie.js", "Storie", "Storie"),
+        "storie.html": semplice("esperimenti", "Che cosa abbiamo scoperto · Il vocabolario del Parlamento", "Le storie del Parlamento italiano, esperimento per esperimento: che cosa ci aspettavamo, che cosa abbiamo trovato.", "esperimenti.js", "Scoperte", "Che cosa abbiamo scoperto"),
         "storia.html": semplice("storia", "Storia · Il vocabolario del Parlamento", "Una storia del Parlamento italiano raccontata con le parole dell'aula.", "storia.js", "Storie", '<a href="storie.html">Storie</a> › <span id="bric">storia</span>', dove=True),
-        "esperimenti.html": semplice("esperimenti", "Esperimenti · Il vocabolario del Parlamento", "I %d esperimenti su %d ipotesi, con l'esito: regge, in parte, smentita." % (len(ESP["elenco"]), ESP["n_ipotesi"]), "esperimenti.js", "Esperimenti", "Esperimenti"),
+        "esperimenti.html": semplice("esperimenti", "Che cosa abbiamo scoperto · Il vocabolario del Parlamento", "I %d esperimenti su %d ipotesi, con l'esito e le storie che li raccontano." % (len(ESP["elenco"]), ESP["n_ipotesi"]), "esperimenti.js", "Scoperte", "Che cosa abbiamo scoperto"),
         "esperimento.html": semplice("esperimento", "Esperimento · Il vocabolario del Parlamento", "Un esperimento: che cosa ci aspettavamo, l'esito, il numero chiave.", "esperimento.js", "Esperimenti", '<a href="esperimenti.html">Esperimenti</a> › <span id="bric">esperimento</span>'),
         "percorsi.html": semplice("percorsi", "Percorsi · Il vocabolario del Parlamento", "Otto percorsi: le lingue dell'aula, il fascismo in aula, la Prima Repubblica, i partiti, amici e nemici, risate e insulti, parole che nascono e muoiono, il resoconto che inganna.", "percorsi.js", "Percorsi", "Percorsi"),
         "percorso.html": semplice("percorso", "Percorso · Il vocabolario del Parlamento", "Un percorso dentro l'archivio dei resoconti: una domanda, un grafico e una fila di storie.", "percorso.js", "Percorsi", '<a href="percorsi.html">Percorsi</a>'),
-        "fascismo.html": semplice("fascismo", "Il fascismo in aula · Il vocabolario del Parlamento", "Il fascismo in aula, 1922-1943: il dissenso che sparisce, le parole del regime, le legislature XXVI-XXX.", "fascismo.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Il fascismo in aula', dove=True),
+        "fascismo.html": semplice("fascismo", "Il fascismo in aula · Il vocabolario del Parlamento", "Il fascismo in aula, 1922-1943: il dissenso che sparisce, le parole del regime, le legislature XXVI-XXX.", "fascismo.js", "Fascismo", "Il fascismo in aula", dove=True),
         "lingue.html": semplice("lingue", "Le lingue dell'aula · Il vocabolario del Parlamento", "Il francese del Parlamento subalpino, il latino, l'inglese, le forme e le grafie antiche.", "lingue.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Le lingue dell&#39;aula', dove=True),
         "risate.html": semplice("risate", "Risate e insulti · Il vocabolario del Parlamento", "Le risate annotate dallo stenografo e gli insulti detti in aula, 1848-2022.", "risate.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Risate e insulti', dove=True),
         "esteri.html": semplice("esteri", "Amici e nemici dell'Italia · Il vocabolario del Parlamento", "Amici e nemici dell'Italia nelle parole dell'aula, 1848-2022, con le alleanze e le guerre vere.", "esteri.js", "Percorsi", '<a href="percorsi.html">Percorsi</a> › Amici e nemici', dove=True),
+        "risate_migliori.html": semplice("risate", "Le risate migliori · Il vocabolario del Parlamento", "Le risate e gli insulti migliori del Parlamento italiano, 1848-2022, scelti leggendo i resoconti.", "risatemigliori.js", "Percorsi", '<a href="risate.html">Risate e insulti</a> › Le risate migliori'),
+        "progetto.html": guscio("Il progetto · Il vocabolario del Parlamento", "Il vocabolario del Parlamento: 175 anni di resoconti di Camera e Senato, i numeri, i metodi, le fonti.", "statica.js", progetto(), attivo="Il progetto"),
         "primevolte.html": semplice("primevolte", "Prime volte · Il vocabolario del Parlamento", "La prima volta che l'aula dice computer, televisione, telefonino, euro, spread, intelligenza artificiale.", "primevolte.js", "Prime volte", '<a href="parole.html">Parole</a> › Prime volte'),
         "capitolo.html": semplice("capitolo", "Capitolo · Il vocabolario del Parlamento", "Un capitolo del racconto del Parlamento italiano, 1848-2022.", "capitolo.js", "", '<a href="index.html#racconto">Il racconto</a> › <span id="bric">capitolo</span>', dove=True),
         "dati.html": semplice("dati", "Dati · Il vocabolario del Parlamento", "I dati del sito da scaricare: conteggi per parola e anno, mappa dei partiti, esperimenti.", "dati.js", "Dati", "Dati"),
@@ -299,6 +464,18 @@ def main():
             T["metodo"] = re.sub(r"I conti: \d+ reggono[^<]*", nuovo, T["metodo"])
             T["metodo"] = re.sub(r"Le ipotesi sono \d+, gli esperimenti \d+", "Le ipotesi sono %d, gli esperimenti %d" % (E["n_ipotesi"], tot[7]), T["metodo"])
             corpo_m = T["metodo"].replace("<h2>Il calendario delle trascrizioni</h2>", '<h2>Il calendario delle trascrizioni</h2><div id="g-calendario"></div>', 1)
+            # la lettura delle prime comparse delle parole nuove (g9b): metodo e conti, dal file della lettura
+            fs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prime_senso.json")
+            if os.path.exists(fs):
+                PS = json.load(open(fs, encoding="utf-8"))
+                cs = {k: sum(1 for v in PS.values() if v.get("stato") == k) for k in ("confermata", "corretta", "non nuova", "incerta")}
+                corpo_m += ("<h2>La prima volta nel senso di oggi</h2><p>La regola della prima volta è automatica, e per le parole nuove a volte trova un altro significato "
+                            "o un errore di lettura: «euro» compare nel 1848 come pezzo di un cognome, la «banda larga» nel 1991 è la banda del cambio della lira. "
+                            "Per le %d parole che il sito presenta come nuove (le prime volte, le parole della prima pagina, quelle la cui curva comincia dal 1990) "
+                            "un programma ha riletto le prime comparse in ordine di data e ha scelto la prima nel senso di oggi. È una lettura automatica, "
+                            "dichiarata parola per parola con la data vecchia, la data nuova e il motivo: %d prime volte sono confermate, %d corrette, "
+                            "%d parole risultano non nuove (c'erano già e crescono dopo), %d restano incerte e non hanno una data. Dove una parola ha anche "
+                            "un senso antico, la sua pagina dà tutte e due le date.</p>") % (len(PS), cs["confermata"], cs["corretta"], cs["non nuova"], cs["incerta"])
             testa_m, resto_m = METODO.split('<article class="c8 colonna-testo" id="testo-metodo">')
             aside_m = resto_m.split("</article>", 1)[1]
             pagine["metodo.html"] = guscio("Metodo e limiti · Il vocabolario del Parlamento", "Come sono contate le parole, quando cambia il resoconto, il giudice automatico, i limiti dei dati.", "metodo.js",
@@ -307,6 +484,22 @@ def main():
     for nome, html in pagine.items():
         open(os.path.join(SITO, nome), "w", encoding="utf-8", newline="\n").write(html)
     open(os.path.join(SITO, "robots.txt"), "w", encoding="utf-8", newline="\n").write("User-agent: *\nDisallow: /\n")
+    # prime volte nel senso di oggi: il file della lettura (g9b) passa al sito così com'è
+    fs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prime_senso.json")
+    if os.path.exists(fs):
+        scrivi_json("prime/senso.json", json.load(open(fs, encoding="utf-8")))
+    # la tabella di «Missione o guerra» con tutte e dieci le operazioni (g3 ora legge anche i numeri con il punto delle
+    # migliaia): si riscrive solo quel campo della home, così non serve rifare tutto g3
+    from g3_sito import tabella_h68
+    fh = os.path.join(DATI, "home.json")
+    Hh = json.load(open(fh, encoding="utf-8"))
+    Hh["h68"] = tabella_h68()
+    scrivi_json("home.json", Hh)
+    governi_h68()
+    sintesi_legislature()
+    nr = risate_migliori()
+    if nr:
+        print("risate e insulti migliori:", nr)
     el = scarica()
     print("pagine:", len(pagine), "file scaricabili:", len(el))
     fine()

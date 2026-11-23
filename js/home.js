@@ -14,17 +14,17 @@
     G.testata({ compatta: false });
     G.piede();
     G.suggerisci($("q"), $("sugg-home"));
-    return Promise.all([G.carica("home.json"), G.carica("base.json"), G.carica("capitoli/indice.json"), G.carica("storie/indice.json"), V.datiCapitoli(), G.carica("sezioni/risate.json"), G.carica("sezioni/insulti.json").catch(() => null), G.carica("percorsi/indice.json").catch(() => ({ percorsi: [] }))])
-      .then(([H, B, IX, SI, D, R, I, PI]) => {
+    return Promise.all([G.carica("home.json"), G.carica("base.json"), G.carica("capitoli/indice.json"), G.carica("storie/indice.json"), V.datiCapitoli(), G.carica("sezioni/risate.json"), G.carica("sezioni/h68_governi.json").catch(() => ({})), G.carica("percorsi/indice.json").catch(() => ({ percorsi: [] })), G.carica("prime/senso.json").catch(() => ({})), G.carica("sezioni/risate_migliori.json").catch(() => null)])
+      .then(([H, B, IX, SI, D, R, GV, PI, PS, RM]) => {
         const c = B.conti;
         const pronto = asse(H);
         brevi(H);
         sette(IX, D);
-        amici(H, SI, D);
-        tagli(H, SI, R, I);
-        parole(H);
+        amici(H, SI, D, GV);
+        tagli(H, SI, R);
+        parole(H, PS);
         listino(B);
-        temiPercorsi(H, B, SI, D, R, PI);
+        percorsiFrase(B, SI, D, R, PI, RM);
         storie(SI, c, H);
         $("riga-steno").textContent = minuscola(IX.riga) + ".";
         $("chiusa-frasi").innerHTML = `<i class="es">«${G.esc(IX.prologo)}»</i> <span class="anni">la prima riga del primo resoconto, 8 maggio 1848</span> · <i class="es">«${G.esc(IX.chiusa)}»</i> <span class="anni">la frase che chiude il racconto, 20 luglio 2022</span>`;
@@ -165,35 +165,67 @@
         <div class="fig" id="cg${k.n}"></div><p class="did">${V.CAPITOLI_NOTE[k.n]}</p>
         <p class="som">${G.esc(k.sommario)}</p></article>`;
     }).join("");
-    IX.capitoli.forEach((k) => V.graficoCapitolo("#cg" + k.n, +k.n, D, { h: 74, wl: 0, hp: 11, paesi: ["Austria", "Germania"] }));
+    IX.capitoli.forEach((k) => V.graficoCapitolo("#cg" + k.n, +k.n, D, { h: 74, wl: 0, hr: 52, paesi: ["Germania"] }));
   }
 
-  /* ---------------- tavola II: amici e nemici, con guerra, pace e missione accanto ---------------- */
-  function amici(H, SI, D) {
+  /* ---------------- tavola II: amici e nemici; tavola III: missione o guerra, con chi governa ---------------- */
+  function amici(H, SI, D, GV) {
     const am = SI.storie.find((s) => s.id === "amici-e-nemici");
     if (am) $("am-titolo").textContent = am.titolo;
-    $("leg").innerHTML = V.legendaStrisce();
-    V.strisce("#g-strisce", D.X, { hp: 19, hf: 6, vuoto: 8, wl: 112, fsNome: 15, pesoNome: 800, sotto: false, note: [V.NOTE_STRISCE[2], V.NOTE_STRISCE[5]] });
-    const gu = SI.storie.find((s) => s.id === "missione-o-guerra") || { id: "missione-o-guerra", titolo: "Missione o guerra" };
-    $("guerra-pace").innerHTML = ["guerra", "pace", "missione"].map((p, i) => `<div class="voce"><p class="testa"><a class="lemma" href="parola.html?p=${p}">${p}</a> <span class="anni">punta nel ${V.annoDiPunta(H, p)}</span></p><div class="fig" id="gp${i}"></div></div>`).join("") +
-      `<div class="voce"><p><b><a href="storia.html?id=${gu.id}">${G.esc(gu.titolo)}</a></b></p><div class="fig" id="g-manubri"></div><p class="did">Quanto si dice «guerra» invece di «missione», ogni cento volte. Cerchio vuoto: chi governa. Pieno: chi sta all'opposizione.</p></div>`;
-    ["guerra", "pace", "missione"].forEach((p, i) => V.mini("#gp" + i, V.curvaParola(H, p), { h: 40, assi: [1848, 2022], mt: 6, sp: 1.3, punti: [{ x: V.annoDiPunta(H, p), testo: "" }], fmt: (v) => V.num(v, 0) + " per milione" }));
-    V.manubri("#g-manubri", H.h68.map((r) => [r[0], r[2], r[4]]), { wl: 86, passo: 17, fmt: (v) => v });
+    // versione scelta: le linee sopra e sotto lo zero; le altre due restano per il confronto (?amici=celle, ?amici=strisce)
+    const v = G.param("amici");
+    if (v === "celle") { $("leg").innerHTML = V.legendaGradini(); V.amiciCelle("#g-strisce", D.X, { hr: 24, wl: 112 }); }
+    else if (v === "strisce") { $("leg").innerHTML = V.legendaStrisce(); V.strisce("#g-strisce", D.X, { hp: 19, hf: 6, vuoto: 8, wl: 112, fsNome: 15, pesoNome: 800, sotto: false, note: [V.NOTE_STRISCE[2], V.NOTE_STRISCE[5]] }); }
+    else { $("leg").innerHTML = V.legendaLinee(); V.amiciLinee("#g-strisce", D.X, { hr: 40, wl: 112 }); }
+    manubri(H, SI, GV);
+  }
+  function manubri(H, SI, GV) {
+    const righe = H.h68.filter((r) => r[1] != null);
+    // come nel verdetto dell'esperimento: la Bosnia ha troppo poche parole e non si conta tra le operazioni col segno atteso
+    const piu = righe.filter((r) => r[4] > r[2] && r[0] !== "Bosnia").length;
+    $("gu-titolo").textContent = `Chi sta all'opposizione dice «guerra» più di chi governa: succede in ${piu} operazioni militari su ${righe.length}`;
+    $("gu-did").innerHTML = "Su cento volte che si parla dell'operazione, quante si dice «guerra» invece di «missione» o «operazione» (entro 30 parole dal nome del paese), Camera. Ogni intervento conta dalla parte in cui stava chi parlava quel giorno. <a href=\"storia.html?id=missione-o-guerra\">La storia →</a>";
+    V.fig("#g-manubri", (a, w) => {
+      const T = V.tema, passo = 46, mt = 30, h = mt + righe.length * passo + 4, wl = 0;
+      const svg = a.append("svg").attr("width", w).attr("height", h).attr("viewBox", `0 0 ${w} ${h}`).attr("role", "img").attr("aria-label", "Missione o guerra: quota di «guerra» detta da chi governa e da chi sta all'opposizione, operazione per operazione").style("display", "block").style("overflow", "visible");
+      const x = d3.scaleLinear().domain([0, 100]).range([wl + 4, w - 30]);
+      [0, 25, 50, 75, 100].forEach((t) => { svg.append("line").attr("x1", x(t)).attr("x2", x(t)).attr("y1", mt - 6).attr("y2", h).attr("stroke", T.riga); svg.append("text").attr("x", x(t)).attr("y", mt - 10).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", T.grigio).text(t + (t === 100 ? " volte su 100" : "")); });
+      // la spiegazione dentro il grafico
+      svg.append("circle").attr("cx", x(0) + 4).attr("cy", 6).attr("r", 4.5).attr("fill", "#fff").attr("stroke", T.ink).attr("stroke-width", 1.4);
+      svg.append("text").attr("x", x(0) + 12).attr("y", 10).attr("font-size", 12.5).attr("fill", T.ink).text("chi governa");
+      svg.append("circle").attr("cx", x(0) + 96).attr("cy", 6).attr("r", 4.5).attr("fill", T.evid);
+      svg.append("text").attr("x", x(0) + 104).attr("y", 10).attr("font-size", 12.5).attr("fill", T.ink).text("chi sta all'opposizione");
+      righe.forEach((r, i) => {
+        const g = GV[r[0]] || {}, y0 = mt + i * passo, cy = y0 + 25;
+        const una = (g.governi || []).length && (g.governi.length <= 2) && !(g.tecnico || []).length;
+        svg.append("text").attr("x", wl).attr("y", y0 + 11).attr("font-size", 13).attr("font-weight", 800).attr("fill", T.ink).text(r[0].replace(/ \d{4}(-\d{2})?$/, "") + (g.da ? " " + g.da.slice(0, 4) + (g.a.slice(0, 4) !== g.da.slice(0, 4) ? "-" + g.a.slice(2, 4) : "") : ""));
+        const chi = una ? `gov. ${g.governi.join(", ")}: ${g.governo.slice(0, 5).join(", ")} · opp.: ${g.opposizione.slice(0, 4).join(", ")}` : g.governi ? `${g.governi.length > 3 ? g.governi[0] + " … " + g.governi[g.governi.length - 1] : g.governi.join(", ")}: maggioranze diverse` : "";
+        const t = svg.append("text").attr("x", x(0) + 168 > w - 30 ? wl : wl + 0).attr("y", y0 + 11).attr("font-size", 11.5).attr("fill", T.grigio).attr("text-anchor", "end").attr("x", w).text(chi.length > 70 ? chi.slice(0, 68) + "…" : chi);
+        t.append("title").text(chi);
+        const qm = r[2], qo = r[4], forte = r[6] > 0, nonMis = r[0] === "Bosnia";
+        svg.append("line").attr("x1", x(qm)).attr("x2", x(qo)).attr("y1", cy).attr("y2", cy).attr("stroke", T.dati).attr("stroke-width", forte ? 3 : 2).attr("stroke-dasharray", nonMis ? "3 3" : null);
+        svg.append("circle").attr("cx", x(qm)).attr("cy", cy).attr("r", 5).attr("fill", "#fff").attr("stroke", T.ink).attr("stroke-width", 1.4).append("title").text(`${r[0]}: chi governa dice «guerra» ${qm} volte su 100`);
+        svg.append("circle").attr("cx", x(qo)).attr("cy", cy).attr("r", 5).attr("fill", T.evid).append("title").text(`${r[0]}: chi sta all'opposizione dice «guerra» ${qo} volte su 100`);
+        const dx = qo >= qm ? 9 : -9;
+        svg.append("text").attr("x", x(qo) + dx).attr("y", cy + 4).attr("text-anchor", dx > 0 ? "start" : "end").attr("font-size", 12.5).attr("font-weight", 700).attr("fill", T.ink).text(qo);
+        svg.append("text").attr("x", x(qm) - dx).attr("y", cy + 4).attr("text-anchor", dx > 0 ? "end" : "start").attr("font-size", 12).attr("fill", T.grigio).text(qm);
+        if (nonMis) svg.append("text").attr("x", x(100)).attr("y", cy + 4).attr("text-anchor", "end").attr("font-size", 11.5).attr("fill", T.grigio).text("troppo poche parole");
+      });
+    });
   }
 
-  /* ---------------- i tagli: partiti, risate e insulti, smentite ---------------- */
-  function tagli(H, SI, R, I) {
+  /* ---------------- i tagli: partiti, chi fa ridere più del previsto, smentite ---------------- */
+  function tagli(H, SI, R) {
     const mp = SI.storie.find((s) => s.id === "mappa-partiti-governo-opposizione");
     if (mp) $("pa-titolo").textContent = mp.titolo;
     V.scie("#g-scie", H.mappa_linee, { h: 285 });
-    const ri = SI.storie.find((s) => s.id === "risate-in-aula");
-    if (ri) { $("ri-titolo").textContent = ri.titolo; $("ri-titolo").href = "storia.html?id=" + ri.id; }
-    V.barre("#g-risate", R.periodi.map((p, i) => [p[0], p[1], i === R.periodi.length - 1 || i === 0]), { wl: 74, passo: 17, fmt: (v) => V.num(v, v < 10 ? 1 : 0) });
-    const top = (R.top || []).slice(0, 4).map((o) => `${o.pid ? `<a href="persona.html?id=${encodeURIComponent(o.pid)}">${G.esc(o.nome)}</a>` : G.esc(o.nome)} <span class="anni">${o.ila}</span>`).join(" · ");
-    const ins = I && I.parole ? I.parole.slice(0, 9).map((p) => `<a href="parola.html?p=${encodeURIComponent(G.norma(p[0]))}">${G.esc(p[0])}</a>`).join(", ") : "";
-    $("lingue-home").innerHTML = `<p class="voce"><b>Chi fa ridere di più:</b> ${top}. <span class="did">Risate annotate dopo un suo intervento.</span></p>` +
-      (ins ? `<p class="voce"><b>Gli insulti più detti:</b> ${ins}. <a href="risate.html">→ risate e insulti</a></p>` : "") +
-      `<p class="voce"><b>Le lingue:</b> il francese del Parlamento subalpino, il latino, l'inglese, le forme antiche. <a href="lingue.html">→ le lingue dell'aula</a></p>`;
+    const E = (R.efficaci || []).slice(0, 8), b = E[0];
+    if (b) {
+      const attese = b.ila / b.rapporto;
+      $("ri-titolo").textContent = `${b.nome} fa ridere l'aula ${G.num(b.rapporto, 1)} volte più del previsto`;
+      $("ri-spiega").innerHTML = `Che cosa vuol dire. Ogni anno lo stenografo annota un certo numero di risate ogni mille parole dette in aula. Se ${G.esc(b.nome)} facesse ridere come un parlamentare qualunque di quegli anni, con le sue ${G.num(b.parole)} parole avremmo circa ${G.num(attese, attese < 10 ? 1 : 0)} ${Math.round(attese) === 1 ? "risata" : "risate"}: è il previsto. Lo stenografo ne ha annotate ${G.num(b.ila)}: ${G.num(b.rapporto, 1)} volte tanto.`;
+    }
+    V.barre("#g-risate", E.map((o, i) => [o.nome.length > 24 ? o.nome.slice(0, 23) + "…" : o.nome, o.rapporto, i === 0]), { wl: 150, passo: 19, fmt: (v) => V.num(v, 1) + " volte" });
     $("smentite").innerHTML = (H.smentite_txt || []).slice(0, 5).map((s) => `<li><span class="sm" aria-hidden="true">■</span> <a href="storia.html?id=${s.storia}">${G.esc(s.testo)}</a></li>`).join("");
     const tot = H.esperimenti.conti.find((r) => r[0] === "Totale");
     $("n-esp").textContent = tot ? tot[7] : "";
@@ -201,14 +233,15 @@
   }
 
   /* ---------------- le parole ---------------- */
-  function parole(H) {
+  function parole(H, PS) {
     const pp = H.multipli.filter((p) => H.curve[p]).sort((p, q) => V.annoDiPunta(H, p) - V.annoDiPunta(H, q));
     $("venti").innerHTML = pp.map((p, i) => `<a class="riga-voce" href="parola.html?p=${p}"><span class="lemma">${G.esc(H.curve[p].forma || p)}</span> <span class="anni">[${V.annoDiPunta(H, p)}]</span><span class="fig" id="v${i}"></span></a>`).join("");
     pp.forEach((p, i) => V.mini("#v" + i, V.curvaParola(H, p), { h: 28, assi: false, mt: 5, sp: 1.2, punti: [{ x: V.annoDiPunta(H, p), testo: "" }], fmt: (v) => V.num(v, v < 10 ? 1 : 0) + " per milione" }));
     const tre = (q, k) => [1, 2, 3].map((j) => (j === k ? `<b>${G.num1(q[j])}</b>` : G.num1(q[j]))).join(" · ");
-    const testa = `<p class="did">Volte per milione nel 1848-1900 · 1901-89 · 1990-2022</p>`;
-    $("nate").innerHTML = testa + H.nate.slice(0, 12).map((q) => `<p><a class="lemma piccolo" href="parola.html?p=${encodeURIComponent(q[0])}">${G.esc(q[4] || q[0])}</a> <i class="gram">neol.</i> <span class="cifre">${tre(q, 3)}</span></p>`).join("");
-    $("morte").innerHTML = testa + H.morte.slice(0, 12).map((q) => `<p><a class="lemma piccolo" href="parola.html?p=${encodeURIComponent(q[0])}">† ${G.esc(q[4] || q[0])}</a> <span class="cifre">${tre(q, 1)}</span></p>`).join("");
+    // «neol.» solo per le parole davvero nuove: la prima volta nel senso di oggi viene dalla lettura delle prime comparse
+    const neol = (w) => { const x = PS[w]; return x && (x.stato === "confermata" || x.stato === "corretta") ? ` <i class="gram" title="parola nuova: prima volta nel senso di oggi ${x.nuova ? x.nuova[0].slice(0, 4) : ""}">neol. ${x.nuova ? x.nuova[0].slice(0, 4) : ""}</i>` : ""; };
+    $("nate").innerHTML = `<p class="did">Volte per milione nel 1848-1900 · 1901-89 · 1990-2022. <i>neol.</i> e l'anno: parola nuova, con la prima volta nel senso di oggi; le altre c'erano già.</p>` + H.nate.slice(0, 12).map((q) => `<p><a class="lemma piccolo" href="parola.html?p=${encodeURIComponent(q[0])}">${G.esc(q[4] || q[0])}</a>${neol(q[0])} <span class="cifre">${tre(q, 3)}</span></p>`).join("");
+    $("morte").innerHTML = `<p class="did">Volte per milione nel 1848-1900 · 1901-89 · 1990-2022</p>` + H.morte.slice(0, 12).map((q) => `<p><a class="lemma piccolo" href="parola.html?p=${encodeURIComponent(q[0])}">† ${G.esc(q[4] || q[0])}</a> <span class="cifre">${tre(q, 1)}</span></p>`).join("");
   }
 
   /* ---------------- il listino della parola dell'anno ---------------- */
@@ -217,12 +250,11 @@
     $("listino").innerHTML = anni.map((a) => { const w = (B.parole_anno[a] || []).find((x) => x[0].length >= 5) || (B.parole_anno[a] || [])[0]; return w ? `<a href="anno.html?a=${a}"${a % 10 === 0 ? ' class="dieci"' : ""}><span>${a}</span> ${G.esc(w[3] || w[0])}</a>` : ""; }).join("");
   }
 
-  /* ---------------- temi, percorsi, la frase ---------------- */
-  function temiPercorsi(H, B, SI, D, R, PI) {
-    V.calore("#g-temi", H.temi.filter((t) => !t.proc), { n: 18, hr: 12, wl: 200 });
+  /* ---------------- percorsi, la frase, tre risate scelte ---------------- */
+  function percorsiFrase(B, SI, D, R, PI, RM) {
     const fr = SI.storie.find((s) => s.id === "repubblica-non-si-semplifica");
     if (fr) $("fr-titolo").textContent = fr.titolo;
-    V.frasi("#g-frasi", B.archivi, { h: 120 });
+    V.frasi("#g-frasi", B.archivi, { h: 150 });
     const cam = D.F.periodi.filter((p) => p.ramo === "camera"), d0 = cam[0], d1 = cam.find((p) => /regime/i.test(p.periodo)) || cam[cam.length - 1];
     const fc = D.L.francese.camera || {}, am = Object.keys(fc).reduce((a, b) => (fc[b] > fc[a] ? b : a), Object.keys(fc)[0]);
     const quattro = [["fascismo.html", "Il fascismo in aula", "1922-1943", `il dissenso annotato alla Camera scende da ${G.num(d0.dissenso_100, 0)} a ${G.num(d1.dissenso_100, 0)} ogni cento interventi`],
@@ -231,13 +263,25 @@
       ["risate.html", "Risate e insulti", "1848-2022", `da ${G.num(R.periodi[0][1], 0)} a ${G.num(R.periodi[R.periodi.length - 1][1], 1)} risate ogni mille interventi`]];
     const altri = (PI.percorsi || []).map((p) => [`percorso.html?id=${p.id}`, p.titolo, p.tappe + " tappe", p.domanda.replace(/<[^>]+>/g, "")]);
     $("percorsi-voci").innerHTML = quattro.concat(altri).map((p) => `<p><a class="lemma" href="${p[0]}">${G.esc(p[1])}</a> <span class="anni">[${p[2]}]</span> ${G.esc(G.maiusc(p[3]))}${/[.?!]$/.test(p[3]) ? "" : "."}</p>`).join("");
+    // tre risate della scelta, di tre epoche diverse
+    const ep = [], tre = [];
+    ((RM && RM.risate) || []).forEach((r) => { if (tre.length < 3 && ep.indexOf(r.epoca) < 0 && r.frase.length < 190) { ep.push(r.epoca); tre.push(r); } });
+    $("risate-scelte").innerHTML = tre.map((r) => `<p class="es">«${G.esc(r.frase.replace(/^«|»$/g, ""))}» <span>${G.esc(r.oratore)}${r.partito ? " (" + G.esc(r.partito) + ")" : ""}, ${G.ramo(r.ramo)}, ${G.data(r.data)}</span></p>`).join("");
   }
 
-  /* ---------------- vedi anche: le storie, le sezioni, chi parla di più ---------------- */
+  /* ---------------- vedi anche: le storie più interessanti, epoche e verdetti mescolati ---------------- */
   function storie(SI, c, H) {
-    $("n-storie").textContent = "le prime diciotto storie, in ordine di solidità e sorpresa";
-    $("muro").innerHTML = G.tessere(SI.storie, 18);
-    $("sezioni").innerHTML = [["parole.html", "Parole", c.parole], ["persone.html", "Persone", c.persone], ["partiti.html", "Partiti", c.partiti], ["legislature.html", "Legislature", c.legislature], ["anni.html", "Anni", G.ANNI.length], ["temi.html", "Temi", c.temi], ["storie.html", "Storie", c.storie], ["esperimenti.html", "Esperimenti", c.esperimenti]]
+    // si parte dalle storie più interessanti e più solide (campi «interesse» e «forza» dell'indice delle storie);
+    // al massimo tre per epoca, e almeno quattro smentite, così le epoche e i verdetti si mescolano
+    const epoca = (s) => (s.occhiello || "").split(",")[0];
+    const ord = SI.storie.slice().sort((a, b) => (+b.interesse || 0) - (+a.interesse || 0) || (+b.forza || 0) - (+a.forza || 0) || (+a.n || 0) - (+b.n || 0));
+    const scelte = [], perEpoca = {};
+    ord.filter((s) => s.verdetto === "smentita").slice(0, 4).forEach((s) => { scelte.push(s); perEpoca[epoca(s)] = (perEpoca[epoca(s)] || 0) + 1; });
+    ord.forEach((s) => { if (scelte.length < 18 && scelte.indexOf(s) < 0 && (perEpoca[epoca(s)] || 0) < 3) { scelte.push(s); perEpoca[epoca(s)] = (perEpoca[epoca(s)] || 0) + 1; } });
+    scelte.sort((a, b) => ((a.anni || [])[0] || 0) - ((b.anni || [])[0] || 0));
+    $("n-storie").textContent = "diciotto storie scelte tra le più sorprendenti e le più solide, di epoche diverse, in ordine di tempo";
+    $("muro").innerHTML = G.tessere(scelte, 18);
+    $("sezioni").innerHTML = [["parole.html", "Parole", c.parole], ["persone.html", "Persone", c.persone], ["partiti.html", "Partiti", c.partiti], ["legislature.html", "Legislature", c.legislature], ["anni.html", "Anni", G.ANNI.length], ["temi.html", "Temi", c.temi], ["esperimenti.html", "Storie", c.storie], ["esperimenti.html", "Esperimenti", c.esperimenti]]
       .map((s) => `<li><a href="${s[0]}">${s[1]}</a><span>${G.num(s[2])}</span></li>`).join("");
     V.barre("#g-oratori", H.oratori.slice(0, 8).map((o) => [o[0].replace(/^(\S)\S+ /, "$1. "), o[2], !!o[3]]), { wl: 112, passo: 17, hb: 7 });
   }

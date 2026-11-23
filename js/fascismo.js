@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   G.avvia(function () {
-    G.testata({ attivo: "Percorsi" });
+    G.testata({ attivo: "Fascismo" });
     G.piede();
     const el = document.getElementById("contenuto");
     return Promise.all([G.carica("sezioni/fascismo.json"), G.carica("base.json"), G.carica("esperimenti.json"), G.carica("storie/indice.json").catch(() => ({ storie: [] }))]).then(([F, B, E, S]) => {

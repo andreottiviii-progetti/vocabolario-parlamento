@@ -5,13 +5,14 @@
     G.testata({ attivo: "Legislature" });
     G.piede();
     const el = document.getElementById("contenuto");
-    return G.carica("base.json").then((B) => {
+    return Promise.all([G.carica("base.json"), G.carica("legislature/sintesi.json").catch(() => [])]).then(([B, SL]) => {
       const L = B.legislature;
       el.innerHTML = `<h1 class="titolo-pagina" style="font-size:clamp(48px,7vw,96px)">50 legislature, dal Parlamento subalpino al 2022</h1>
         <p class="sommario">Trenta del Regno, poi la Consulta e la Costituente, poi diciotto della Repubblica. Per ognuna: quanto si parla, chi parla di più, i temi che salgono e scendono, le parole dell'anno. Dal 1948 anche la mappa dei partiti e le parole di destra e di sinistra.</p>
         <p class="piccolo grigio">I partiti si conoscono solo per la Camera della Repubblica. In tutto 98 archivi: quasi tutte le legislature hanno la Camera e il Senato.</p>
         <div id="g-leg"></div>
-        <section class="sezione"><div class="tab-scorre" id="tab"></div></section>`;
+        <section class="sezione"><div class="testa"><h2>Che cosa distingue ogni legislatura</h2></div><p class="sotto-titolo">Le parole più tipiche (dette molto più che nelle altre legislature), chi parla di più, i temi che salgono, i governi.</p><div class="voci-leg" id="voci-leg"></div></section>
+        <section class="sezione"><div class="testa"><h2>Tutti i numeri</h2></div><div class="tab-scorre" id="tab"></div></section>`;
       const area = G.figura("#g-leg", {
         titolo: (() => { const pa = (l) => l.parole / Math.max(1, l.a - l.da + 1); const mx = L.reduce((p, q) => (pa(q) > pa(p) ? q : p)); return `La ${G.esc(mx.nome)} è la più fitta: ${G.num(pa(mx) / 1e6, 1)} milioni di parole l'anno`; })(),
         sotto: "Milioni di parole in un anno, legislatura per legislatura, Camera e Senato sommati. Ogni barra è un link.",
@@ -34,6 +35,9 @@
         svg.append("text").attr("class", "etich").attr("x", x(mx.da)).attr("y", y(pa(mx)) - 6).attr("text-anchor", "end").attr("fill", G.ROSSO).text(`${mx.nome}: ${G.num(pa(mx), 1)}`);
         d3.range(1860, 2021, w < 560 ? 50 : 20).forEach((v) => g.append("text").attr("x", x(v)).attr("y", h - 6).attr("text-anchor", "middle").text(v));
       });
+      const EP = { regno: "Regno", consulta: "Consulta", costituente: "Costituente", repubblica: "Repubblica" };
+      document.getElementById("voci-leg").innerHTML = SL.map((l) => `<p class="voce"><a class="lemma" href="legislatura.html?id=${l.id}">${G.esc(l.nome)}</a> <span class="anni">[${l.da}-${l.a}]</span> <i class="gram">${EP[l.epoca] || ""}</i><br>
+        ${l.tipiche.length ? `<b>Parole:</b> ${l.tipiche.map((w) => G.lParola(G.norma(w), w)).join(", ")}. ` : ""}${l.oratore ? `<b>Parla di più:</b> ${l.oratore[1] && /^camera:p\d/.test(l.oratore[1]) ? G.lPersona(l.oratore[1], G.oratore(l.oratore[0])) : G.esc(G.oratore(l.oratore[0]))}. ` : ""}${l.temi.length ? `<b>Temi che salgono:</b> ${l.temi.map(G.esc).join("; ")}. ` : ""}${l.governi.length ? `<b>Governi:</b> ${l.governi.length > 4 ? G.esc(l.governi[0]) + " … " + G.esc(l.governi[l.governi.length - 1]) + " (" + l.governi.length + ")" : l.governi.map(G.esc).join(", ")}.` : ""}</p>`).join("");
       G.tabella(document.getElementById("tab"), [
         { t: "legislatura", k: "nome", fmt: (l) => G.lLeg(l.id, l.nome), v: (l) => l.da * 10 + l.n },
         { t: "anni", k: "da", fmt: (l) => l.da + "-" + l.a, n: true },

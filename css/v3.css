@@ -388,3 +388,61 @@ ol.cronologia,ul.cronologia{column-count:2;column-gap:var(--gap);column-rule:1px
 body .scommessa .bottone,body[data-sezione] .scommessa .bottone{background:var(--fondo);color:var(--ink);border:1px solid var(--ink)}
 body .scommessa .bottone:hover,body[data-sezione] .scommessa .bottone:hover,body .scommessa .bottone.scelta,body[data-sezione] .scommessa .bottone.scelta{background:var(--ink);color:var(--fondo)}
 @media (max-width:759px){.unghie{overflow:hidden}.unghie a{flex:1 1 0;min-width:0;font-size:12px;padding:6px 0}}
+
+/* ===== v4: testatina con il nome a sinistra (porta alla prima pagina), parole guida piccole sotto; alfabeto leggero ===== */
+.riga-nome{display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:9px 0 7px;border-bottom:1px solid var(--ink)}
+.marchio{font-size:22px}
+.testatina .menu{justify-content:flex-end;font-size:14.5px;gap:2px 13px}
+.riga-guide{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:5px 0 5px;border-bottom:1px solid var(--filo)}
+.guida{font-size:14.5px;font-weight:600;max-width:30%;color:var(--grigio)}
+.guida a{color:var(--grigio)}
+.guida a:hover{color:var(--ink)}
+.home .riga-guide{border-bottom:0;padding-bottom:0}
+.riga-guide .cerca-testa{flex:0 1 440px}
+.variante-b .nome-e-guide{display:flex;align-items:baseline;gap:14px;min-width:0}
+.variante-b .guide-accanto{display:flex;gap:10px;font-style:italic}
+.variante-b .guide-accanto .guida{max-width:none;font-size:13.5px;font-weight:400}
+.riga-guide.solo-cerca{justify-content:flex-end}
+.unghie{border-left:1px solid var(--filo);width:22px;top:110px}
+.unghie a,.unghie a:nth-child(odd){background:none;color:var(--grigio);font:400 12px/1 "Alegreya Sans SC","Alegreya Sans",sans-serif;padding:5px 0;border-bottom:0}
+.unghie a:hover,.unghie a:focus{background:none;color:var(--voce);text-decoration:underline}
+.senza-unghie .unghie{display:none}
+body[data-sezione="fascismo"] .unghie a,body[data-sezione="fascismo"] .unghie a:nth-child(odd){background:none;color:#A3A9B2}
+@media (max-width:1100px){.riga-nome{flex-wrap:wrap}.testatina .menu{justify-content:flex-start}}
+@media (max-width:759px){
+  .riga-nome{flex-direction:column;align-items:stretch;gap:4px}
+  .testatina .menu{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding-bottom:2px}
+  .riga-guide{flex-wrap:wrap}
+  .riga-guide .cerca-testa{order:3;flex:1 0 100%}
+}
+/* le risate migliori */
+.colonne-ris{column-count:2;column-gap:var(--gap);column-rule:1px solid var(--filo)}
+.epoca-ris{break-inside:avoid-column;margin-bottom:10px}
+.frasi-scelte{list-style:none;margin:0;padding:0}
+.frasi-scelte li{break-inside:avoid;border-bottom:1px solid var(--filo);padding:7px 0 8px}
+.frasi-scelte q{quotes:"«" "»";font-size:17px;line-height:1.35;display:block}
+.frasi-scelte .quando{display:block;font-size:13.5px;color:var(--grigio);margin-top:3px}
+.frasi-scelte .quando b{color:var(--ink)}
+.frasi-scelte .contesto{display:block;font-size:13.5px;font-style:italic;color:var(--grigio)}
+@media (max-width:900px){.colonne-ris{column-count:1}}
+/* il progetto: la scala del lavoro */
+.scala{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 var(--gap)}
+.scala li{border-top:1px solid var(--filo);padding:8px 0 10px;font-size:16px;line-height:1.3}
+.scala b{display:block;font-size:30px;font-weight:800;letter-spacing:-.015em;line-height:1.05}
+.scala span{display:block;font-size:14px;color:var(--grigio);margin-top:2px}
+@media (max-width:900px){.scala{grid-template-columns:1fr 1fr}}
+.voci-leg{column-count:3;column-gap:var(--gap);column-rule:1px solid var(--filo)}
+.voci-leg .voce{break-inside:avoid;margin:0 0 10px;font-size:14.5px}
+.voci-leg .lemma{font-size:17px}
+@media (max-width:1100px){.voci-leg{column-count:2}}@media (max-width:700px){.voci-leg{column-count:1}}
+/* che cosa abbiamo scoperto: un esperimento per voce, con le storie dentro */
+.voci-esp{column-count:2;column-gap:var(--gap);column-rule:1px solid var(--filo);margin-bottom:12px}
+.esp{break-inside:avoid;border-bottom:1px solid var(--filo);padding:7px 0 9px;font-size:14.5px;line-height:1.33}
+.esp .testa{font-size:16px;margin:0 0 3px}
+.esp .testa b{font-weight:800}
+.esp p{margin:0 0 3px}
+.esp .rimandi{margin-top:5px}
+.filone-esp{margin-top:16px}
+@media (max-width:900px){.voci-esp{column-count:1}}
+@media (max-width:759px){.riga-nome{display:block}.riga-nome .marchio{display:block;margin-bottom:4px}.testatina .menu{display:flex;width:100%;max-width:100%;min-width:0}}
+@media (max-width:759px){.unghie{width:auto;top:auto;border-left:0}}

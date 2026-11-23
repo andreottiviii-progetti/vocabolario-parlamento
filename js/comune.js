@@ -121,20 +121,28 @@
   /* ---------- testata, striscia dove sei, piede ---------- */
   G.INVENTARIO = [["parole", "parole", "parole.html"], ["anni", "anni", "anni.html"], ["legislature", "legislature", "legislature.html"], ["partiti", "partiti", "partiti.html"],
     ["persone", "persone", "persone.html"], ["temi", "temi", "temi.html"], ["storie", "storie", "storie.html"], ["esperimenti", "esperimenti", "esperimenti.html"]];
-  G.MENU = [["Parole", "parole.html"], ["Prime volte", "primevolte.html"], ["Anni", "anni.html"], ["Legislature", "legislature.html"], ["Partiti", "partiti.html"], ["Persone", "persone.html"], ["Temi", "temi.html"], ["Storie", "storie.html"], ["Percorsi", "percorsi.html"], ["Esperimenti", "esperimenti.html"], ["Metodo e limiti", "metodo.html"], ["Dati", "dati.html"], ["Paper", "paper.html"]];
-  /* testatina del vocabolario: le parole guida ai due lati (come nei dizionari: la prima e l'ultima voce della pagina),
-     il menu in mezzo; nelle pagine interne, sotto, il nome del sito e la ricerca */
+  G.MENU = [["Parole", "parole.html"], ["Prime volte", "primevolte.html"], ["Anni", "anni.html"], ["Legislature", "legislature.html"], ["Partiti", "partiti.html"], ["Persone", "persone.html"], ["Temi", "temi.html"], ["Scoperte", "esperimenti.html"], ["Percorsi", "percorsi.html"], ["Fascismo", "fascismo.html"], ["Metodo", "metodo.html"], ["Dati", "dati.html"], ["Paper", "paper.html"], ["Il progetto", "progetto.html"]];
+  G.ALIAS_MENU = { Storie: "Scoperte", Esperimenti: "Scoperte", "Metodo e limiti": "Metodo" };
+  /* testatina: in alto a sinistra il nome del sito, che porta sempre alla prima pagina, e il menu;
+     sotto, piccole, le parole guida (la voce prima e quella dopo, come nei dizionari) e la ricerca.
+     Varianti da mostrare: ?testata=b (parole guida accanto al nome), ?unghie=no (senza l'alfabeto sul bordo) */
   G.MARCHIO = 'vocabolàrio <i>del</i> Parlaménto';
   G.testata = function (o) {
     o = o || {};
     const el = document.getElementById("testata");
     if (!el) return;
     const home = o.compatta === false;
-    el.className = "testatina" + (home ? " home" : "");
-    const menu = G.MENU.map((m) => `<a href="${m[1]}"${o.attivo === m[0] ? ' class="attivo" aria-current="page"' : ""}>${m[0]}</a>`).join("");
-    const g = o.guide || (home ? [G.lGuida("adunque"), G.lGuida("tangentopoli")] : [G.esc((o.attivo || "vocabolario").toLowerCase()), "1848 · 2022"]);
-    el.innerHTML = `<div class="riga-guide"><span class="guida" id="guida-a">${g[0]}</span><nav class="menu" aria-label="Sezioni">${menu}</nav><span class="guida destra" id="guida-b">${g[1]}</span></div>` +
-      (home ? "" : `<div class="riga-nome"><a class="marchio" href="index.html">${G.MARCHIO}</a><form class="cerca-testa" action="parola.html" method="get" role="search"><input name="p" type="search" placeholder="cerca una voce: parola o espressione" aria-label="Cerca una parola o un'espressione" autocomplete="off" list="sugg-ricerca"><datalist id="sugg-ricerca"></datalist><button type="submit">Cerca</button></form></div>`) +
+    const attivo = G.ALIAS_MENU[o.attivo] || o.attivo;
+    const variante = G.param("testata") === "b" ? " variante-b" : "";
+    if (G.param("unghie") === "no") document.documentElement.classList.add("senza-unghie");
+    el.className = "testatina" + (home ? " home" : "") + variante;
+    const menu = G.MENU.map((m) => `<a href="${m[1]}"${attivo === m[0] ? ' class="attivo" aria-current="page"' : ""}>${m[0]}</a>`).join("");
+    const g = o.guide || (home ? [G.lGuida("adunque", "◂ adunque"), G.lGuida("tangentopoli", "tangentopoli ▸")] : ["", ""]);
+    const cerca = home ? "" : `<form class="cerca-testa" action="parola.html" method="get" role="search"><input name="p" type="search" placeholder="cerca una voce: parola o espressione" aria-label="Cerca una parola o un'espressione" autocomplete="off" list="sugg-ricerca"><datalist id="sugg-ricerca"></datalist><button type="submit">Cerca</button></form>`;
+    el.innerHTML = variante
+      ? `<div class="riga-nome"><span class="nome-e-guide"><a class="marchio" href="index.html" title="La prima pagina">${G.MARCHIO}</a><span class="guide-accanto"><span class="guida" id="guida-a">${g[0]}</span> <span class="guida destra" id="guida-b">${g[1]}</span></span></span><nav class="menu" aria-label="Sezioni">${menu}</nav></div>` + (cerca ? `<div class="riga-guide solo-cerca">${cerca}</div>` : "")
+      : `<div class="riga-nome"><a class="marchio" href="index.html" title="La prima pagina">${G.MARCHIO}</a><nav class="menu" aria-label="Sezioni">${menu}</nav></div>` +
+      `<div class="riga-guide"><span class="guida" id="guida-a">${g[0]}</span>${cerca}<span class="guida destra" id="guida-b">${g[1]}</span></div>` +
       (o.briciole ? '<div class="briciole">' + o.briciole + "</div>" : "");
     G.suggerisci(el.querySelector("input[name=p]"), el.querySelector("#sugg-ricerca"));
   };
@@ -510,10 +518,35 @@
       const I = M.inizi;
       let lo = 0, hi = I.length - 1, k = 0;
       while (lo <= hi) { const m = (lo + hi) >> 1; if (I[m] <= w) { k = m; lo = m + 1; } else hi = m - 1; }
-      return G.carica("prime/d/" + G.pad(k) + ".json").then((d) => d[w] || null);
+      return G.carica("prime/d/" + G.pad(k) + ".json").then((d) => G.conSenso(w, d[w] || null));
     }).catch(() => null);
   };
-  G.espressione = (q) => G.carica("prime/espressioni.json").then((E) => E[q] || null).catch(() => null);
+  G.espressione = (q) => G.carica("prime/espressioni.json").then((E) => G.conSenso(q, E[q] || null)).catch(() => null);
+  /* prima volta nel senso di oggi (lettura delle prime comparse, _genera/prime_senso.json): per le parole nuove la regola
+     automatica a volte trova un altro significato o un errore di lettura. La scheda si corregge qui, per tutto il sito:
+     s.p diventa la prima comparsa nel senso di oggi; s.senso tiene stato, data vecchia, senso antico e motivo. */
+  G.conSenso = function (w, s) {
+    if (!s) return Promise.resolve(s);
+    return G.carica("prime/senso.json").catch(() => ({})).then((S) => {
+      const x = S[w];
+      if (!x || s.senso) return s;
+      s.senso = x;
+      if (x.stato !== "confermata") s.g = null; // la comparsa «più vecchia» della regola non serve più
+      if (x.stato === "incerta") { s.vecchie = s.p; s.p = []; }
+      else if ((x.stato === "corretta" || x.stato === "non nuova") && x.nuova) { s.vecchie = s.p; s.p = [x.nuova]; }
+      return s;
+    });
+  };
+  /* la riga che spiega una prima volta corretta */
+  G.notaSenso = function (s) {
+    const x = s && s.senso;
+    if (!x) return "";
+    const ant = x.antico ? ` Prima, dal ${G.data(x.antico.data)}, in un altro senso: ${G.esc(x.antico.senso)}.` : "";
+    if (x.stato === "incerta") return `Prima volta nel senso di oggi: incerta. ${G.esc(G.maiusc(x.motivo))}.`;
+    if (x.stato === "corretta") return `Prima volta nel senso di oggi. La regola automatica dava il ${G.data(x.vecchia)}: ${G.esc(x.motivo)}.${ant}`;
+    if (x.stato === "non nuova") return /^non è una parola nuova/i.test(x.motivo) ? G.esc(G.maiusc(x.motivo)) + "." : `Non è una parola nuova: ${G.esc(x.motivo)}.`;
+    return x.antico ? `Altro significato: dal ${G.data(x.antico.data)}, ${G.esc(x.antico.senso)}.` : "";
+  };
   /* voce di una prima volta: [data, ramo, nome, pid, partito, frase, forma] */
   G.voceVolta = function (v, forme) {
     const nome = v[2] ? (v[3] ? G.lPersona(v[3], G.oratore(v[2])) : G.esc(G.oratore(v[2]))) : "oratore non riconosciuto";
@@ -598,6 +631,57 @@
     });
   };
 
+  /* la mappa dei partiti, ferma: quattro epoche, in ognuna i percorsi dei partiti principali con le legislature scritte
+     sul percorso, gli altri punti in grigio. Si capisce senza premere nulla (il cursore resta sotto, come extra). */
+  G.mappaFerma = function (sel, TR) {
+    const P = TR.partiti, tutti = [].concat(...Object.entries(P).map(([n, v]) => v.map((q) => ({ n, q }))));
+    const EPOCHE = [[1, 4, "1948-1968: DC al governo, PCI all'opposizione"], [5, 10, "1968-1992: il centro-sinistra, il compromesso storico, il pentapartito"], [11, 14, "1992-2006: la Seconda Repubblica, due coalizioni"], [15, 18, "2006-2022: PD, PdL, Lega, M5S"]];
+    // da che parte stanno governo e opposizione: la media della prima direzione per chi governa e per chi si oppone
+    const mg = d3.mean(tutti.filter((t) => t.q[6] >= 0.5), (t) => t.q[2]), mo = d3.mean(tutti.filter((t) => t.q[6] < 0.5), (t) => t.q[2]);
+    const govDestra = mg > mo;
+    const area = G.figura(sel, {
+      titolo: "Come si muovono i partiti: a sinistra e a destra, al governo e all'opposizione",
+      sotto: `Ogni punto è un partito in una legislatura della Camera: più due punti sono vicini, più usano le stesse parole. In verticale le parole di destra (in alto) e di sinistra (in basso); in orizzontale le parole di chi governa (a ${govDestra ? "destra" : "sinistra"}) e di chi sta all'opposizione (a ${govDestra ? "sinistra" : "destra"}). In ogni epoca i partiti principali sono colorati, con il numero della legislatura sul percorso; gli altri sono in grigio.`,
+      limite: "Le due direzioni riassumono poco più di un terzo delle differenze; la posizione viene dalle parole, non dai voti.",
+      csv: () => [["partito", "legislatura", "anno", "d1", "d2", "quota", "famiglia", "governo"]].concat(tutti.map((t) => [t.n].concat(t.q))), nomeCSV: "mappa_partiti_epoche",
+    });
+    G.grafico(area, (a, w) => {
+      const col = w < 700 ? 1 : 2, pw = (w - (col - 1) * 24) / col, ph = col === 1 ? 300 : 330, m = 22;
+      const x = d3.scaleLinear().domain(d3.extent(tutti, (t) => t.q[2])).nice().range([m, pw - m - 54]);
+      const y = d3.scaleLinear().domain(d3.extent(tutti, (t) => t.q[3])).nice().range([ph - m - 6, m + 22]);
+      const righe = Math.ceil(EPOCHE.length / col), H = righe * (ph + 16);
+      const svg = a.append("svg").attr("width", w).attr("height", H).attr("role", "img").attr("aria-label", "La mappa dei partiti in quattro epoche");
+      EPOCHE.forEach((e, k) => {
+        const g = svg.append("g").attr("transform", `translate(${(k % col) * (pw + 24)},${Math.floor(k / col) * (ph + 16)})`);
+        g.append("rect").attr("x", 0).attr("y", 0).attr("width", pw).attr("height", ph).attr("fill", "none").attr("stroke", G.RIGA);
+        g.append("text").attr("x", 8).attr("y", 16).attr("font-size", 14).attr("font-weight", 800).attr("fill", G.INK).text(e[2]);
+        g.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 24).attr("y2", ph - 4).attr("stroke", G.RIGA);
+        g.append("line").attr("x1", 4).attr("x2", pw - 4).attr("y1", y(0)).attr("y2", y(0)).attr("stroke", G.RIGA);
+        g.append("text").attr("x", 8).attr("y", 34).attr("font-size", 11.5).attr("fill", G.GRIGIO).text("↑ destra");
+        g.append("text").attr("x", 8).attr("y", ph - 8).attr("font-size", 11.5).attr("fill", G.GRIGIO).text("↓ sinistra");
+        g.append("text").attr("x", pw - 8).attr("y", ph - 8).attr("text-anchor", "end").attr("font-size", 11.5).attr("fill", G.GRIGIO).text(govDestra ? "governo →" : "opposizione →");
+        g.append("text").attr("x", 64).attr("y", ph - 8).attr("font-size", 11.5).attr("fill", G.GRIGIO).text(govDestra ? "← opposizione" : "← governo");
+        const nelle = tutti.filter((t) => t.q[0] >= e[0] && t.q[0] <= e[1]);
+        nelle.forEach((t) => g.append("circle").attr("cx", x(t.q[2])).attr("cy", y(t.q[3])).attr("r", 2.6).attr("fill", G.GDATI).append("title").text(`${t.n}, ${G.romano(t.q[0])} legislatura`));
+        // i partiti principali dell'epoca: almeno il 6% delle parole in una legislatura, al massimo sei
+        const qmax = {}; nelle.forEach((t) => { qmax[t.n] = Math.max(qmax[t.n] || 0, t.q[4] || 0); });
+        const princ = Object.keys(qmax).filter((n) => qmax[n] >= 0.06).sort((p, q) => qmax[q] - qmax[p]).slice(0, 6);
+        const fine = [];
+        princ.forEach((n) => {
+          const v = P[n].filter((q) => q[0] >= e[0] && q[0] <= e[1]), c = G.FAMIGLIA[v[0][5]] || "#8C939D";
+          if (v.length > 1) g.append("path").attr("d", d3.line().x((q) => x(q[2])).y((q) => y(q[3])).curve(d3.curveCatmullRom.alpha(0.5))(v)).attr("fill", "none").attr("stroke", c).attr("stroke-width", 2.2);
+          v.forEach((q, i) => {
+            g.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", 4.2).attr("fill", c).attr("stroke", v[0][5] === "M5S" ? G.INK : "#fff").attr("stroke-width", 1).append("title").text(`${n.replace("Unita'", "Unità")}, ${G.romano(q[0])} legislatura (${Math.round(q[1])}): ${Math.round((q[4] || 0) * 100)}% delle parole`);
+            g.append("text").attr("x", x(q[2])).attr("y", y(q[3]) - 7).attr("text-anchor", "middle").attr("font-size", 10.5).attr("font-weight", 700).attr("fill", G.INK).attr("class", "alone").text(G.romano(q[0]));
+          });
+          const u = v[v.length - 1];
+          fine.push({ x: x(u[2]) + 8, y: y(u[3]) + 4, t: n.replace("Unita'", "Unità").replace("PDS/DS/PD", "PDS-DS-PD"), c: v[0][5] === "M5S" ? G.INK : c });
+        });
+        G.separa(fine, 13, 30, ph - 14);
+        fine.forEach((f) => g.append("text").attr("x", Math.min(f.x, pw - 4)).attr("y", f.y).attr("text-anchor", f.x > pw - 50 ? "end" : "start").attr("font-size", 12.5).attr("font-weight", 800).attr("fill", f.c).attr("class", "alone").text(f.t));
+      });
+    });
+  };
   /* il filo del tempo: i sette capitoli del racconto sull'asse 1848-2022 (il 4 attraversa tutti gli anni) */
   G.filoDelTempo = function (sel, capitoli, attivo) {
     G.grafico(sel, (a, w) => {
