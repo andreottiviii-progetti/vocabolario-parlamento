@@ -283,6 +283,8 @@ def main():
 
     # ------------------------------------------------------------- persone
     up = pq.read_table(os.path.join(PERSONE, "unita_persona.parquet"), columns=["ramo", "leg", "pid", "partito", "ruolo", "n_parole", "n_turni"]).to_pandas()
+    # omonimi agganciati male (correzioni_oratori.json): la persona giusta prima dei conti per persona
+    up["pid"] = [persona_corretta("%s_repubblica_%02d" % (r_, int(l_)), p_, ru_) if l_ == l_ else p_ for r_, l_, p_, ru_ in zip(up.ramo, up.leg, up.pid, up.ruolo)]
     up = up[up.pid.astype(str).str.contains(":p")]
     gruppi_sen = {}
     for r in pq.read_table(os.path.join(PERSONE, "senato_gruppo_periodi.parquet"), columns=["gruppo_id", "nome_gruppo"]).to_pylist():

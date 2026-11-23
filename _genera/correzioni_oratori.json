@@ -1,0 +1,212 @@
+{
+ "nota": "Attribuzioni di frasi (risate, insulti, prime volte, frasi delle parole) corrette dopo il controllo sui turni originali e sull'anagrafe. Solo casi CONFERMATI. Le frasi si riconoscono con data, ramo, nome indicato in chi_era (o id persona) e le prime parole della frase. I numeri e le prove sono in _progetto/ATTRIBUZIONI_RISATE.md.",
+ "correzioni": [
+  {
+   "data": "1865-03-18",
+   "ramo": "camera",
+   "chi_era": "LANZA",
+   "chi_e": "Riccardo Sineo",
+   "pid": "",
+   "partito": "",
+   "frase_inizia": "Dichiaro di ritirare il mio emendamento",
+   "tutte_le_frasi_del_giorno": false,
+   "prova": "Nel turno n. 92 del ministro Lanza il resoconto riporta «Mi pare che queste dichiarazioni debbano appagare compiutamente il deputato Sineo; e nutro ancora la speranza ch'egli vorrà recedere [...] sinre. Dichiaro di ritirare il mio emendamento non per speranza, ma per timore. erresIiDpENTE. Essendo ritirato»: la sigla SINEO (letta «sinre») e PRESIDENTE sono rimaste dentro il turno di Lanza. Riccardo Sineo (camera:pr4078) e' deputato nella VIII legislatura."
+  },
+  {
+   "data": "1993-02-18",
+   "ramo": "camera",
+   "chi_era": "BRUNO LANDI",
+   "chi_e": "CARLO TASSI",
+   "pid": "camera:p60746",
+   "partito": "MSI",
+   "frase_inizia": "Sì, parlo a favore della proposta Bianco",
+   "tutte_le_frasi_del_giorno": false,
+   "prova": "Il Presidente dice «Ha chiesto di parlare a favore l'onorevole Tassi»; il turno n. 90 (etichettato Bruno Landi, PSI) comincia «Complimenti! CarLo TASSI. Sì, parlo a favore della proposta Bianco, perché solo uno scemo può farlo» e prosegue con il discorso di Tassi, che il turno n. 92 riprende («ed io interpreto quella parte»)."
+  },
+  {
+   "data": "1993-02-18",
+   "ramo": "camera",
+   "chi_era": "BRUNO LANDI",
+   "chi_e": "CARLO TASSI",
+   "pid": "camera:p60746",
+   "partito": "MSI",
+   "frase_inizia": "Pertanto, signor Presidente, se fossi scemo",
+   "tutte_le_frasi_del_giorno": false,
+   "prova": "Stesso turno n. 90: la frase viene dopo la sigla «CarLo TASSI.» ed e' la chiusa del discorso di Tassi a favore della proposta Bianco."
+  },
+  {
+   "data": "2008-05-15",
+   "ramo": "senato",
+   "chi_era": "camera:p300436",
+   "chi_e": "FRANCESCO COSSIGA",
+   "pid": "camera:p200246",
+   "partito": "",
+   "frase_inizia": "",
+   "tutte_le_frasi_del_giorno": true,
+   "prova": "Senato XVI legislatura, etichetta COSSIGA con ruolo «parlamentare»: sono turni del senatore a vita Francesco Cossiga (nel registro dei senatori dal 29/4/2008 al 17/8/2010, gruppo UDC, SVP e Autonomie), non del sottosegretario Giuseppe Cossiga, che al Senato ha solo turni di ruolo «governo» dal 9/10/2008 e non e' senatore. Il 15/5/2008 il testo parla del «mio tormentato intervallo al Quirinale»."
+  },
+  {
+   "data": "2008-05-27",
+   "ramo": "senato",
+   "chi_era": "camera:p300436",
+   "chi_e": "FRANCESCO COSSIGA",
+   "pid": "camera:p200246",
+   "partito": "",
+   "frase_inizia": "",
+   "tutte_le_frasi_del_giorno": true,
+   "prova": "Turno di ruolo «parlamentare»; il testo dice «se oggi compio cinquant'anni di vita parlamentare, il 26 luglio ne compio ottanta»: Francesco Cossiga, nato il 26/7/1928, deputato dal 1958. Quel giorno non ci sono turni «governo» di Cossiga."
+  },
+  {
+   "data": "2008-06-24",
+   "ramo": "senato",
+   "chi_era": "camera:p300436",
+   "chi_e": "FRANCESCO COSSIGA",
+   "pid": "camera:p200246",
+   "partito": "",
+   "frase_inizia": "",
+   "tutte_le_frasi_del_giorno": true,
+   "prova": "Turni di ruolo «parlamentare» (dichiarazione di voto, «C'era Palmiro Togliatti, non Veltroni!»): Francesco Cossiga. Quel giorno non ci sono turni «governo» di Cossiga."
+  },
+  {
+   "data": "2008-08-01",
+   "ramo": "senato",
+   "chi_era": "camera:p300436",
+   "chi_e": "FRANCESCO COSSIGA",
+   "pid": "camera:p200246",
+   "partito": "",
+   "frase_inizia": "",
+   "tutte_le_frasi_del_giorno": true,
+   "prova": "Turno di ruolo «parlamentare»: «credo che l'unico titolo sia quello che, pochi giorni fa, ho compiuto 80 anni». Francesco Cossiga compie 80 anni il 26/7/2008. Quel giorno non ci sono turni «governo» di Cossiga."
+  },
+  {
+   "data": "2008-10-29",
+   "ramo": "senato",
+   "chi_era": "camera:p300436",
+   "chi_e": "FRANCESCO COSSIGA",
+   "pid": "camera:p200246",
+   "partito": "",
+   "frase_inizia": "",
+   "tutte_le_frasi_del_giorno": true,
+   "prova": "Tutti i 17 turni di Cossiga del giorno sono di ruolo «parlamentare»: «essendo stato io [...] Presidente della Camera [...] Ministro dell'interno», «Cossiga boia!», «quando ho fatto picchiare a sangue gli universitari che hanno cacciato via Lama» (Francesco Cossiga, ministro dell'Interno 1976-78 e presidente della Repubblica 1985-92)."
+  },
+  {
+   "data": "1926-03-16",
+   "ramo": "senato",
+   "chi_era": "MUSSOLINI",
+   "chi_e": "Pompeo Molmenti",
+   "pid": "",
+   "partito": "",
+   "frase_inizia": "Non sono fascista, perchè sono tanto vecchio",
+   "tutte_le_frasi_del_giorno": false,
+   "prova": "Nel turno n. 22 di Mussolini il resoconto dice «Male! MOLMENTI....ma riconosco le benemerenze che ha avuto il fascismo [...] Non sono fascista, perchè sono tanto vecchio, che non saprei intonare giovinezza»; il turno n. 21, di Molmenti, finisce con «Io non sono fascista...». Pompeo Molmenti (camera:pr3052), senatore del Regno, ha 7 turni al Senato nella XXVII legislatura (11/3-19/5/1926) e parla in quella seduta (turni n. 12, 14, 21). Di Mussolini e' solo «Male!»."
+  },
+  {
+   "data": "1926-03-16",
+   "ramo": "senato",
+   "chi_era": "MUSSOLINI",
+   "chi_e": "Pompeo Molmenti",
+   "pid": "",
+   "partito": "",
+   "frase_inizia": "… sarebbe un giorno di lutto per la bellezza",
+   "tutte_le_frasi_del_giorno": false,
+   "prova": "Stessa sigla MOLMENTI dentro il turno n. 22 di Mussolini: la frase «Quel giorno sarebbe un giorno di lutto per la bellezza e per l'arte» chiude il discorso sulla Venezia «svenezianizzata», cioe' di Molmenti (prima volta della parola «plaust»)."
+  },
+  {
+   "data": "1928-12-08",
+   "ramo": "camera",
+   "chi_era": "TURATI",
+   "chi_e": "Augusto Turati",
+   "pid": "",
+   "partito": "PNF",
+   "frase_inizia": "",
+   "tutte_le_frasi_del_giorno": true,
+   "prova": "Filippo Turati decade da deputato il 9/11/1926 ed e' in esilio (muore nel 1932); l'unico Turati in Camera dopo il 1926 e' Augusto Turati (camera:pr11177), segretario del PNF 1926-1930, deputato fino al 19/1/1934. Il progetto lo aggancia gia' ad Augusto (oratori_persone: camera regno_27 e regno_28, etichetta TURATI)."
+  },
+  {
+   "data": "1929-04-29",
+   "ramo": "camera",
+   "chi_era": "TURATI",
+   "chi_e": "Augusto Turati",
+   "pid": "",
+   "partito": "PNF",
+   "frase_inizia": "",
+   "tutte_le_frasi_del_giorno": true,
+   "prova": "Come sopra: dopo il 9/11/1926 nessun Filippo Turati in aula. Il testo parla del «Gran Consiglio, organo supremo della Rivoluzione» e del Fascio."
+  },
+  {
+   "data": "1929-05-31",
+   "ramo": "camera",
+   "chi_era": "TURATI",
+   "chi_e": "Augusto Turati",
+   "pid": "",
+   "partito": "PNF",
+   "frase_inizia": "",
+   "tutte_le_frasi_del_giorno": true,
+   "prova": "Il Presidente dice «Ha facoltà di parlare l'onorevole camerata Turati»; il discorso parla di ufficiali in congedo, Milizia e camicie nere universitarie, «per la buona volonta' portatavi dal camerata ministro Ciano, ma soprattutto per l'ostinazione del sottoscritto»: non e' Filippo Turati (fuori dal Parlamento dal 1926)."
+  },
+  {
+   "data": "1929-12-18",
+   "ramo": "camera",
+   "chi_era": "TURATI",
+   "chi_e": "Augusto Turati",
+   "pid": "",
+   "partito": "PNF",
+   "frase_inizia": "",
+   "tutte_le_frasi_del_giorno": true,
+   "prova": "Come sopra: dopo il 9/11/1926 il solo Turati in Camera e' Augusto."
+  },
+  {
+   "data": "1930-03-03",
+   "ramo": "camera",
+   "chi_era": "TURATI",
+   "chi_e": "Augusto Turati",
+   "pid": "",
+   "partito": "PNF",
+   "frase_inizia": "",
+   "tutte_le_frasi_del_giorno": true,
+   "prova": "Il testo ricorda Michele Bianchi «Segretario del Partito e Quadrumviro» e la marcia su Roma: commemorazione fascista. Dopo il 9/11/1926 il solo Turati in Camera e' Augusto."
+  },
+  {
+   "data": "1954-10-14",
+   "ramo": "camera",
+   "chi_era": "EDOARDO ANGELO MARTINO",
+   "chi_e": "GAETANO MARTINO",
+   "pid": "camera:p13430",
+   "partito": "PLI",
+   "frase_inizia": "Sono un medico che non ha mai esercitato",
+   "tutte_le_frasi_del_giorno": false,
+   "prova": "Il turno precedente (Gray, MSI) dice «domando al ministro degli esteri, anzi domando al professore Martino, fisiologo insigne»; il turno di Martino risponde «Sono un medico che non ha mai esercitato». Gaetano Martino e' ministro degli Esteri dal 19/9/1954; Edoardo Angelo Martino in quei mesi non ha incarichi di governo."
+  },
+  {
+   "data": "1964-04-28",
+   "ramo": "senato",
+   "chi_era": "VITTORINO COLOMBO",
+   "chi_e": "EMILIO COLOMBO",
+   "pid": "camera:p1770",
+   "partito": "",
+   "frase_inizia": "FRANZA, È vero che vanno scomparendo le monete",
+   "tutte_le_frasi_del_giorno": false,
+   "prova": "Turno di ruolo «governo» con la relazione sulla moneta e il credito; il turno seguente dice «Ministro del tesoro. Non è vero». Il ministro del Tesoro dal 21/6/1963 e' Emilio Colombo; Vittorino Colombo e' sottosegretario alle Finanze solo dal 1966."
+  },
+  {
+   "data": "1964-09-25",
+   "ramo": "senato",
+   "chi_era": "VITTORINO COLOMBO",
+   "chi_e": "EMILIO COLOMBO",
+   "pid": "camera:p1770",
+   "partito": "",
+   "frase_inizia": "Potrei usare allora la parola",
+   "tutte_le_frasi_del_giorno": false,
+   "prova": "Turno di ruolo «governo» in risposta al relatore Artom, che dice «l'onorevole Colombo [...] come uomo di Governo»: nel bilancio dello Stato il governo e' rappresentato dal ministro del Tesoro Emilio Colombo (Vittorino Colombo non ha incarichi di governo prima del 1966)."
+  }
+ ],
+ "persone": [
+  {
+   "archivio": "senato_repubblica_16",
+   "pid_era": "camera:p300436",
+   "ruolo": "parlamentare",
+   "pid_giusto": "camera:p200246",
+   "prova": "Senato XVI, etichetta COSSIGA: i 27 turni con ruolo «parlamentare» sono di Francesco Cossiga, senatore a vita (il 27/5/2008 dice «ne compio ottanta»); Giuseppe Cossiga al Senato parla solo da sottosegretario, con ruolo «governo»."
+  }
+ ]
+}

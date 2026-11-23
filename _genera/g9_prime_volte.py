@@ -157,6 +157,7 @@ def lavora(archivio):
                 continue
             C = cerca.get((ramo, anno))
             pid, par = persone.get((r["file"], int(r["n_turno"] or 0)), ("", ""))
+            pid = persona_corretta(archivio, pid, r.get("ruolo") or "")  # omonimi agganciati male (correzioni_oratori.json)
             orat = (r["oratore"] or "").strip()
             if C:
                 toks = set(re.findall(r"[a-z]+", tm))
@@ -230,7 +231,7 @@ def main():
 
     def voce(o, controlla=True):
         data, nt, ramo, orat, pid, par, fr, fm = o
-        nome = nomi.get(pid) or oratore_valido(orat, "", data[:4] if data[:4].isdigit() else None)
+        nome = nomi.get(pid) or oratore_valido(orat, pid, data[:4] if data[:4].isdigit() else None)  # con la persona riconosciuta ma senza nome in anagrafe resta il nome del resoconto
         if controlla and not frase_pulita(fr):
             scartate["n"] += 1
             if len(scartate["esempi"]) < 30:

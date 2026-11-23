@@ -140,3 +140,20 @@ def oratore_valido(nome, pid="", anno=None):
     if _re.fullmatch(r"[A-ZÀ-Ü][A-ZÀ-Ü'’ .\-]{3,60}", n) and "RICONOSCIUT" not in n and sum(c.isalpha() for c in n) >= 4:
         return n
     return ""
+
+
+_PERSONE_CORRETTE = None
+
+
+def persona_corretta(archivio, pid, ruolo):
+    """La persona giusta di un turno quando l'aggancio del progetto ha scelto l'omonimo sbagliato: regole verificate sul testo
+    dei turni e sull'anagrafe, in _genera/correzioni_oratori.json (campo «persone»)."""
+    global _PERSONE_CORRETTE
+    if _PERSONE_CORRETTE is None:
+        import json as _json
+        f = os.path.join(QUI, "correzioni_oratori.json")
+        _PERSONE_CORRETTE = {}
+        if os.path.exists(f):
+            for c in _json.load(open(f, encoding="utf-8")).get("persone", []):
+                _PERSONE_CORRETTE[(c["archivio"], c["pid_era"], c["ruolo"])] = c["pid_giusto"]
+    return _PERSONE_CORRETTE.get((archivio, pid, ruolo), pid)

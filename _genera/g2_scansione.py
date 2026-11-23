@@ -109,6 +109,7 @@ def lavora(archivio):
             except ValueError:
                 continue
             pid, par = persone.get((r["file"], int(r["n_turno"] or 0)), ("", ""))
+            pid = persona_corretta(archivio, pid, r.get("ruolo") or "")  # omonimi agganciati male (correzioni_oratori.json)
             orat = (r["oratore"] or "").strip()
             chiave = pid if pid else "%s:%s" % (ramo, orat)
             if not orat and not pid:

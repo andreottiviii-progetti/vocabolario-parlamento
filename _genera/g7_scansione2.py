@@ -101,6 +101,7 @@ def lavora(arg):
             data = r["data"] or ""
             orat = (r["oratore"] or "").strip()
             pid, par = persone.get((r["file"], int(r["n_turno"] or 0)), ("", ""))
+            pid = persona_corretta(archivio, pid, r.get("ruolo") or "")  # omonimi agganciati male (correzioni_oratori.json)
             if r["lingua"] == "fr":
                 if data[:4] <= "1870" and len(francese) < 60 and len(testo) == len(tm):
                     pezzi = [p.strip() for p in re.split(r"(?<=[.?!])\s+", testo) if 60 <= len(p.strip()) <= 220]

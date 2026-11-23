@@ -55,6 +55,15 @@ def nomi_persone():
     for pid, u in zip(t.pid, t.sen):
         if pid and pid not in nomi and u in sen and sen[u]:
             nomi[pid] = sen[u]
+    # ultima fonte: l'anagrafe degli oratori del progetto (base_pulita/oratori/oratori_persone.csv, nome completo da
+    # dati.camera.it, dati.senato.it e Wikidata), per le persone che le tabelle qui sopra non nominano
+    import csv as _csv
+    fo = os.path.join(BASE, "base_pulita", "oratori", "oratori_persone.csv")
+    if os.path.exists(fo):
+        for r in _csv.DictReader(open(fo, encoding="utf-8-sig")):
+            pid, nc = r.get("id_fonte") or "", (r.get("nome_completo") or "").strip()
+            if pid.startswith("camera:p") and pid not in nomi and nc and r.get("affidabilita", "alta") != "bassa":
+                nomi[pid] = nc
     return nomi
 
 

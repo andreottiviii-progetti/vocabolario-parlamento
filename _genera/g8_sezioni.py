@@ -75,7 +75,7 @@ def main():
     print("archivi della seconda scansione:", len(S2), flush=True)
 
     def chi(orat, pid, data=""):
-        return nomi.get(pid) or oratore_valido(orat, "", data[:4] if data[:4].isdigit() else None)
+        return nomi.get(pid) or oratore_valido(orat, pid, data[:4] if data[:4].isdigit() else None)  # con la persona riconosciuta ma senza nome in anagrafe resta il nome del resoconto
 
     # ------------------------------------------------------------------ risate
     serie = defaultdict(lambda: [None, None])
