@@ -82,9 +82,16 @@ def main():
     for r in leggi_csv("h20_serie.csv"):
         serie[int(r["anno"])][0 if r["ramo"] == "camera" else 1] = f(r["ila_per_1000_interventi"], 2)
     periodi = [[r["periodo"], f(r["media"], 2)] for r in leggi_csv("h20_periodi.csv") if r["ramo"] == "tutti" and r["misura"] == "ila_per_1000_interventi"]
+    # chi non è parlamentare (un presidente del Consiglio esterno) nella tabella del progetto ha solo l'id della Camera:
+    # il nome si prende dagli elenchi ufficiali dei membri del governo (dati.camera.it, dati/elenchi_parlamentari/camera)
+    nomi_gov = {}
+    for fg in glob.glob(os.path.join(BASE, "dati", "elenchi_parlamentari", "camera", "membri_governo_rep_*.json")):
+        for b_ in json.load(open(fg, encoding="utf-8"))["results"]["bindings"]:
+            pp = b_["pers"]["value"].rsplit("/", 1)[-1].replace(".rdf", "")
+            nomi_gov.setdefault("camera:" + pp, (b_["nome"]["value"] + " " + b_["cognome"]["value"]).title())
     orat = []
     for r in leggi_csv("h20_oratori.csv"):
-        orat.append({"nome": r["nome"], "pid": qid_pid.get(r["pers"], ""), "ila": int(float(r["ila"])), "interventi": int(float(r["interventi"])),
+        orat.append({"nome": nomi_gov.get(r["nome"], r["nome"]) if re.match(r"^camera:p\d+$", r["nome"]) else r["nome"], "pid": qid_pid.get(r["pers"], ""), "ila": int(float(r["ila"])), "interventi": int(float(r["interventi"])),
                      "parole": int(float(r["parole"])), "da": int(float(r["anno_min"])), "a": int(float(r["anno_max"])),
                      "per10k": f(r["ila_per_10000"], 2), "rapporto": f(r["ila_osservata_su_attesa"], 2), "rami": r["rami"]})
     top = sorted(orat, key=lambda o: -o["ila"])[:25]

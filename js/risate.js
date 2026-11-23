@@ -14,6 +14,7 @@
       el.innerHTML = `
         <h1 class="titolo-pagina">Risate e insulti</h1>
         <p class="sommario">Nel ${G.esc(p0[0])} lo stenografo annota l'ilarità ${G.num(p0[1], 0)} volte ogni mille interventi; nel ${G.esc(p1[0])} ${G.num(p1[1], 1)}. Gli insulti invece non aumentano: ${G.num(media(1948, 1969), 3)} ogni mille parole nel 1948-69, ${G.num(media(2008, 2022), 3)} dal 2008.</p>
+        <p class="piccolo grigio"><a class="lk" href="risate_migliori.html">Le risate e gli insulti migliori, scelti leggendo, epoca per epoca →</a></p>
         <section class="griglia" style="margin-top:14px">
           <div class="c4"><div class="numero-ill">${G.num(p0[1], 0)}→${G.num(p1[1], 1)}</div><p class="che-cosa">risate annotate ogni mille interventi, ${G.esc(p0[0])} e ${G.esc(p1[0])}</p>${e20a ? `<p class="piccolo">${G.lEsp("H20a")} ${G.esito(e20a.esito)}</p>` : ""}<h2 class="rubrica">Vedi anche: le storie</h2>${G.tessere(storie, 4).replace('class="rimandi"', 'class="rimandi una"')}</div>
           <div class="c8" id="g-ila"></div>
@@ -43,7 +44,8 @@
       const lp = (o) => (o.pid ? G.lPersona(o.pid, o.nome) : G.esc(o.nome));
       const a2 = G.figura("#g-top", { titolo: `${G.esc(R.top[0].nome)} fa ridere l'aula ${G.num(R.top[0].ila)} volte`, sotto: "Risate annotate dopo un intervento, per oratore, 1848-2022", csv: () => [["oratore", "risate", "interventi", "anni"]].concat(R.top.map((o) => [o.nome, o.ila, o.interventi, o.da + "-" + o.a])), nomeCSV: "chi_fa_ridere" });
       a2.html(G.barre(R.top.slice(0, 15).map((o, i) => [lp(o) + ` <span class="grigio">${o.da}-${o.a}</span>`, o.ila, i === 0])));
-      const a3 = G.figura("#g-efficaci", { titolo: `${G.esc(R.efficaci[0].nome)} fa ridere ${G.num(R.efficaci[0].rapporto, 1)} volte più del previsto`, sotto: "Risate osservate su quelle attese per le sue parole, oratori con almeno 200.000 parole" + (e20b ? ". " + G.esc(e20b.numero) : ""), csv: () => [["oratore", "osservate_su_attese"]].concat(R.efficaci.map((o) => [o.nome, o.rapporto])), nomeCSV: "piu_efficaci" });
+      const a3 = G.figura("#g-efficaci", { titolo: `${G.esc(R.efficaci[0].nome)} fa ridere ${G.num(R.efficaci[0].rapporto, 1)} volte più del previsto`, sotto: (() => { const b = R.efficaci[0], at = b.ila / b.rapporto; return `Che cosa vuol dire «più del previsto»: ogni anno, alla Camera e al Senato, lo stenografo annota un certo numero di risate ogni mille parole. Se ${G.esc(b.nome)} facesse ridere come un parlamentare qualunque dei suoi anni, con le sue ${G.num(b.parole)} parole ci sarebbero circa ${G.num(at, at < 10 ? 1 : 0)} risate: è il previsto. Ne sono annotate ${G.num(b.ila)}, cioè ${G.num(b.rapporto, 1)} volte tanto. Oratori con almeno 200.000 parole.`; })(),
+        limite: e20b ? "Il conto completo, con la misura di quanto le risate si concentrano su pochi oratori: " + G.esc(e20b.numero) : "", csv: () => [["oratore", "osservate_su_attese"]].concat(R.efficaci.map((o) => [o.nome, o.rapporto])), nomeCSV: "piu_efficaci" });
       a3.html(G.barre(R.efficaci.slice(0, 15).map((o, i) => [lp(o) + ` <span class="grigio">${o.da}-${o.a}</span>`, o.rapporto, i === 0]), { fmt: (v) => G.num(v, 1) + " volte" }));
       // frasi
       let ep = "", quante = 30;
