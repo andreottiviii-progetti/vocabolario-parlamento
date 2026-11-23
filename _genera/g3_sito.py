@@ -93,7 +93,7 @@ def main():
         if c[0] == "Codice" or len(c) < 6:
             continue
         # i rimandi ai file di lavoro tra parentesi (es. «h1_h2_h5_primi_risultati.txt») non vanno nel sito pubblico
-        numero_ = re.sub(r"[,;]?\s*[\w./-]*(?:risultati|note_h\d|misure)[\w./-]*|[,;]?\s*[\w./-]+\.(?:txt|csv|md|json|py|parquet)\b", "", c[4])
+        numero_ = re.sub(r"[,;]?\s*[\w.-]*(?:risultati/|_risultati|note_h\d|misure/)[\w./-]*|[,;]?\s*[\w./-]+\.(?:txt|csv|md|json|py|parquet)\b", "", c[4])
         numero_ = re.sub(r"\(\s*[;,]?\s*\)", "", numero_)
         numero_ = re.sub(r"\(([^()]*?)[;,]\s*\)", r"(\1)", numero_)
         esp.append({"filone": filone, "cod": c[0], "titolo": c[1], "attesa": c[2], "esito": c[3], "numero": re.sub(r"\s{2,}", " ", numero_).strip()})
