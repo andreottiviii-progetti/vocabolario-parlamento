@@ -13,20 +13,25 @@
       const storie = (C.storie || []).map((id) => S.storie.find((s) => s.id === id)).filter(Boolean);
       const i = IX.capitoli.findIndex((c) => +c.n === n);
       const prec = IX.capitoli[i - 1], succ = IX.capitoli[i + 1];
+      const minuscola = (t) => (t ? t.charAt(0).toLowerCase() + t.slice(1) : t);
+      const a0 = (C.anni || [])[0], a1 = (C.anni || [])[(C.anni || []).length - 1];
+      // la voce lunga: il titolo spiega di che cosa parla il capitolo, la parola guida sta accanto
       el.innerHTML = `
-        <h1 class="titolo-pagina" style="font-size:clamp(44px,6vw,80px)">${G.esc(C.titolo)} <small class="grigio" style="font-size:.45em;font-weight:400">${(C.anni || []).join("-")}</small></h1>
+        <h1 class="titolo-pagina">${G.esc(C.titolo)}<span class="accanto"><span class="anni">[${a0}-${a1}]</span> <i class="gram">cap. ${C.n} di ${IX.capitoli.length} · parola guida</i> ${G.esc(minuscola(C.simbolo || ""))}</span></h1>
         <p class="sommario">${G.esc(C.sommario)}</p>
+        ${C.frase ? `<p class="es cap-es">«${G.esc(C.frase.replace(/^«|»$/g, ""))}» <span>${G.esc(C.chi)}</span></p>` : ""}
         <div id="filo"></div>
-        ${C.frase ? `<section style="margin:48px 0 24px"><blockquote class="citazione-gigante">${G.esc(C.frase)}</blockquote><p class="chi">${G.esc(C.chi)}</p></section>` : ""}
         <section class="scorrimento">
           <div class="scena"><div id="g-chiave"></div></div>
-          <div class="passi">${C.passi.map((p, k) => `<div class="passo" data-stato="${k + 1}"><p class="occhiello">Passo ${k + 1}</p><h2 class="titolo-piccolo">${p.titolo}</h2>${p.testo}${p.porte ? `<p class="piccolo porte">${p.porte}</p>` : ""}</div>`).join("")}</div>
+          <div class="passi">${C.passi.map((p, k) => `<div class="passo" data-stato="${k + 1}"><h2 class="titolo-piccolo senso"><b class="n" aria-label="Passo ${k + 1}">${k + 1}</b> ${p.titolo}</h2>${p.testo}${p.porte ? `<p class="piccolo porte">→ ${p.porte}</p>` : ""}</div>`).join("")}</div>
         </section>
-        ${C.stenografo ? `<section class="sezione"><div class="testa"><h2>Il momento dello stenografo</h2></div><div class="colonna-testo">${C.stenografo}</div></section>` : ""}
-        <section class="sezione griglia"><div class="c6"><h3 class="titolo-piccolo">Tre porte</h3><div class="colonna-testo">${C.porte_fondo}</div></div><div class="c6 fil"><h3 class="titolo-piccolo">I verdetti toccati</h3><div class="colonna-testo">${C.verdetti}</div></div></section>
-        <section class="sezione"><div class="testa"><h2>Le storie del capitolo</h2></div>${G.tessere(storie, 8)}</section>
-        ${C.verso ? `<section class="sezione sottile"><div class="colonna-testo">${C.verso}</div></section>` : ""}
-        <nav class="prec-succ" aria-label="Capitoli vicini"><span>${prec ? `<a href="capitolo.html?n=${prec.n}">← ${G.esc(prec.titolo)}</a>` : `<a href="index.html">← La prima pagina</a>`}</span><span>${succ ? `<a href="capitolo.html?n=${succ.n}">${G.esc(succ.titolo)} →</a>` : `<a href="percorsi.html">I percorsi →</a>`}</span></nav>`;
+        <section class="sezione griglia">
+          <div class="c4">${C.stenografo ? `<h2 class="rubrica">Il momento dello stenografo</h2><div class="voce">${C.stenografo}</div>` : ""}<h2 class="rubrica">Tre porte</h2><div class="voce">${C.porte_fondo}</div></div>
+          <div class="c4 fil"><h2 class="rubrica">I verdetti toccati</h2><div class="voce">${C.verdetti}</div>${C.verso ? `<h2 class="rubrica">L'ultima riga</h2><div class="voce">${C.verso}</div>` : ""}</div>
+          <div class="c4 fil"><h2 class="rubrica">Vedi anche: le storie del capitolo</h2>${G.tessere(storie, 12).replace('class="rimandi"', 'class="rimandi una"')}</div>
+        </section>
+        <nav class="prec-succ" aria-label="Capitoli vicini"><span>${prec ? `<a href="capitolo.html?n=${prec.n}">◂ ${G.esc(prec.titolo)}</a> <i class="gram">cap. ${prec.n}</i>` : `<a href="index.html">◂ La prima pagina</a>`}</span><span>${succ ? `<i class="gram">cap. ${succ.n}</i> <a href="capitolo.html?n=${succ.n}">${G.esc(succ.titolo)} ▸</a>` : `<a href="percorsi.html">I percorsi ▸</a>`}</span></nav>`;
+      G.guideVicine(prec ? ["capitolo.html?n=" + prec.n, prec.titolo] : ["index.html", "la prima pagina"], succ ? ["capitolo.html?n=" + succ.n, succ.titolo] : ["percorsi.html", "i percorsi"]);
       G.filoDelTempo("#filo", IX.capitoli, n);
       Promise.all([G.carica("capitoli/scommesse.json"), G.carica("esperimenti.json")]).then(([SC, E]) => {
         SC.scommesse.filter((x) => x.capitolo === n).forEach((x) => { const p = el.querySelectorAll(".passo")[x.passo - 1]; if (p) G.scommessa(p, x, E); });

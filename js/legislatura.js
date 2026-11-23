@@ -17,6 +17,8 @@
     document.title = L.nome + " · Il vocabolario del Parlamento";
     document.getElementById("bric").textContent = L.nome;
     G.dove([L.da, L.a, L.nome + ", " + L.da + "-" + L.a]);
+    const il = B.legislature.findIndex((l) => l.id === L.id), lp = B.legislature[il - 1], ls = B.legislature[il + 1];
+    G.guideVicine(lp ? ["legislatura.html?id=" + lp.id, lp.nome] : null, ls ? ["legislatura.html?id=" + ls.id, ls.nome] : null);
     const C = L.archivi.camera, Se = L.archivi.senato;
     const oc = (L.oratori.camera || [])[0];
     const rep = L.epoca === "repubblica";

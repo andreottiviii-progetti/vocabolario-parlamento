@@ -11,6 +11,7 @@
       document.title = a + " · Il vocabolario del Parlamento";
       document.getElementById("bric").textContent = a;
       G.dove([a, a, String(a)]);
+      G.guideVicine(a > 1848 ? ["anno.html?a=" + (a - 1), String(a - 1)] : null, a < 2022 ? ["anno.html?a=" + (a + 1), String(a + 1)] : null);
       const legs = Y.leg.map((id) => B.legislature.find((l) => l.id === id)).filter(Boolean);
       const parole = (Y.parole || []).filter((x) => x[0].length >= 4);
       const p1 = parole.find((x) => x[0].length >= 5) || parole[0];

@@ -16,15 +16,14 @@
       el.innerHTML = `
         <h1 class="titolo-pagina">Il fascismo in aula</h1>
         <p class="sommario">Dal ${G.num(p0.dissenso_100, 1)} al ${G.num(p1.dissenso_100, 1)} ogni cento interventi: alla Camera il dissenso annotato dallo stenografo sparisce tra il periodo liberale e il regime. Le parole del regime si moltiplicano, il «Lei» lascia il posto al «Voi», le sedute si svuotano di oratori.</p>
-        <section class="griglia" style="margin-top:40px">
-          <div class="c4"><div class="numero-ill">${G.num(p0.dissenso_100, 0)}→${G.num(p1.dissenso_100, 0)}</div><p class="che-cosa">annotazioni di dissenso ogni cento interventi alla Camera, ${G.esc(p0.periodo)} e ${G.esc(p1.periodo)}</p></div>
+        <section class="griglia" style="margin-top:14px">
+          <div class="c4"><div class="numero-ill">${G.num(p0.dissenso_100, 0)}→${G.num(p1.dissenso_100, 0)}</div><p class="che-cosa">annotazioni di dissenso ogni cento interventi alla Camera, ${G.esc(p0.periodo)} e ${G.esc(p1.periodo)}</p><h2 class="rubrica">Vedi anche: le storie</h2>${G.tessere(storie, 8).replace('class="rimandi"', 'class="rimandi una"')}</div>
           <div class="c8"><div id="scena-sp"></div><div id="bottoni-sp"></div></div>
         </section>
         <section class="sezione"><div id="g-termini"></div>${h18c ? `<p class="piccolo grigio">${G.lEsp("H18c")} ${G.esc(h18c.numero)} ${G.esito(h18c.esito)}</p>` : ""}</section>
         <section class="sezione griglia"><div class="c6" id="g-lei"></div><div class="c6 fil" id="g-oratori"></div></section>
         <section class="sezione"><div class="testa"><h2>Le parole del regime, anno per anno</h2></div><p class="sotto-titolo">Volte per milione di parole, Camera e Senato insieme. Ogni curva ha la sua scala.</p><div class="multipli" id="multipli"></div></section>
-        <section class="sezione"><div class="testa"><h2>Le cinque legislature del regime</h2></div><div class="tessere" id="legs"></div></section>
-        <section class="sezione"><div class="testa"><h2>Le storie del fascismo</h2><span class="a-destra"><a href="storie.html">Tutte le storie</a></span></div>${G.tessere(storie, 8)}</section>
+        <section class="sezione"><div class="testa"><h2>Le cinque legislature del regime</h2></div><div class="voci-riga" id="legs"></div></section>
         <section class="sezione"><div class="testa"><h2>Gli esperimenti</h2></div><div class="tab-scorre"><table class="fitta"><thead><tr><th>codice</th><th>esperimento</th><th>esito</th><th>il numero</th></tr></thead><tbody>${esp.map((e) => `<tr><td>${G.lEsp(e.cod)}</td><td>${G.esc(e.titolo)}</td><td>${G.esito(e.esito)}</td><td>${G.esc(e.numero)}</td></tr>`).join("")}</tbody></table></div></section>`;
       G.Scena.primeParole(["antifascismo", "camerati", "autarchia", "razzismo", "littorio"]).then((PP) => {
         const scSP = G.Scena.specchio("#scena-sp", F, PP);
@@ -77,7 +76,7 @@
         document.getElementById("multipli").innerHTML = cc.map((c, i) => `<div class="mul"><h4><a href="parola.html?p=${c.w}">${G.esc(c.forma)}</a></h4><div class="tot">${G.num(c.tot)} volte</div><div id="fm${i}"></div></div>`).join("");
         cc.forEach((c, i) => G.grafico("#fm" + i, (a, w) => G.mini(a, w, c.pm.m, { label: c.forma, asse: i < 5, colore: "#3A3E46", linea: "#F2F3F5" })));
       });
-      document.getElementById("legs").innerHTML = legs.map((l, i) => `<a class="tessera${i === 0 ? " doppia" : ""}" href="legislatura.html?id=${l.id}"><span class="t-occ">${l.da}-${l.a}</span><span class="t-num">${G.esc(l.nome.split(" ")[0])}</span><div><h3>${G.esc(l.nome)}</h3><p>${G.num(l.parole / 1e6, 1)} milioni di parole, ${G.num(l.turni)} interventi</p></div></a>`).join("");
+      document.getElementById("legs").innerHTML = legs.map((l) => `<p class="voce"><a class="lemma" href="legislatura.html?id=${l.id}">${G.esc(l.nome)}</a> <span class="anni">[${l.da}-${l.a}]</span><br>${G.num(l.parole / 1e6, 1)} milioni di parole, ${G.num(l.turni)} interventi</p>`).join("");
     });
   });
 })();

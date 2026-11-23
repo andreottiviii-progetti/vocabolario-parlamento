@@ -148,7 +148,7 @@
       transizione(et).style("opacity", function () { return +this.dataset.a <= fino ? 1 : 0; });
       transizione(fine).style("opacity", !s || s.scritta ? 1 : 0);
     };
-    scena.stati = [{ fino: 1847 }, { fino: 1849 }, { fino: 1849, tenue: true }, { fino: 1859 }, { fino: 1862, scritta: true }, null];
+    scena.stati = [{ fino: 1848 }, { fino: 1849 }, { fino: 1849, tenue: true }, { fino: 1859 }, { fino: 1862, scritta: true }, null];
     return scena;
   };
 

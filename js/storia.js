@@ -30,30 +30,30 @@
     const idx = IX.storie.findIndex((s) => s.id === St.id);
     const prec = IX.storie[idx - 1], succ = IX.storie[idx + 1];
     const coll = (St.storie_collegate || []).map((sid) => IX.storie.find((s) => s.id === sid)).filter(Boolean);
+    const verd = esp.length ? esp.map((e) => G.esito(e.esito)).filter((v, k, a) => a.indexOf(v) === k).join(" ") : G.esito(St.verdetto || "descrittiva");
+    // la storia come voce: titolo, sommario, epoca; il testo a sinistra e le tavole accanto; i rimandi in fondo, in colonne
     el.innerHTML = `
+      <h1 class="titolo-pagina lungo">${G.esc(St.titolo)}</h1>
+      <p class="sommario">${G.esc(St.sottotitolo)}</p>
+      <p class="piccolo grigio"><i>${G.esc(St.occhiello)}</i> · <i class="gram">verdetto</i> ${verd}</p>
+      <div id="nel-racconto"></div>
       <article class="storia griglia">
-        <div class="c9">
-          <p class="occhiello">${G.esc(St.occhiello)}</p>
-          <h1>${G.esc(St.titolo)}</h1>
-          <p class="sommario">${G.esc(St.sottotitolo)}</p>
-          <div id="nel-racconto"></div><div class="colonna-testo">${St.testo}</div>
-          <div id="grafici"></div>
-          <div class="colonna-testo verdetto" style="margin-top:32px"><h2 class="titolo-piccolo">Verdetto e limiti</h2>${St.verdetto_testo}</div>
-        </div>
-        <aside class="c3 fil">
-          <h3 class="titolo-piccolo" style="margin-top:18px">Il verdetto</h3>
-          <ul class="fatti">${esp.length ? esp.map((e) => `<li>${G.lEsp(e.cod)} ${G.esc(e.titolo)}<span class="et">${G.esito(e.esito)}</span></li>`).join("") : `<li>${G.esito(St.verdetto || "descrittiva")}<span class="et">lavoro descrittivo, senza ipotesi da verificare</span></li>`}</ul>
-          ${St.parole.length ? `<h3 class="titolo-piccolo" style="margin-top:18px">Parole</h3><p class="parole-nuvola">${St.parole.map(parola).join(" ")}</p>` : ""}
-          ${St.partiti.length || St.persone.length ? `<h3 class="titolo-piccolo" style="margin-top:18px">Partiti e persone</h3><p class="parole-nuvola">${St.partiti.map((p) => G.lPartito(p, p)).join(" ")} ${St.persone.map(persona).join(" ")}</p>` : ""}
-          ${St.legislature.length || anni.length ? `<h3 class="titolo-piccolo" style="margin-top:18px">Legislature e anni</h3><p class="parole-nuvola">${St.legislature.map(legLink).join(" ")} ${anni.map((a) => G.lAnno(a)).join(" ")}</p>` : ""}
-          ${coll.length ? `<h3 class="titolo-piccolo" style="margin-top:18px">Altre storie</h3><ul class="fatti">${coll.map((s) => `<li><a href="storia.html?id=${s.id}">${G.esc(s.titolo)}</a></li>`).join("")}</ul>` : ""}
-        </aside>
+        <div class="c6 colonna-testo">${St.testo}<div class="verdetto"><h2 class="rubrica">Verdetto e limiti</h2>${St.verdetto_testo}</div></div>
+        <div class="c6 fil" id="grafici"></div>
       </article>
-      <nav class="prec-succ" aria-label="Storie vicine"><span>${prec ? `<a href="storia.html?id=${prec.id}">← ${G.esc(prec.titolo.slice(0, 70))}</a>` : ""}</span><span>${succ ? `<a href="storia.html?id=${succ.id}">${G.esc(succ.titolo.slice(0, 70))} →</a>` : ""}</span></nav>`;
+      <section class="sezione griglia rimandi-storia">
+        <div class="c3"><h2 class="rubrica">Il verdetto</h2><ul class="fatti">${esp.length ? esp.map((e) => `<li>${G.lEsp(e.cod)} ${G.esc(e.titolo)}<span class="et">${G.esito(e.esito)}</span></li>`).join("") : `<li>${G.esito(St.verdetto || "descrittiva")}<span class="et">lavoro descrittivo, senza ipotesi da verificare</span></li>`}</ul></div>
+        <div class="c3 fil">${St.parole.length ? `<h2 class="rubrica">Parole</h2><p class="parole-nuvola">${St.parole.map(parola).join(" ")}</p>` : ""}
+          ${St.legislature.length || anni.length ? `<h2 class="rubrica">Legislature e anni</h2><p class="parole-nuvola">${St.legislature.map(legLink).join(" ")} ${anni.map((a) => G.lAnno(a)).join(" ")}</p>` : ""}</div>
+        <div class="c3 fil">${St.partiti.length || St.persone.length ? `<h2 class="rubrica">Partiti e persone</h2><p class="parole-nuvola">${St.partiti.map((p) => G.lPartito(p, p)).join(" ")} ${St.persone.map(persona).join(" ")}</p>` : ""}</div>
+        <div class="c3 fil">${coll.length ? `<h2 class="rubrica">Vedi anche</h2>${coll.map(G.voceStoria).join("")}` : ""}</div>
+      </section>
+      <nav class="prec-succ" aria-label="Storie vicine"><span>${prec ? `<a href="storia.html?id=${prec.id}">◂ ${G.esc(prec.titolo)}</a>` : ""}</span><span>${succ ? `<a href="storia.html?id=${succ.id}">${G.esc(succ.titolo)} ▸</a>` : ""}</span></nav>`;
+    G.guideVicine(prec ? ["storia.html?id=" + prec.id, prec.titolo] : ["storie.html", "tutte le storie"], succ ? ["storia.html?id=" + succ.id, succ.titolo] : ["storie.html", "tutte le storie"]);
     G.nelRacconto("#nel-racconto", "storie", St.id);
     const box = d3.select("#grafici");
     St.grafici.forEach((g, i) => {
-      const d = box.append("div").attr("class", "sezione sottile").style("max-width", "920px");
+      const d = box.append("div").attr("class", "tav-storia");
       if (!g.dati) {
         d.html(`<h3 class="fig-tit">${g.titolo}</h3><p class="fig-sotto">${g.sotto}</p><p class="segnaposto"><b>Grafico in preparazione.</b> I dati di questo grafico non sono ancora pronti per il sito.</p>`);
         return;

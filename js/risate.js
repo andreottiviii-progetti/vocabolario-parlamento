@@ -14,8 +14,8 @@
       el.innerHTML = `
         <h1 class="titolo-pagina">Risate e insulti</h1>
         <p class="sommario">Nel ${G.esc(p0[0])} lo stenografo annota l'ilarità ${G.num(p0[1], 0)} volte ogni mille interventi; nel ${G.esc(p1[0])} ${G.num(p1[1], 1)}. Gli insulti invece non aumentano: ${G.num(media(1948, 1969), 3)} ogni mille parole nel 1948-69, ${G.num(media(2008, 2022), 3)} dal 2008.</p>
-        <section class="griglia" style="margin-top:40px">
-          <div class="c4"><div class="numero-ill">${G.num(p0[1], 0)}→${G.num(p1[1], 1)}</div><p class="che-cosa">risate annotate ogni mille interventi, ${G.esc(p0[0])} e ${G.esc(p1[0])}</p>${e20a ? `<p class="piccolo">${G.lEsp("H20a")} ${G.esito(e20a.esito)}</p>` : ""}</div>
+        <section class="griglia" style="margin-top:14px">
+          <div class="c4"><div class="numero-ill">${G.num(p0[1], 0)}→${G.num(p1[1], 1)}</div><p class="che-cosa">risate annotate ogni mille interventi, ${G.esc(p0[0])} e ${G.esc(p1[0])}</p>${e20a ? `<p class="piccolo">${G.lEsp("H20a")} ${G.esito(e20a.esito)}</p>` : ""}<h2 class="rubrica">Vedi anche: le storie</h2>${G.tessere(storie, 4).replace('class="rimandi"', 'class="rimandi una"')}</div>
           <div class="c8" id="g-ila"></div>
         </section>
         <section class="sezione griglia"><div class="c6" id="g-top"></div><div class="c6 fil" id="g-efficaci"></div></section>
@@ -26,8 +26,7 @@
         <section class="sezione"><div class="testa"><h2>Gli insulti detti in aula</h2><span class="a-destra" id="n-ins"></span></div>
           <p class="sotto-titolo">Citazioni dall'aula, con fonte e data: la parola può essere rivolta a qualcuno, riferita, negata o avere un altro senso («scema» è anche il verbo scemare). Scegli un decennio.</p>
           <div class="filtri" id="f-dec"></div><div class="cerca-grande"><input id="cerca-ins" type="search" placeholder="filtra per parola o per nome" aria-label="Filtra gli insulti"></div><ul class="elenco-frasi" id="frasi-ins"></ul></section>
-        <section class="sezione griglia"><div class="c6" id="g-partiti"></div><div class="c6 fil" id="g-clima"></div></section>
-        <section class="sezione"><div class="testa"><h2>Le storie</h2></div>${G.tessere(storie, 4)}</section>`;
+        <section class="sezione griglia"><div class="c6" id="g-partiti"></div><div class="c6 fil" id="g-clima"></div></section>`;
       // ilarita' nel tempo
       const anni = Object.keys(R.serie).map(Number).sort();
       const a1 = G.figura("#g-ila", {

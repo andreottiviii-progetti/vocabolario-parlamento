@@ -16,7 +16,7 @@
       el.innerHTML = `
         <h1 class="titolo-pagina">Amici e nemici dell'Italia, 1848-2022</h1>
         <p class="sommario">Per ogni paese e ogni anno, quante volte l'aula ne parla con parole ostili o amichevoli. Sotto ogni linea, le alleanze e le guerre vere: si vede quando le parole seguono i trattati e quando li anticipano o li smentiscono.</p>
-        <section style="margin-top:32px"><div id="scena-an"></div><div id="bottoni-an"></div></section>
+        <section style="margin-top:14px"><div id="scena-an"></div><div id="bottoni-an"></div></section>
         <section class="sezione"><div class="testa"><h2>Otto paesi, 175 anni</h2></div>
           <p class="sotto-titolo">Indice dalle parole vicine al nome del paese, Camera e Senato, media di tre anni: sopra lo zero l'aula ne parla più da nemico, sotto più da amico. Fasce turchesi: anni di alleanza; fasce rosa: anni di guerra (Correlates of War). La tacca grigia in basso è il fascismo.</p>
           <div class="multipli" id="paesi" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>

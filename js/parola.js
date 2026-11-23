@@ -50,7 +50,7 @@
       const pm = dec.map((n, i) => (totDec[i] ? (n / totDec[i]) * 1e6 : 0));
       const imax = pm.reduce((b, v, i) => (v > pm[b] ? i : b), 0);
       el.innerHTML = `
-        <h1 class="titolo-pagina"><span class="evid">${G.esc(f)}</span></h1>
+        <h1 class="titolo-pagina">${G.esc(f)}<span class="accanto">${p0 ? `<span class="anni">[${String(p0[0]).slice(0, 4)}-2022]</span> ` : ""}<i class="gram">${espr ? "espressione" : "voce breve, detta meno di mille volte"}</i></span></h1>
         <p class="sommario">${espr ? "Espressione detta" : "Detta"} <b>${G.num(S.t)}</b> volte in aula tra il 1848 e il 2022. ${p0 ? `La prima volta è il ${G.data(p0[0])}, ${G.alRamo(p0[1])}${p0[2] ? ", " + G.esc(G.oratore(p0[2])) : ""}.` : ""} Il decennio in cui si dice di più sono gli anni ${DEC[imax] === 1840 ? "1848-49" : DEC[imax]}.</p>
         <section class="griglia">
           <div class="c7"><h2 class="titolo-medio">Le prime volte</h2><ul class="frasi" id="prime"></ul></div>
@@ -94,8 +94,8 @@
     const reW = new RegExp("(^|[^a-zà-ù])" + f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-zà-ù]|$)", "i");
     const esp = E.elenco.filter((e) => reW.test(e.titolo + " " + e.attesa + " " + e.numero));
     el.innerHTML = `
-      <h1 class="titolo-pagina"><span class="evid">${G.esc(f)}</span></h1>
-      <p class="sommario">Detta <b>${G.num(C.tot)}</b> volte in aula dal ${C.y0} al 2022, ${G.num(tc)} alla Camera e ${G.num(ts)} al Senato. L'anno di punta è il <a class="lk" href="anno.html?a=${pk.anno}">${pk.anno}</a>, con ${G.num1(pk.val)} volte per milione di parole. ${prima}</p>
+      <h1 class="titolo-pagina">${G.esc(f)}<span class="accanto"><span class="anni">[${C.y0}-2022]</span>${C.y0 >= 1990 ? ' <i class="gram">neol.</i>' : ""} <i class="gram">voce con la curva anno per anno</i></span></h1>
+      <p class="sommario"><b class="n">1</b> Detta <b>${G.num(C.tot)}</b> volte in aula dal ${C.y0} al 2022, ${G.num(tc)} alla Camera e ${G.num(ts)} al Senato. <b class="n">2</b> L'anno di punta è il <a class="lk" href="anno.html?a=${pk.anno}">${pk.anno}</a>, con ${G.num1(pk.val)} volte per milione di parole. ${prima ? '<b class="n">3</b> ' + prima : ""}</p>
       <div id="nel-racconto"></div>
       <section class="griglia">
         <div class="c8">
@@ -117,6 +117,9 @@
         <div class="c3 fil"><h3 class="titolo-piccolo">Collegamenti</h3><ul class="fatti" id="colleg"></ul></div>
       </section>`;
     G.nelRacconto("#nel-racconto", "parole", f);
+    // parole guida: la voce prima e quella dopo, in ordine alfabetico
+    const iw = IX._mappa.get(w), vp = IX.p[iw - 1], vs = IX.p[iw + 1];
+    G.guideVicine(vp ? ["parola.html?p=" + vp[0], vp[1] || vp[0]] : null, vs ? ["parola.html?p=" + vs[0], vs[1] || vs[0]] : null);
     // fatti
     const fatti = [
       [`<b>${G.num(C.tot)}</b> volte`, `${G.num(tc)} alla Camera, ${G.num(ts)} al Senato`],

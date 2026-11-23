@@ -19,16 +19,15 @@
       el.innerHTML = `
         <h1 class="titolo-pagina">Le lingue dell'aula</h1>
         <p class="sommario">Nel ${amax} il ${G.num(fc[amax], 1)}% delle parole dette alla Camera è in francese; dal ${zero || 1861} è zero. Poi arriva l'inglese, il latino resta, e le forme antiche dell'italiano spariscono piano, senza salti.</p>
-        <section class="griglia" style="margin-top:40px">
-          <div class="c4"><div class="numero-ill">${G.num(fc[amax], 1)}%</div><p class="che-cosa">delle parole dette alla Camera nel ${amax} è in francese: lo parlano i deputati della Savoia</p>${e8 ? `<p class="piccolo">${G.lEsp("H8")} ${G.esito(e8.esito)}</p>` : ""}</div>
+        <section class="griglia" style="margin-top:14px">
+          <div class="c4"><div class="numero-ill">${G.num(fc[amax], 1)}%</div><p class="che-cosa">delle parole dette alla Camera nel ${amax} è in francese: lo parlano i deputati della Savoia</p>${e8 ? `<p class="piccolo">${G.lEsp("H8")} ${G.esito(e8.esito)}</p>` : ""}<h2 class="rubrica">Vedi anche: le storie</h2>${G.tessere(storie, 6).replace('class="rimandi"', 'class="rimandi una"')}</div>
           <div class="c8"><div id="scena-fr"></div><div id="bottoni-fr"></div></div>
         </section>
         <section class="sezione"><div class="testa"><h2>Il francese in aula, frase per frase</h2><span class="a-destra" id="n-fr"></span></div>
           <p class="sotto-titolo">Frasi vere dette in francese alla Camera e al Senato, 1848-1870, come le scrive il resoconto.</p><ul class="elenco-frasi" id="frasi-fr"></ul><p><button class="bottone" id="altre-fr" type="button">Altre frasi</button></p></section>
         <section class="sezione"><div id="g-specchio"></div>${e9 ? `<p class="piccolo grigio">${G.lEsp("H9")} ${G.esc(e9.numero)} ${G.esito(e9.esito)}</p>` : ""}<div class="griglia" id="contributori" style="margin-top:20px"></div></section>
         <section class="sezione"><div id="g-forme"></div>${e7 ? `<p class="piccolo grigio">${G.lEsp("H7")} ${G.esc(e7.numero)} ${G.esito(e7.esito)}</p>` : ""}</section>
-        <section class="sezione griglia"><div class="c6" id="g-grafie"></div><div class="c6 fil" id="g-unita"></div></section>
-        <section class="sezione"><div class="testa"><h2>Le storie</h2></div>${G.tessere(storie, 6)}</section>`;
+        <section class="sezione griglia"><div class="c6" id="g-grafie"></div><div class="c6 fil" id="g-unita"></div></section>`;
       const scFR = G.Scena.francese("#scena-fr", L);
       G.bottoniStati("#bottoni-fr", scFR, ["vuoto", "1848-49", "attenuato", "fino al 1859", "1860-62", "tutto"]);
       // frasi
