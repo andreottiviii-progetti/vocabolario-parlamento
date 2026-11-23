@@ -39,12 +39,17 @@
         <div class="c8"><h2 class="titolo-medio">Le parole più sue</h2><p class="fig-sotto">Le parole che dice molto più del resto dell'aula nella stessa legislatura e nello stesso ramo; solo per chi ha detto almeno 3.000 parole in quella legislatura. Accanto, le volte.</p><div class="tab-scorre" id="t-tip"></div></div>
         <div class="c4 fil"><h3 class="titolo-piccolo">Tutte le legislature insieme</h3><p class="parole-nuvola" id="tip-tutte"></p></div>
       </section>`;
-    const area = G.figura("#g-legs", {
+    // con una legislatura sola una barra non dice niente: basta il numero (revisione v7, «niente grafici a una barra»)
+    if (L.length === 1) {
+      const x = L[0];
+      document.getElementById("g-legs").innerHTML = `<p class="numero-solo"><b>${G.num(x.parole)}</b> parole dette in aula, tutti i ruoli, nella <a href="legislatura.html?id=repubblica-${x.leg}">${G.romano(x.leg)} legislatura</a>, ${ramiTxt(x.ramo)}${x.partito ? ", " + G.esc(x.partito) : ""}.</p>`;
+    }
+    const area = L.length === 1 ? null : G.figura("#g-legs", {
       titolo: L.length > 1 ? (() => { const m = L.reduce((p, q) => (q.parole > p.parole ? q : p)); return `Parla di più nella ${G.romano(m.leg)} legislatura: ${G.num(m.parole)} parole`; })() : `${G.num(parole)} parole in una legislatura`,
       sotto: "Parole dette in aula per legislatura e ramo, tutti i ruoli",
       csv: () => [["legislatura", "ramo", "partito", "interventi", "parole"]].concat(L.map((x) => [x.leg, x.ramo, x.partito, x.turni, x.parole])), nomeCSV: "persona",
     });
-    area.html(G.barre(L.map((x) => [`<a href="legislatura.html?id=repubblica-${x.leg}">${G.romano(x.leg)}</a> ${ramiTxt(x.ramo)}${x.partito ? ", " + (x.ramo === "camera" ? G.lPartito(x.partito.replace("Unità", "Unita'"), x.partito) : G.esc(x.partito)) : ""}`, x.parole, false])));
+    if (area) area.html(G.barre(L.map((x) => [`<a href="legislatura.html?id=repubblica-${x.leg}">${G.romano(x.leg)}</a> ${ramiTxt(x.ramo)}${x.partito ? ", " + (x.ramo === "camera" ? G.lPartito(x.partito.replace("Unità", "Unita'"), x.partito) : G.esc(x.partito)) : ""}`, x.parole, false])));
     const f = [[`<b>${G.num(turni)}</b> interventi`, `${G.num(Math.round(parole / Math.max(1, turni)))} parole per intervento in media`]];
     Object.entries(ruoli).sort((p, q) => q[1] - p[1]).forEach(([k, v]) => f.push([`<b>${G.num(v)}</b> interventi ${nomiRuolo[k] || k}`, ""]));
     document.getElementById("fatti").innerHTML = f.map((x) => `<li>${x[0]}${x[1] ? `<span class="et">${x[1]}</span>` : ""}</li>`).join("");

@@ -33,7 +33,8 @@
       G.grafico(area, (a, w) => {
         const qc = G.media3(t.q), qs = t.qs ? G.media3(t.qs) : null;
         const mx = d3.max(qc.concat(qs || []), (v) => v || 0) || 0.01;
-        const ss = [{ punti: G.ANNI.map((y, i) => [y, qc[i]]), colore: G.ROSSO, sp: 2.5, etich: "Camera", piccoEtich: { x: picco, y: qc[k], testo: picco + ": " + G.pct(t.q[k]) } }];
+        // come dice il sottotitolo: nero (grigio scuro) la Camera, grigio il Senato; in rosso il punto dell'anno di punta
+        const ss = [{ punti: G.ANNI.map((y, i) => [y, qc[i]]), colore: G.SCURO, sp: 2.5, etich: qs ? "Camera" : null, nome: "Camera", piccoEtich: { x: picco, y: qc[k], colore: G.ROSSO, testo: picco + ": " + G.pct(t.q[k]) } }];
         if (qs) ss.push({ punti: G.ANNI.map((y, i) => [y, qs[i]]), colore: G.GDATI, sp: 1.5, etich: "Senato" });
         G.linee(a, w, { x: [1848, 2022], y: [0, mx * 1.15], serie: ss, yFmt: (v) => G.pct(v, 0), unita: "delle parole" });
       });

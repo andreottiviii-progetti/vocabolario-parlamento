@@ -5,7 +5,7 @@
 (function () {
   "use strict";
   const S = (G.Scena = {});
-  const ROSSO = "#E3120B", TURCHESE = "#00A3AD", TURCHESE_S = "#00757D";
+  const ROSSO = "#E3120B", TURCHESE = "#00A3AD", TURCHESE_S = "#008F9C";
 
   /* collega gli stati ai passi: mappa[k] e' lo stato del passo k (0, 1, 2...) */
   G.legaPassi = function (scena, passi, mappa) {
@@ -30,7 +30,7 @@
   S.amiciNemici = function (sel, X) {
     const PAESI = ["Austria", "Germania", "Francia", "Gran Bretagna", "Russia/URSS", "Stati Uniti", "Jugoslavia"];
     const scena = { stati: [], stato: () => {} };
-    const colore = (v) => (v == null ? "#fff" : v >= 0.3 ? "#C9241C" : v >= 0.1 ? "#EE9B95" : v > -0.1 ? "#ECEDEF" : v > -0.3 ? "#8FD0D5" : "#00838C"); // cinque gradini
+    const colore = (v) => (v == null ? "#fff" : v >= 0.3 ? "#C9241C" : v >= 0.1 ? "#EE9B95" : v > -0.1 ? "#ECEDEF" : v > -0.3 ? "#6CC0C6" : "#00838C"); // cinque gradini
     const m3 = (o, a) => { const v = []; for (let y = a - 1; y <= a + 1; y++) if (o[y] && o[y][0] != null && (o[y][3] || 0) >= 30) v.push(o[y][0]); return v.length >= 2 ? d3.mean(v) : null; };
     const giud = X.giudice_periodi || {};
     const area = G.figura(sel, {
@@ -57,9 +57,10 @@
           let v = p === "Jugoslavia" ? null : m3(o, y), daGiudice = false;
           const gp = (giud[p] || []).find((q) => y >= q[0] && y <= q[1]);
           if (gp && (p === "Jugoslavia" || (y >= 1956 && y <= 1967))) { v = (gp[2] - 0.15) * 1.6; daGiudice = true; }
-          if (v != null) tutte.push(g.append("rect").attr("class", "cella").attr("data-p", p).attr("data-a", y).attr("x", x(y)).attr("y", y0 + 6).attr("width", cw + 0.4).attr("height", rh * 0.5).attr("fill", colore(v)).attr("stroke", daGiudice ? G.INK : null).attr("stroke-width", daGiudice ? 0.4 : null).node());
+          if (v != null) tutte.push(g.append("rect").attr("class", "cella").attr("data-p", p).attr("data-a", y).attr("x", x(y)).attr("y", y0 + 6).attr("width", cw + 0.4).attr("height", rh * 0.5).attr("fill", colore(v)).attr("stroke", daGiudice ? G.INK : null).attr("stroke-width", daGiudice ? 0.4 : null)
+            .attr("data-tip", `${v >= 0.1 ? "da nemico" : v > -0.1 ? "neutro" : "da amico"} (${(v > 0 ? "+" : "−") + G.num(Math.abs(v), 2)})\n${p}, ${y}${daGiudice ? ", giudice automatico" : ""}`).node());
           const st = (al[y] || [])[1];
-          if (st === "alleato" || st === "guerra") g.append("rect").attr("class", "cella fatto").attr("data-p", p).attr("data-a", y).attr("x", x(y)).attr("y", y0 + 6 + rh * 0.5 + 4).attr("width", cw + 0.4).attr("height", 5).attr("fill", st === "alleato" ? TURCHESE_S : ROSSO);
+          if (st === "alleato" || st === "guerra") g.append("rect").attr("class", "cella fatto").attr("data-p", p).attr("data-a", y).attr("x", x(y)).attr("y", y0 + 6 + rh * 0.5 + 4).attr("width", cw + 0.4).attr("height", 5).attr("fill", st === "alleato" ? TURCHESE_S : ROSSO).attr("data-tip", `${st === "alleato" ? "alleanza in vigore" : "in guerra con l'Italia"}\n${p}, ${y}`);
         });
         if (!stretto) g.append("text").attr("x", 0).attr("y", y0 + rh * 0.45 + 15).attr("font-size", 12).attr("fill", G.GRIGIO).text(p === "Jugoslavia" ? "il giudice, i fatti" : "le parole, i fatti");
       });
@@ -127,12 +128,13 @@
       anni.forEach((y) => {
         const n = Math.ceil((T[y] || 0) / per);
         for (let k = 0; k < n; k++) tutti.push({ y, k, cx: x(y) + (k % col) * lato, cy: base - (Math.floor(k / col) + 1) * lato });
-        svg.append("text").attr("class", "q-et").attr("data-a", y).attr("x", x(y)).attr("y", base - (Math.ceil(n / col)) * lato - 6).attr("font-size", 12.5).attr("font-weight", 700).attr("fill", G.SEZ_S).text(T[y] ? G.num(T[y]) : (y === 1861 ? "zero" : ""));
+        svg.append("text").attr("class", "q-et").attr("data-a", y).attr("x", x(y)).attr("y", base - (Math.ceil(n / col)) * lato - 6).attr("font-size", 12.5).attr("font-weight", y === am ? 800 : 700).attr("fill", G.INK).text(T[y] ? G.num(T[y]) : (y === 1861 ? "zero" : ""));
+        svg.append("rect").attr("x", x(y)).attr("y", top).attr("width", x.step()).attr("height", base - top).attr("fill", "transparent").attr("data-tip", `${G.num(T[y] || 0)} interventi in francese${Q[y] != null ? ", " + G.num(Q[y], 1) + "% delle parole" : ""}\nCamera, ${y}`);
         svg.append("text").attr("x", x(y)).attr("y", base + 16).attr("font-size", 12).attr("fill", G.INK).text(stretto ? String(y).slice(2) : y);
         if (!stretto) svg.append("text").attr("x", x(y)).attr("y", base + 31).attr("font-size", 12).attr("fill", G.GRIGIO).text(Q[y] != null ? G.num(Q[y], 1) + "%" : "");
       });
       svg.append("line").attr("x1", 0).attr("x2", w).attr("y1", base).attr("y2", base).attr("stroke", G.GRIGIO);
-      svg.selectAll("rect.q").data(tutti).enter().append("rect").attr("class", "q").attr("data-a", (d) => d.y).attr("x", (d) => d.cx).attr("y", (d) => d.cy).attr("width", Math.max(1, lato - 1)).attr("height", Math.max(1, lato - 1)).attr("fill", G.SEZ);
+      svg.selectAll("rect.q").data(tutti).enter().append("rect").attr("class", "q").attr("data-a", (d) => d.y).attr("x", (d) => d.cx).attr("y", (d) => d.cy).attr("width", Math.max(1, lato - 1)).attr("height", Math.max(1, lato - 1)).attr("fill", (d) => (d.y === am ? G.ROSSO : G.NERO)).attr("pointer-events", "none");
       if (per > 1) svg.append("text").attr("x", w).attr("y", 14).attr("text-anchor", "end").attr("font-size", 12).attr("fill", G.GRIGIO).text("un quadretto = " + per + " interventi");
       fine = svg.append("text").attr("x", x(1861) + x.bandwidth()).attr("y", base - 70).attr("text-anchor", "end").attr("font-size", stretto ? 16 : 22).attr("font-weight", 800).attr("fill", G.INK).text("1861: il Regno d'Italia. In aula, nessun intervento in francese.").style("opacity", 0);
       if (stretto) fine.text("1861: nessuno");
@@ -173,11 +175,12 @@
       const y = d3.scaleLinear().domain([0, d3.max(anni, (q) => Math.max(su(q) || 0, giu(q) || 0))]).range([0, alt]);
       fascia = svg.append("rect").attr("x", x(1926)).attr("y", 4).attr("width", w - x(1926)).attr("height", 2 * alt + 24).attr("fill", document.body.dataset.sezione === "fascismo" ? "#22252B" : "#EEF0F2").style("opacity", 0);
       colSu = svg.selectAll("rect.su").data(anni).enter().append("rect").attr("class", "su").attr("data-a", (d) => d).attr("x", (d) => x(d)).attr("width", x.bandwidth()).attr("y", (d) => mid - y(su(d) || 0)).attr("height", (d) => y(su(d) || 0)).attr("fill", G.GDATI);
-      colGiu = svg.selectAll("rect.giu").data(anni).enter().append("rect").attr("class", "giu").attr("data-a", (d) => d).attr("x", (d) => x(d)).attr("width", x.bandwidth()).attr("y", mid).attr("height", (d) => y(giu(d) || 0)).attr("fill", ROSSO);
+      colGiu = svg.selectAll("rect.giu").data(anni).enter().append("rect").attr("class", "giu").attr("data-a", (d) => d).attr("x", (d) => x(d)).attr("width", x.bandwidth()).attr("y", mid).attr("height", (d) => y(giu(d) || 0)).attr("fill", G.ROSSO);
+      svg.selectAll("rect.tip").data(anni).enter().append("rect").attr("x", (d) => x(d)).attr("width", x.step()).attr("y", mid - alt).attr("height", 2 * alt).attr("fill", "transparent").attr("data-tip", (d) => `${G.num(su(d) || 0, 1)} applausi · ${G.num(giu(d) || 0, 1)} proteste ogni cento interventi\nCamera, ${d}`);
       svg.append("line").attr("x1", 0).attr("x2", w).attr("y1", mid).attr("y2", mid).attr("stroke", G.INK);
       anni.filter((q) => q % 2 === 1).forEach((q) => svg.append("text").attr("x", x(q) + x.bandwidth() / 2).attr("y", mid + 4).attr("text-anchor", "middle").attr("font-size", 12).attr("class", "alone").attr("fill", G.INK).text(q));
       svg.append("text").attr("x", 0).attr("y", 14).attr("font-size", 12.5).attr("font-weight", 700).attr("fill", G.INK).text("↑ applausi, approvazioni ogni cento interventi");
-      svg.append("text").attr("x", 0).attr("y", mid + alt + 14).attr("font-size", 12.5).attr("font-weight", 700).attr("fill", ROSSO).text("↓ proteste, rumori, interruzioni, commenti");
+      svg.append("text").attr("x", 0).attr("y", mid + alt + 14).attr("font-size", 12.5).attr("font-weight", 700).attr("fill", G.INK).text("↓ proteste, rumori, interruzioni, commenti");
       crono = svg.append("g").style("opacity", 0);
       const yc = h - 40;
       crono.append("line").attr("x1", 0).attr("x2", w).attr("y1", yc).attr("y2", yc).attr("stroke", G.INK);
@@ -216,8 +219,9 @@
     let dis = null;
     G.grafico(area, (a, w) => {
       const stretto = w < 560, h = stretto ? 280 : 360, m = { t: 34, r: stretto ? 12 : 130, b: 26, l: 0 };
+      const leg = a.append("div");
       const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", o.titolo);
-      const gF = svg.append("g"), gA = svg.append("g").attr("class", "asse"), gL = svg.append("g"), gE = svg.append("g"), gN = svg.append("g");
+      const gF = svg.append("g"), gA = svg.append("g").attr("class", "asse"), gL = svg.append("g"), gE = svg.append("g"), gN = svg.append("g"), gT = svg.append("g").attr("class", "asse"), gM = svg.append("g");
       const scritta = svg.append("text").attr("x", 0).attr("y", 14).attr("font-size", 14).attr("font-weight", 800).attr("fill", G.INK);
       const x = d3.scaleLinear().range([m.l, w - m.r]), y = d3.scaleLinear().range([h - m.b, m.t]);
       const linee = {};
@@ -235,6 +239,9 @@
           gA.append("line").attr("x1", m.l).attr("x2", w - m.r).attr("y1", y(v)).attr("y2", y(v)).attr("class", v === 0 ? "zero" : null);
           gA.append("text").attr("x", m.l).attr("y", y(v) - 4).text(G.num(v, hi < 0.1 ? 3 : hi < 10 ? 1 : 0) + (i === ticks.length - 1 ? " " + (S0.unita || per[mostra[0]].unita || "") : ""));
         });
+        // i numeri dell'asse verticale passano sopra le linee, con l'alone
+        gT.selectAll("*").remove();
+        gA.selectAll("text").each(function () { if (+this.getAttribute("y") < h - m.b) { this.classList.add("alone"); gT.node().appendChild(this); } });
         const span = S0.x[1] - S0.x[0], passo = span > 100 ? (stretto ? 50 : 20) : span > 40 ? (stretto ? 20 : 10) : span > 20 ? (stretto ? 10 : 5) : stretto ? 5 : 2;
         d3.range(Math.ceil(S0.x[0] / passo) * passo, S0.x[1] + 0.001, passo).forEach((v) => gA.append("text").attr("x", x(v)).attr("y", h - m.b + 17).attr("text-anchor", x(v) < 20 ? "start" : "middle").text(v));
         gF.selectAll("*").remove();
@@ -246,17 +253,25 @@
                 const fine = [];
         o.serie.forEach((s) => {
           const on = mostra.includes(s.id), ev = evid.includes(s.id);
-          const col = ev ? (s.colore || (evid.length === 1 ? G.SEZ : G.SERIE[evid.indexOf(s.id) % G.SERIE.length])) : G.GDATI;
-          transizione(linee[s.id]).attr("d", linea(s.punti)).attr("stroke", col).attr("stroke-width", ev ? 2.5 : 1.5).attr("stroke-dasharray", tratt.includes(s.id) ? "6 4" : null).style("opacity", on ? 1 : 0);
-          if (on) { const u = s.punti.filter((p) => p[1] != null && p[0] >= S0.x[0] && p[0] <= S0.x[1]).slice(-1)[0]; if (u) fine.push({ x: x(u[0]), y: y(u[1]), testo: s.nome, col: ev ? col : G.GRIGIO }); }
+          // una parola sola in blu (blu = la parola di cui si parla); una misura sola (frase, risate, insulti) in grigio scuro;
+          // più parole insieme con la tavolozza delle serie; le serie di contesto in grigio chiaro
+          const parola = /per milione/.test(s.unita || "");
+          const col = ev ? (s.colore || (evid.length === 1 ? (parola ? G.SEZ : G.SCURO) : G.SERIE[evid.indexOf(s.id) % G.SERIE.length])) : G.GDATI;
+          transizione(linee[s.id]).attr("d", linea(s.punti)).attr("stroke", col).attr("stroke-width", ev ? 2.25 : 1.5).attr("stroke-dasharray", tratt.includes(s.id) ? "6 4" : null).style("opacity", on ? 1 : 0);
+          if (on) { const u = s.punti.filter((p) => p[1] != null && p[0] >= S0.x[0] && p[0] <= S0.x[1]).slice(-1)[0]; if (u) fine.push({ x: x(u[0]), y: y(u[1]), testo: s.nome, col: col, tratt: tratt.includes(s.id), s: s }); }
         });
+        // legenda sopra il disegno quando ci sono due serie o più; le etichette restano nell'inchiostro, con il tratto del colore
+        leg.html(fine.length >= 2 ? G.legenda(fine.map((f) => ({ c: f.col, nome: f.testo, tratt: f.tratt }))) : "");
         gE.selectAll("*").remove();
         if (stretto) {
-          fine.forEach((f, i) => gE.append("text").attr("class", "etich").attr("x", w - 4).attr("y", m.t + 14 + i * 15).attr("text-anchor", "end").attr("fill", f.col).text(f.testo));
+          fine.forEach((f, i) => { G.chiaveSVG(gE, w - 4 - f.testo.length * 6.6 - 18, m.t + 10 + i * 15, f.col, f.tratt); gE.append("text").attr("class", "etich").attr("x", w - 4).attr("y", m.t + 14 + i * 15).attr("text-anchor", "end").attr("fill", G.INK).text(f.testo); });
         } else {
           G.separa(fine, 15, m.t, h - m.b);
-          fine.forEach((f) => gE.append("text").attr("class", "etich").attr("x", f.x + 6).attr("y", f.y + 4).attr("fill", f.col).text(f.testo));
+          fine.forEach((f) => { G.chiaveSVG(gE, f.x + 5, f.y, f.col, f.tratt); gE.append("text").attr("class", "etich").attr("x", f.x + 21).attr("y", f.y + 4).attr("fill", G.INK).text(f.testo); });
         }
+        // il mirino legge le serie mostrate in questo passo
+        gM.selectAll("*").remove();
+        G.mirino(gM, x, y, fine.map((f) => ({ nome: f.testo, colore: f.col, tratt: f.tratt, punti: f.s.punti.filter((p) => p[0] >= S0.x[0] && p[0] <= S0.x[1]) })), { fmt: (v) => G.num(v, hi < 0.1 ? 3 : hi < 10 ? 1 : 0), unita: S0.unita || (per[mostra[0]] || {}).unita || "" });
         gN.selectAll("*").remove();
         if (S0.nota && per[S0.nota.id]) {
           const p = per[S0.nota.id].punti.find((q) => q[0] === S0.nota.x);

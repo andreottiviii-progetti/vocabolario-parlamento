@@ -12,15 +12,17 @@
         <section class="sezione"><div class="testa"><h2>La parola di ogni anno</h2></div><p class="sotto-titolo">La parola detta molto più del solito in quell'anno, tra quelle di almeno cinque lettere. Restano alcuni residui dello scanner e del resoconto.</p><div class="anni-blocco" id="blocco"></div></section>`;
       const area = G.figura("#g-anni", {
         titolo: (() => { let k = 0; B.tot[0].forEach((v, i) => { if (v + B.tot[1][i] > B.tot[0][k] + B.tot[1][k]) k = i; }); return `Il ${1848 + k} è l'anno più fitto: ${G.num((B.tot[0][k] + B.tot[1][k]) / 1e6, 1)} milioni di parole`; })(),
-        sotto: "Milioni di parole contate in un anno, Camera (nero) e Senato (grigio), 1848-2022: interventi di parlamentari, ministri e relatori",
+        sotto: "Milioni di parole contate in un anno, Camera e Senato insieme (linea scura) e la sola Camera (linea grigia), 1848-2022: interventi di parlamentari, ministri e relatori",
         limite: "Nel 1941-45 non ci sono sedute.",
         csv: () => [["anno", "parole_camera", "parole_senato"]].concat(G.ANNI.map((a, i) => [a, B.tot[0][i], B.tot[1][i]])), nomeCSV: "parole_per_anno",
       });
       G.grafico(area, (a, w) => {
-        const r = G.linee(a, w, { x: [1848, 2022], y: [0, d3.max(B.tot[0]) / 1e6 * 1.1], unita: "milioni di parole", serie: [
-          { punti: G.ANNI.map((y, i) => [y, B.tot[0][i] ? B.tot[0][i] / 1e6 : null]), colore: G.NERO, sp: 2, etich: "Camera" },
-          { punti: G.ANNI.map((y, i) => [y, B.tot[1][i] ? B.tot[1][i] / 1e6 : null]), colore: G.GDATI, sp: 1.5, etich: "Senato" }],
-          lettura: (y) => `<b>${y}</b>: Camera ${G.num(B.tot[0][y - 1848] / 1e6, 1)} milioni, Senato ${G.num(B.tot[1][y - 1848] / 1e6, 1)} milioni di parole` });
+        // il titolo parla del totale: la linea scura è Camera e Senato insieme, con l'anno più fitto in rosso; la grigia la sola Camera
+        const tot = G.ANNI.map((y, i) => (B.tot[0][i] || B.tot[1][i] ? ((B.tot[0][i] || 0) + (B.tot[1][i] || 0)) / 1e6 : null));
+        const k = d3.maxIndex(tot);
+        const r = G.linee(a, w, { x: [1848, 2022], y: [0, d3.max(tot) * 1.1], unita: "milioni di parole", yFmt: (v) => G.num(v, v % 1 ? 1 : 0), serie: [
+          { punti: G.ANNI.map((y, i) => [y, tot[i]]), colore: G.SCURO, sp: 2.5, etich: "Camera e Senato", piccoEtich: { x: 1848 + k, y: tot[k], colore: G.ROSSO, testo: (1848 + k) + ": " + G.num(tot[k], 1) } },
+          { punti: G.ANNI.map((y, i) => [y, B.tot[0][i] ? B.tot[0][i] / 1e6 : null]), colore: G.NERO, sp: 1.5, etich: "Camera" }] });
         r.svg.selectAll("text.anno-lk").remove();
       });
       const dec = []; for (let d = 1840; d <= 2020; d += 10) dec.push(d);

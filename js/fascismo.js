@@ -51,6 +51,7 @@
           svg.append("circle").attr("cx", xp).attr("cy", y).attr("r", 4.5).attr("fill", "#fff").attr("stroke", G.INK).attr("stroke-width", 1.5);
           svg.append("circle").attr("cx", xr).attr("cy", y).attr("r", 5).attr("fill", G.ROSSO);
           svg.append("text").attr("x", Math.max(xp, xr) + 8).attr("y", y + 4).attr("font-size", 12.5).attr("fill", G.GRIGIO).text(G.num(t.regime, t.regime < 10 ? 1 : 0));
+          svg.append("rect").attr("x", 0).attr("y", y - rh / 2).attr("width", w).attr("height", rh).attr("fill", "transparent").attr("data-tip", `${G.num(t.prima, t.prima < 10 ? 1 : 0)} → ${G.num(t.regime, t.regime < 10 ? 1 : 0)} per milione\n«${t.lemma}», 1919-22 → 1927-38`);
         });
       });
       const a3 = G.figura("#g-lei", {
@@ -68,7 +69,7 @@
       });
       G.grafico(a4, (a, w) => {
         const s1 = punti(sc, "oratori_per_seduta");
-        G.linee(a, w, { x: [1913, 1943], y: [0, d3.max(s1, (p) => p[1] || 0) * 1.1], h: 260, fasce: [{ da: 1926, a: 1943, colore: "#22252B" }], serie: [{ punti: s1, colore: G.ROSSO, sp: 3, etich: "oratori" }], unita: "per seduta" });
+        G.linee(a, w, { x: [1913, 1943], y: [0, d3.max(s1, (p) => p[1] || 0) * 1.1], h: 260, fasce: [{ da: 1926, a: 1943, colore: "#22252B" }], serie: [{ punti: s1, colore: G.SCURO, sp: 2.5, nome: "oratori" }], unita: "per seduta" });
       });
       const PR = ["duce", "camerati", "fascista", "corporativo", "autarchia", "impero", "littorio", "razza", "regime", "rivoluzione"];
       Promise.all(PR.map((w) => G.curvaParola(w))).then((cc) => {

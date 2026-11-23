@@ -1,7 +1,8 @@
 /* Percorso: amici e nemici dell'Italia, 1848-2022 */
 (function () {
   "use strict";
-  const ALLEATO = "#8FD9DE", GUERRA = "#F6A29F";
+  // alleanze e guerre: strisce sottili sotto la curva, non fasce piene (rosso e turchese sono nemico e amico)
+  const ALLEATO = "#008F9C", GUERRA = "#C9241C";
   G.avvia(function () {
     G.testata({ attivo: "Percorsi" });
     G.piede();
@@ -18,7 +19,7 @@
         <p class="sommario">Per ogni paese e ogni anno, quante volte l'aula ne parla con parole ostili o amichevoli. Sotto ogni linea, le alleanze e le guerre vere: si vede quando le parole seguono i trattati e quando li anticipano o li smentiscono.</p>
         <section style="margin-top:14px"><div id="scena-an"></div><div id="bottoni-an"></div></section>
         <section class="sezione"><div class="testa"><h2>Otto paesi, 175 anni</h2></div>
-          <p class="sotto-titolo">Indice dalle parole vicine al nome del paese, Camera e Senato, media di tre anni: sopra lo zero l'aula ne parla più da nemico, sotto più da amico. Fasce turchesi: anni di alleanza; fasce rosa: anni di guerra (Correlates of War). La tacca grigia in basso è il fascismo.</p>
+          <p class="sotto-titolo">Indice dalle parole vicine al nome del paese, Camera e Senato, media di tre anni: sopra lo zero l'aula ne parla più da nemico, sotto più da amico. Sotto la curva, la striscia turchese segna gli anni di alleanza e quella rossa gli anni di guerra (Correlates of War); la tacca grigia più in basso è il fascismo.</p>
           <div class="multipli" id="paesi" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
           <p class="fig-fonte">Fonte: resoconti stenografici di Camera e Senato; alleanze e guerre: Correlates of War (Formal Alliances 4.1, Inter-State War 4.0). Il conteggio delle parole vicine sbaglia il segno in una parte delle frasi (non capisce le negazioni): per alcuni paesi c'è anche il giudice automatico, più sotto.</p></section>
         <section class="sezione"><div id="g-nemico"></div></section>
@@ -48,7 +49,7 @@
         const paesi = Object.keys(conta).filter((p) => conta[p] >= 2).sort((p, q) => NA.find((r) => r[1] === p)[0] - NA.find((r) => r[1] === q)[0]);
         const rh = 19, lw = w < 560 ? 92 : 130, top = 30, h = top + paesi.length * rh + 22;
         const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "Nemico principale per anno");
-        const x = d3.scaleLinear().domain([1848, 2023]).range([lw, w]);
+        const x = d3.scaleLinear().domain([1848, 2023]).range([lw, w - 58]); // a destra lo spazio per «14 anni»
         G.bandaEpoche(svg, x, 0, 20, w < 560);
         paesi.forEach((p, k) => {
           const y0 = top + k * rh;
@@ -82,12 +83,14 @@
         [-1, -0.5, 0, 0.5, 1].forEach((v) => { g.append("line").attr("x1", x(v)).attr("x2", x(v)).attr("y1", 0).attr("y2", h - 22).attr("class", v === 0 ? "zero" : null); g.append("text").attr("x", x(v)).attr("y", h - 6).attr("text-anchor", "middle").text(v === -1 ? "amico" : v === 1 ? "nemico" : G.num(v, 1)); });
         righe.forEach((r, i) => {
           const y = i * rh + 20;
-          const col = r.et.startsWith("PCI") ? "#E3120B" : "#1E78E6";
+          const col = r.et.startsWith("PCI") ? G.FAMIGLIA["PCI-PD"] : G.FAMIGLIA.DC;
+          svg.append("rect").attr("x", 0).attr("y", y - rh / 2).attr("width", w).attr("height", rh).attr("fill", "transparent")
+            .attr("data-tip", `${r.g ? "giudice " + G.num(r.g[0], 2) + " (tra " + G.num(r.g[1], 2) + " e " + G.num(r.g[2], 2) + ")" : ""}${r.lx != null ? (r.g ? " · " : "") + "parole vicine " + G.num(r.lx, 2) : ""}\n${r.et}, 1948-1968`);
           svg.append("text").attr("x", lw - 10).attr("y", y + 5).attr("text-anchor", "end").attr("font-size", 14).attr("font-weight", 700).attr("fill", G.INK).text(r.et);
           if (r.g) svg.append("line").attr("x1", x(r.g[1])).attr("x2", x(r.g[2])).attr("y1", y).attr("y2", y).attr("stroke", col).attr("stroke-opacity", 0.35).attr("stroke-width", 8);
           if (r.lx != null && r.g) svg.append("line").attr("x1", x(r.lx)).attr("x2", x(r.g[0])).attr("y1", y).attr("y2", y).attr("stroke", G.GDATI).attr("stroke-dasharray", "3 3");
           if (r.lx != null) svg.append("circle").attr("cx", x(r.lx)).attr("cy", y).attr("r", 6).attr("fill", "#fff").attr("stroke", col).attr("stroke-width", 2);
-          if (r.g) { svg.append("circle").attr("cx", x(r.g[0])).attr("cy", y).attr("r", 7).attr("fill", col); svg.append("text").attr("x", x(r.g[0])).attr("y", y - 12).attr("text-anchor", "middle").attr("font-size", 12.5).attr("font-weight", 700).attr("fill", col).text(G.num(r.g[0], 2)); }
+          if (r.g) { svg.append("circle").attr("cx", x(r.g[0])).attr("cy", y).attr("r", 7).attr("fill", col); svg.append("text").attr("x", x(r.g[0])).attr("y", y - 12).attr("text-anchor", "middle").attr("font-size", 12.5).attr("font-weight", 700).attr("fill", G.INK).attr("class", "alone").text(G.num(r.g[0], 2)); }
         });
       });
       const GP = X.giudice_paesi;
@@ -96,27 +99,28 @@
         sotto: "Quanto il tono letto dal giudice automatico segue lo stato vero (alleato, neutrale, in guerra): pendenza con il suo margine di incertezza, per paese",
         csv: () => [["paese", "frasi", "pendenza", "basso", "alto", "correlazione"]].concat(GP), nomeCSV: "giudice_paesi",
       });
-      a4.html(G.barre(GP.map((r, i) => [G.esc(r[0]) + ` <span class="grigio">(${G.num(r[1])} frasi)</span>`, Math.max(0, r[2]), r[3] > 0]), { fmt: (v) => G.num(v, 2) }) + '<p class="fig-fonte">In evidenza i paesi in cui il margine di incertezza non tocca lo zero. Pendenze negative o nulle sono mostrate a zero.</p>');
+      a4.html(G.barre(GP.map((r, i) => [G.esc(r[0]) + ` <span class="grigio">(${G.num(r[1])} frasi)</span>`, Math.max(0, r[2]), r[3] > 0]), { fmt: (v) => G.num(v, 2), classe: "scure" }) + '<p class="fig-fonte">In evidenza i paesi in cui il margine di incertezza non tocca lo zero. Pendenze negative o nulle sono mostrate a zero.</p>');
       document.getElementById("frasi").innerHTML = X.frasi.map((f) => `<li><span class="quando"><b>${G.esc(f[0])}</b> · ${G.esc(f[1])} · ${G.data(f[2])}, ${G.ramo(f[3])}${f[4] ? ", " + G.esc(G.oratore(f[4])) : ""}</span><q>${G.frase(f[5], [f[1]])}</q></li>`).join("");
     });
   });
 
   function paese(area, w, p, X, media3, asse) {
     const o = X.indice[p] || {}, al = X.alleanze[p] || {};
-    const h = 170, m = { t: 8, b: asse ? 18 : 6 };
+    const h = 182, m = { t: 8, b: asse ? 32 : 16 };
     const svg = area.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", p);
     const x = d3.scaleLinear().domain([1848, 2022]).range([0, w]);
     const y = d3.scaleLinear().domain([-1, 1]).range([h - m.b, m.t]);
     Object.keys(al).forEach((a) => {
       const st = al[a][1];
-      if (st === "alleato" || st === "guerra") svg.append("rect").attr("x", x(+a)).attr("width", Math.max(1, x(+a + 1) - x(+a))).attr("y", m.t).attr("height", h - m.b - m.t).attr("fill", st === "alleato" ? ALLEATO : GUERRA);
+      if (st === "alleato" || st === "guerra") svg.append("rect").attr("x", x(+a)).attr("width", Math.max(1, x(+a + 1) - x(+a)) + 0.6).attr("y", y(-1) + 3).attr("height", 4).attr("fill", st === "alleato" ? ALLEATO : GUERRA).attr("data-tip", `${st === "alleato" ? "alleanza in vigore" : "in guerra con l'Italia"}\n${p}, ${a}`);
     });
-    svg.append("rect").attr("x", x(1922)).attr("width", x(1943) - x(1922)).attr("y", h - m.b - 4).attr("height", 4).attr("fill", "#C9CED5");
+    svg.append("rect").attr("x", x(1922)).attr("width", x(1943) - x(1922)).attr("y", y(-1) + 9).attr("height", 3).attr("fill", "#C9CED5");
     svg.append("line").attr("x1", 0).attr("x2", w).attr("y1", y(0)).attr("y2", y(0)).attr("stroke", G.GRIGIO);
     const pts = G.ANNI.map((a) => [a, o[a] && (o[a][3] || 0) >= 30 ? media3(o, a) : null]);
-    svg.append("path").attr("d", d3.line().defined((d) => d[1] != null).x((d) => x(d[0])).y((d) => y(d[1]))(pts)).attr("fill", "none").attr("stroke", G.INK).attr("stroke-width", 2);
+    svg.append("path").attr("d", d3.line().defined((d) => d[1] != null).x((d) => x(d[0])).y((d) => y(d[1]))(pts)).attr("fill", "none").attr("stroke", G.SCURO).attr("stroke-width", 1.5).attr("stroke-linejoin", "round");
     svg.append("text").attr("x", 2).attr("y", y(0.85)).attr("font-size", 12).attr("fill", G.GRIGIO).text("nemico");
-    svg.append("text").attr("x", 2).attr("y", y(-0.92)).attr("font-size", 12).attr("fill", G.GRIGIO).text("amico");
-    if (asse) [1850, 1900, 1950, 2000].forEach((a) => svg.append("text").attr("x", x(a)).attr("y", h - 3).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(a));
+    svg.append("text").attr("x", 2).attr("y", y(-0.78)).attr("font-size", 12).attr("fill", G.GRIGIO).text("amico");
+    if (asse) [1850, 1900, 1950, 2000].forEach((a) => svg.append("text").attr("x", x(a)).attr("y", h - 3).attr("text-anchor", a === 1850 ? "start" : "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(a));
+    G.mirino(svg, x, y, [{ nome: p, colore: G.SCURO, punti: pts }], { fmt: (v) => (v > 0 ? "da nemico, +" : "da amico, −") + G.num(Math.abs(v), 2) });
   }
 })();

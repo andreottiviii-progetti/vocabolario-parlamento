@@ -126,12 +126,15 @@
     const r = d3.scaleSqrt().domain([0, d3.max(P, (p) => p.quota) || 0.3]).range([2, 22]);
     svg.append("line").attr("x1", 0).attr("x2", w).attr("y1", h - 4).attr("y2", h - 4).attr("stroke", G.RIGA);
     const et = [];
-    punti.forEach((p) => {
-      const cx = x(p.x), cy = y(p.y), rr = r(q.get(p.p) || 0.01);
-      svg.append("circle").attr("cx", cx).attr("cy", cy).attr("r", rr).attr("fill", p.p === top ? G.ROSSO : G.GDATI).attr("fill-opacity", p.p === top ? 1 : 0.85);
-      et.push({ x: cx + rr + 4, y: cy + 4, t: p.p.replace("Unita'", "Unità"), top: p.p === top });
+    // un grafico dei partiti: ogni punto nel colore della sua famiglia (gli altri in grigio), con la sigla scritta accanto
+    // nell'inchiostro; i punti grandi sotto, i piccoli sopra; un anello bianco li separa dove si toccano
+    punti.slice().sort((a, b) => (q.get(b.p) || 0) - (q.get(a.p) || 0)).forEach((p) => {
+      const cx = x(p.x), cy = y(p.y), rr = r(q.get(p.p) || 0.01), f = G.famigliaDi(p.p);
+      svg.append("circle").attr("cx", cx).attr("cy", cy).attr("r", Math.max(rr, 4)).attr("fill", f ? G.FAMIGLIA[f] : G.GDATI).attr("stroke", "#fff").attr("stroke-width", 2)
+        .attr("data-tip", `${q.get(p.p) != null ? G.pct(q.get(p.p)) + " delle parole dei deputati" : "quota non disponibile"}\n${p.p.replace("Unita'", "Unità")}`);
+      et.push({ x: cx + Math.max(rr, 4) + 4, y: cy + 4, t: p.p.replace("Unita'", "Unità"), top: p.p === top });
     });
     G.separa(et, 14, 12, h - 8);
-    et.forEach((e) => { const a = svg.append("a").attr("href", "partito.html?id=" + encodeURIComponent(e.t.replace("Unità", "Unita'"))); a.append("text").attr("class", "etich").attr("x", e.x).attr("y", e.y).attr("fill", e.top ? G.ROSSO : G.NERO).text(e.t); });
+    et.forEach((e) => { const a = svg.append("a").attr("href", "partito.html?id=" + encodeURIComponent(e.t.replace("Unità", "Unita'"))); a.append("text").attr("class", "etich").attr("x", e.x).attr("y", e.y).attr("fill", G.INK).attr("font-weight", e.top ? 800 : 600).text(e.t); });
   }
 })();

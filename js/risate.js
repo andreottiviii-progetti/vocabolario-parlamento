@@ -38,8 +38,10 @@
       });
       G.grafico(a1, (a, w) => {
         const c = G.media3(G.ANNI.map((y) => (R.serie[y] ? R.serie[y][0] : null))), s = G.media3(G.ANNI.map((y) => (R.serie[y] ? R.serie[y][1] : null)));
+        // una misura, non una parola: grigio scuro, Camera piena e Senato a tratteggio; la fascia segna gli anni del calo
         G.linee(a, w, { x: [1848, 2022], y: [0, d3.max(c.concat(s), (v) => v || 0) * 1.1], h: w < 560 ? 240 : 320, trascr: "entrambi", unita: "ogni mille interventi",
-          serie: [{ punti: G.ANNI.map((y, i) => [y, c[i]]), colore: G.SEZ, sp: 3, etich: "Camera" }, { punti: G.ANNI.map((y, i) => [y, s[i]]), colore: G.SEZ_S, sp: 2, tratt: "8 4", etich: "Senato" }] });
+          fasce: [{ da: 1920, a: 1970, colore: "#F2F3F5", testo: "1920-1970" }],
+          serie: [{ punti: G.ANNI.map((y, i) => [y, c[i]]), colore: G.SCURO, sp: 2.5, etich: "Camera" }, { punti: G.ANNI.map((y, i) => [y, s[i]]), colore: G.SCURO, sp: 1.5, tratt: "6 3", etich: "Senato" }] });
       });
       const lp = (o) => (o.pid ? G.lPersona(o.pid, o.nome) : G.esc(o.nome));
       const a2 = G.figura("#g-top", { titolo: `${G.esc(R.top[0].nome)} fa ridere l'aula ${G.num(R.top[0].ila)} volte`, sotto: "Risate annotate dopo un intervento, per oratore, 1848-2022", csv: () => [["oratore", "risate", "interventi", "anni"]].concat(R.top.map((o) => [o.nome, o.ila, o.interventi, o.da + "-" + o.a])), nomeCSV: "chi_fa_ridere" });
@@ -73,7 +75,7 @@
       G.grafico(ai, (a, w) => {
         const v = G.media3(G.ANNI.map((y) => (I.serie[y] ? I.serie[y][0] : null)));
         G.linee(a, w, { x: [1848, 2022], y: [0, d3.max(v, (x) => x || 0) * 1.3], h: 280, unita: "ogni mille parole", yFmt: (x) => G.num(x, 2),
-          serie: [{ punti: G.ANNI.map((y, i) => [y, v[i]]), colore: G.SEZ, sp: 3, etich: "insulti" }] });
+          serie: [{ punti: G.ANNI.map((y, i) => [y, v[i]]), colore: G.SCURO, sp: 2.5, nome: "insulti" }] });
       });
       const mx = I.parole[0][1];
       document.getElementById("parole-ins").innerHTML = I.parole.slice(0, 40).map((p) => `<a href="parola.html?p=${p[0]}" style="font-size:${(14 + 26 * Math.sqrt(p[1] / mx)).toFixed(0)}px">${G.esc(p[0])}</a>`).join(" ");
@@ -82,7 +84,7 @@
       const ac = G.figura("#g-clima", { titolo: "Proteste, commenti e interruzioni annotati", sotto: "Interventi con un'annotazione di proteste, commenti o interruzioni ogni cento, Camera e Senato, media di tre anni", limite: "Il calo può venire dalle regole degli stenografi.", csv: () => [["anno", "per_100"]].concat(Object.entries(I.serie).map(([y, v]) => [y, v[1]])), nomeCSV: "clima" });
       G.grafico(ac, (a, w) => {
         const v = G.media3(G.ANNI.map((y) => (I.serie[y] ? I.serie[y][1] : null)));
-        G.linee(a, w, { x: [1848, 2022], y: [0, d3.max(v, (x) => x || 0) * 1.1], h: 240, unita: "ogni cento", serie: [{ punti: G.ANNI.map((y, i) => [y, v[i]]), colore: G.SEZ_S, sp: 2.5, etich: "annotazioni" }] });
+        G.linee(a, w, { x: [1848, 2022], y: [0, d3.max(v, (x) => x || 0) * 1.1], h: 240, unita: "ogni cento", serie: [{ punti: G.ANNI.map((y, i) => [y, v[i]]), colore: G.SCURO, sp: 2.5, nome: "annotazioni" }] });
       });
       // elenco degli insulti per decennio
       const dec = Object.keys(I.decenni).map(Number).sort();

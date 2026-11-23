@@ -33,13 +33,13 @@
       G.grafico(area, (a, w) => {
         const L = IX.linee, tutti = [].concat(...Object.values(L)).map((p) => p[1]), ext = d3.extent(tutti);
         const r = G.linee(a, w, {
-          x: [1948, 2022], y: [ext[0] - 0.005, ext[1] + 0.005], yTicks: [], h: w < 560 ? 260 : 360, m: { r: w < 560 ? 60 : 130 }, etichSopra: false,
+          x: [1948, 2022], y: [ext[0] - 0.005, ext[1] + 0.005], yTicks: [], h: w < 560 ? 260 : 360, m: { r: w < 560 ? 60 : 150 }, etichSopra: false, legenda: false,
           serie: Object.keys(L).filter((f) => f !== "PCI-PD").map((f) => ({ punti: L[f].map((p) => [p[0], p[1]]), colore: G.GDATI, sp: 1, etich: f })).concat([{ punti: L["PCI-PD"].map((p) => [p[0], p[1]]), colore: G.ROSSO, sp: 2.5, punto: 2.5, etich: "PCI, poi PDS, DS e PD" }]),
         });
         // le fasi del PCI-PD (contesto storico, non dati del progetto): bande chiare con il nome scritto
         [[1976, 1979.9, "compromesso storico"], [1989, 1991.9, "svolta: PCI → PDS"], [1998, 2007.4, "DS"], [2007.8, 2022.9, "PD"]].forEach((f, k) => {
           const x0 = r.x(f[0]), x1 = r.x(f[1]);
-          r.svg.insert("rect", ":first-child").attr("x", x0).attr("y", r.m.t).attr("width", Math.max(2, x1 - x0)).attr("height", r.h - r.m.t - r.m.b).attr("fill", k % 2 ? "#F1F2F4" : "#E8EAED");
+          r.svg.insert("rect", ":first-child").attr("x", x0).attr("y", r.m.t).attr("width", Math.max(2, x1 - x0)).attr("height", r.h - r.m.t - r.m.b).attr("fill", "#F2F3F5");
           r.svg.append("text").attr("x", x0 + 3).attr("y", r.m.t + 12 + (k % 2) * 13).attr("font-size", 12).attr("font-weight", 700).attr("fill", G.INK).attr("class", "alone").text(f[2]);
         });
         r.svg.append("text").attr("x", 0).attr("y", r.y(ext[1]) + 4).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di destra");

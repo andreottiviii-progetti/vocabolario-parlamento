@@ -53,18 +53,21 @@
     G.grafico(area, (a, w) => {
       const righe = E.conti.filter((c) => c[0] !== "Totale");
       const lw = w < 560 ? 140 : 340, rh = 22, unit = Math.min(18, (w - lw - 40) / d3.max(righe, (r) => r[7]));
+      // i quadretti sono i verdetti di tutto il sito: pieno regge, mezzo in parte, rosso smentita, vuoto gli altri esiti
+      a.append("div").html('<p class="legenda"><span><span class="q pieno"></span>regge</span><span><span class="q mezzo"></span>in parte</span><span><span class="q rosso"></span>smentita</span><span><span class="q vuoto"></span>altri esiti</span></p>');
       const svg = a.append("svg").attr("width", w).attr("height", righe.length * rh + 6).attr("role", "img").attr("aria-label", "Verdetti per filone");
       const gr = svg.append("defs").append("linearGradient").attr("id", "mezzo2");
-      gr.append("stop").attr("offset", "50%").attr("stop-color", G.NERO); gr.append("stop").attr("offset", "50%").attr("stop-color", "#fff");
+      gr.append("stop").attr("offset", "50%").attr("stop-color", G.SCURO); gr.append("stop").attr("offset", "50%").attr("stop-color", "#fff");
       righe.forEach((r, i) => {
         const yy = i * rh;
         const t = svg.append("a").attr("href", "?filone=" + encodeURIComponent(r[0])).append("text").attr("x", lw - 10).attr("y", yy + 15).attr("text-anchor", "end").attr("font-size", 13).attr("font-weight", r[0] === filone ? 800 : 400).text(w < 560 ? r[0].replace(/^Temi: /, "").slice(0, 22) : r[0]);
         t.on("click", (e) => { e.preventDefault(); filone = r[0]; aggiorna(); G.ridisegna("#g-conti .fig-area"); });
         let k = 0;
-        [[r[1], G.NERO, G.NERO], [r[2], "url(#mezzo2)", G.NERO], [r[3], G.ROSSO, G.ROSSO], [r[4] + r[5] + r[6], "#fff", G.GDATI]].forEach(([n, f, s]) => {
+        [[r[1], G.SCURO, G.SCURO], [r[2], "url(#mezzo2)", G.SCURO], [r[3], G.ROSSO, G.ROSSO], [r[4] + r[5] + r[6], "#fff", G.GDATI]].forEach(([n, f, s]) => {
           for (let j = 0; j < n; j++) { svg.append("rect").attr("x", lw + k * unit + 1).attr("y", yy + 5).attr("width", unit - 3).attr("height", 12).attr("fill", f).attr("stroke", s).attr("stroke-width", 1.2); k++; }
         });
         svg.append("text").attr("x", lw + k * unit + 6).attr("y", yy + 15).attr("font-size", 12).attr("fill", G.GRIGIO).text(r[7]);
+        svg.append("rect").attr("x", lw).attr("y", yy).attr("width", Math.max(0, w - lw)).attr("height", rh).attr("fill", "transparent").attr("data-tip", `${r[1]} reggono · ${r[2]} in parte · ${r[3]} smentite · ${r[4] + r[5] + r[6]} altri\n${r[0]}: ${r[7]} esperimenti`);
       });
     });
     const esiti = ["", "regge", "in parte", "smentita", "altro"];

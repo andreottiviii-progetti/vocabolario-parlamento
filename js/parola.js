@@ -77,9 +77,10 @@
         const y = d3.scaleLinear().domain([0, d3.max(pm) || 1]).range([h2 - m.b, m.t]);
         DEC.forEach((d, i) => {
           if (pm[i] > 0) svg.append("rect").attr("x", x(d)).attr("width", x.bandwidth()).attr("y", y(pm[i])).attr("height", y(0) - y(pm[i])).attr("fill", i === imax ? G.SEZ : G.SEZ_M);
+          svg.append("rect").attr("x", x(d) - (x.step() - x.bandwidth()) / 2).attr("width", x.step()).attr("y", m.t).attr("height", h2 - m.t - m.b).attr("fill", "transparent").attr("data-tip", `${G.num(pm[i], pm[i] < 10 ? 2 : 1)} per milione · ${G.num(dec[i])} volte\nanni ${d === 1840 ? "1848-49" : d + "-" + (d + 9)}`);
           if (d % 40 === 0 || d === 1840) svg.append("text").attr("x", x(d) + x.bandwidth() / 2).attr("y", h2 - 4).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(d === 1840 ? 1848 : d);
         });
-        svg.append("text").attr("class", "etich").attr("x", x(DEC[imax]) + x.bandwidth() / 2).attr("y", y(pm[imax]) - 6).attr("text-anchor", "middle").attr("fill", G.SEZ_S).text(G.num(pm[imax], pm[imax] < 10 ? 2 : 1));
+        svg.append("text").attr("class", "etich").attr("x", x(DEC[imax]) + x.bandwidth() / 2).attr("y", y(pm[imax]) - 6).attr("text-anchor", "middle").attr("fill", G.INK).text(G.num(pm[imax], pm[imax] < 10 ? 2 : 1));
       });
     });
   }
@@ -167,7 +168,7 @@
     let modo = "m";
     let serie = [C].concat(altre);
     const area = G.figura("#g-curva", {
-      titolo: "", lettura: true,
+      titolo: "", lettura: "Passa sul grafico per leggere i valori di un anno.",
       sotto: "",
       limite: "Un anno di un ramo entra nella curva solo con almeno 300.000 parole: restano fuori quasi tutti gli anni 1934-40; nel 1941-45 non ci sono sedute.",
       csv: () => [["anno"].concat([].concat(...serie.map((s) => [s.w + "_camera_volte", s.w + "_senato_volte", s.w + "_per_milione_media"])))].concat(G.ANNI.map((a, i) => [a].concat([].concat(...serie.map((s) => [s.pm.nc[i], s.pm.ns[i], s.pm.m[i] == null ? "" : s.pm.m[i].toFixed(2)]))))),
@@ -176,7 +177,7 @@
     const box = area.node().parentNode;
     function testi() {
       const s0 = serie[0], p0 = G.picco(s0.pm.m);
-      box.querySelector(".fig-tit").innerHTML = serie.length > 1 ? `<span style="color:${G.SERIE[0]}">«${G.esc(s0.forma)}»</span> tocca il massimo nel ${p0.anno}, ` + serie.slice(1).map((s, i) => `<span style="color:${G.SERIE[i + 1]}">«${G.esc(s.forma)}»</span> nel ${G.picco(s.pm.m).anno}`).join(", ") : `«${G.esc(G.maiusc(s0.forma))}» tocca il massimo nel ${p0.anno}: ${G.num1(p0.val)} volte per milione di parole`;
+      box.querySelector(".fig-tit").innerHTML = serie.length > 1 ? `<span class="con-chiave">${G.chiave(G.SERIE[0])}«${G.esc(s0.forma)}»</span> tocca il massimo nel ${p0.anno}, ` + serie.slice(1).map((s, i) => `<span class="con-chiave">${G.chiave(G.SERIE[i + 1])}«${G.esc(s.forma)}»</span> nel ${G.picco(s.pm.m).anno}`).join(", ") : `«${G.esc(G.maiusc(s0.forma))}» tocca il massimo nel ${p0.anno}: ${G.num1(p0.val)} volte per milione di parole`;
       box.querySelector(".fig-sotto").textContent = modo === "a" ? "Volte per milione di parole, media dei due rami, anno per anno, 1848-2022." : modo === "cs" ? "Volte per milione di parole, media mobile di tre anni: linea piena la Camera, tratteggio il Senato, 1848-2022." : "Volte per milione di parole, media dei due rami e media mobile di tre anni. Righe tratteggiate verticali: cambi di trascrizione.";
     }
     testi();
@@ -198,11 +199,10 @@
       ss.forEach((s) => { s.punti = s.punti.filter((p) => p[0] >= da); });
       const max = d3.max(ss, (s) => d3.max(s.punti, (p) => p[1] || 0)) || 1;
       G.linee(a, wd, {
-        x: [da, 2022], y: [0, max * 1.1], serie: ss, unita: "volte per milione", trascr: modo === "a" ? null : "entrambi", h: wd < 560 ? 250 : 360,
-        lettura: (y) => "<b>" + y + "</b>: " + serie.map((s, i) => `<span style="color:${G.SERIE[i]};font-weight:700">${G.esc(s.forma)}</span> ${s.pm.m[y - 1848] == null ? "nessun dato" : G.num1(s.pm.m[y - 1848]) + " per milione (" + G.num(s.pm.nc[y - 1848] + s.pm.ns[y - 1848]) + " volte)"}`).join(" · "),
+        x: [da, 2022], y: [0, max * 1.1], serie: ss, unita: "volte per milione", trascr: modo === "a" ? null : "entrambi", scrittaTrascr: false, h: wd < 560 ? 250 : 360,
       });
       const riga = box.querySelector(".fig-lettura");
-      if (riga && !riga.innerHTML) riga.textContent = wd < 560 ? "Tocca il grafico per leggere i valori di un anno." : "Passa sul grafico per leggere i valori di un anno.";
+      if (riga) riga.textContent = wd < 560 ? "Tocca il grafico per leggere i valori di un anno." : "Passa sul grafico per leggere i valori di un anno.";
     });
     box.parentNode.parentNode.querySelectorAll(".filtri button").forEach((b) => b.addEventListener("click", () => {
       modo = b.dataset.m;

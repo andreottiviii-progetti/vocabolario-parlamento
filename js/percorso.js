@@ -22,7 +22,7 @@
         P.forEach((p, i) => {
           const anno = +p.data.slice(0, 4), xx = x(anno), yy = y0 - 24 - (i % righe) * 34;
           svg.append("line").attr("x1", xx).attr("x2", xx).attr("y1", yy + 4).attr("y2", y0).attr("stroke", "#CDD2D8");
-          svg.append("rect").attr("x", xx - 4).attr("y", y0 - 4).attr("width", 8).attr("height", 8).attr("fill", G.SEZ);
+          svg.append("rect").attr("x", xx - 4).attr("y", y0 - 4).attr("width", 8).attr("height", 8).attr("fill", G.SEZ).attr("data-tip", `${G.data(p.data)}\nla prima volta di «${p.forma}»`);
           const fine = xx > w - 150;
           svg.append("a").attr("href", "parola.html?p=" + encodeURIComponent(G.norma(p.forma))).append("text").attr("class", "etich alone").attr("x", xx + (fine ? -4 : 4)).attr("y", yy).attr("text-anchor", fine ? "end" : "start").attr("fill", G.INK).text("«" + p.forma + "» " + anno);
         });
@@ -37,12 +37,13 @@
       titolo: "Quando cambia il modo di scrivere il resoconto",
       sotto: "Camera e Senato, 1948-2022. Tratteggio: cambi di trascrizione provati; puntini: cambi di scrittura (punteggiatura e grafie). Le date incerte non si disegnano.",
       limite: "Le date vengono dal calendario rivisto del progetto: alla Camera i cambi di trascrizione non si possono datare con sicurezza.",
+      csv: () => [["ramo", "anno", "cambio"]].concat([].concat(...["camera", "senato"].map((r) => (G.TRASCR[r] || []).map((a) => [r, a, "trascrizione"]).concat(((G.SCRITTURA || {})[r] || []).map((a) => [r, a, "scrittura"]))))), nomeCSV: "calendario_resoconto",
     });
     G.grafico(area, (a, w) => {
       const h = 170, svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "Calendario del resoconto");
       const x = d3.scaleLinear().domain([1948, 2022]).range([70, w - 10]);
       [["camera", "Camera", 20], ["senato", "Senato", 90]].forEach(([r, nome, y0]) => {
-        svg.append("rect").attr("x", x(1948)).attr("width", x(2022) - x(1948)).attr("y", y0).attr("height", 50).attr("fill", "#F4F5F7");
+        svg.append("line").attr("x1", x(1948)).attr("x2", x(2022)).attr("y1", y0 + 50).attr("y2", y0 + 50).attr("stroke", G.RIGA);
         svg.append("text").attr("x", 0).attr("y", y0 + 30).attr("font-weight", 800).attr("font-size", 14).attr("fill", G.INK).text(nome);
         G.lineeTrascrizione(svg, x, y0, y0 + 50, r, false);
       });

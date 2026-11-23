@@ -79,6 +79,7 @@
           svg.append("line").attr("x1", x(1848)).attr("x2", x(Math.min(1960, f[3]))).attr("y1", y).attr("y2", y).attr("stroke", G.SEZ_M).attr("stroke-width", 6);
           svg.append("circle").attr("cx", x(Math.min(1960, f[2]))).attr("cy", y).attr("r", 4).attr("fill", G.SEZ);
           svg.append("text").attr("x", x(Math.min(1960, f[3])) + 6).attr("y", y + 4).attr("font-size", 12).attr("fill", G.GRIGIO).text(f[3]);
+          svg.append("rect").attr("x", 0).attr("y", y - rh / 2).attr("width", w).attr("height", rh).attr("fill", "transparent").attr("data-tip", `si dimezza nel ${f[3]}\n«${f[0]}»: massimo nel ${f[2]}, ${G.num(f[1])} volte`);
         });
       });
       // grafie antiche
@@ -90,7 +91,7 @@
       });
       G.grafico(a4, (a, w) => {
         const p = Object.keys(gr).map(Number).sort().map((y) => [y, gr[y]]);
-        G.linee(a, w, { x: [1848, d3.max(p, (q) => q[0])], y: [0, 100], h: 260, yFmt: (v) => G.num(v, 0) + "%", serie: [{ punti: p, colore: G.SEZ, sp: 3, etich: "forme antiche" }] });
+        G.linee(a, w, { x: [1848, d3.max(p, (q) => q[0])], y: [0, 100], h: 260, yFmt: (v) => G.num(v, 0) + "%", serie: [{ punti: p, colore: G.SCURO, sp: 2.5, nome: "forme antiche" }] });
       });
       // il gradino dell'Unita'
       const wps = (L.regno.wps || {});
@@ -103,8 +104,8 @@
       G.grafico(a5, (a, w) => {
         const pc = Object.keys(wps.camera || {}).map(Number).sort().map((y) => [y, wps.camera[y]]), ps = Object.keys(wps.senato || {}).map(Number).sort().map((y) => [y, wps.senato[y]]);
         const v = pc.concat(ps).map((p) => p[1]).filter((x) => x != null);
-        G.linee(a, w, { x: [1848, 1922], y: [Math.floor(d3.min(v) - 2), Math.ceil(d3.max(v) + 2)], h: 260, fasce: [{ da: 1860.9, a: 1861.1, colore: G.SEZ, testo: "1861" }],
-          serie: [{ punti: pc, colore: G.SEZ, sp: 2.5, etich: "Camera" }, { punti: ps, colore: G.SEZ_S, sp: 2, tratt: "8 4", etich: "Senato" }], unita: "parole per frase" });
+        G.linee(a, w, { x: [1848, 1922], y: [Math.floor(d3.min(v) - 2), Math.ceil(d3.max(v) + 2)], h: 260, fasce: [{ da: 1860.85, a: 1861.15, colore: G.ROSSO, testo: "1861" }],
+          serie: [{ punti: pc, colore: G.SCURO, sp: 2.5, etich: "Camera" }, { punti: ps, colore: G.SCURO, sp: 1.5, tratt: "6 3", etich: "Senato" }], unita: "parole per frase" });
       });
     });
   });

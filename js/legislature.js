@@ -29,10 +29,13 @@
         const mx = L.reduce((p, q) => (pa(q) > pa(p) ? q : p));
         L.forEach((l) => {
           const lk = svg.append("a").attr("href", "legislatura.html?id=" + l.id);
-          lk.append("title").text(`${l.nome}, ${l.da}-${l.a}`);
+          lk.append("title").text(`${G.num(pa(l), 1)} milioni di parole l'anno\n${l.nome}, ${l.da}-${l.a}`);
           lk.append("rect").attr("x", x(l.da)).attr("width", Math.max(1.5, x(l.a + 1) - x(l.da) - 1)).attr("y", y(pa(l))).attr("height", y(0) - y(pa(l))).attr("fill", l === mx ? G.ROSSO : G.NERO);
         });
-        svg.append("text").attr("class", "etich").attr("x", x(mx.da)).attr("y", y(pa(mx)) - 6).attr("text-anchor", "end").attr("fill", G.ROSSO).text(`${mx.nome}: ${G.num(pa(mx), 1)}`);
+        svg.append("text").attr("class", "etich").attr("x", x(mx.da)).attr("y", y(pa(mx)) - 6).attr("text-anchor", "end").attr("fill", G.INK).text(`${mx.nome}: ${G.num(pa(mx), 1)}`);
+        // i numeri dell'asse sopra le barre, con l'alone bianco
+        const gt = svg.append("g").attr("class", "asse");
+        g.selectAll("text").each(function () { this.classList.add("alone"); gt.node().appendChild(this); });
         d3.range(1860, 2021, w < 560 ? 50 : 20).forEach((v) => g.append("text").attr("x", x(v)).attr("y", h - 6).attr("text-anchor", "middle").text(v));
       });
       const EP = { regno: "Regno", consulta: "Consulta", costituente: "Costituente", repubblica: "Repubblica" };

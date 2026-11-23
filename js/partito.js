@@ -18,7 +18,7 @@
     document.getElementById("bric").textContent = nome;
     const U = P.unita;
     const colF = G.FAMIGLIA[P.famiglia] || "#E5007D";
-    const chiaro = ["#FF7BAC", "#00B4D8", "#00A85A", "#F5C400", "#B8BEC7"].includes(colF);
+    const chiaro = G.testoSu(colF) !== "#fff";
     document.body.style.setProperty("--sez", colF); document.body.style.setProperty("--sez-s", chiaro ? "#16181D" : colF); document.body.style.setProperty("--sez-testo", chiaro ? "#16181D" : "#fff");
     G.colori();
     const da = Math.round(U[0].anno - 2.5), a = Math.min(2022, Math.round(U[U.length - 1].anno + 2.5));
@@ -65,12 +65,17 @@
       y.ticks(4).forEach((v, i, arr) => { g.append("line").attr("x1", 0).attr("x2", w).attr("y1", y(v)).attr("y2", y(v)).attr("class", v === 0 ? "zero" : null); g.append("text").attr("x", 0).attr("y", y(v) - 4).text(G.pct(v, 0) + (i === arr.length - 1 ? " delle parole" : "")); });
       U.forEach((u) => {
         const lg = B.legislature.find((l) => l.id === legId(u.leg));
-        const x0 = x(lg ? lg.da : u.anno - 2), x1 = x(lg ? lg.a + 1 : u.anno + 2) - 2;
+        // le legislature si toccano (una finisce nell'anno in cui comincia l'altra): 2 px di bianco tra una colonna e l'altra
+        const succ = B.legislature.find((l) => l.id === legId(u.leg + 1));
+        const x0 = x(lg ? lg.da : u.anno - 2), x1 = Math.min(x(lg ? lg.a + 1 : u.anno + 2), succ ? x(succ.da) : Infinity) - 2;
         const lk = svg.append("a").attr("href", "legislatura.html?id=" + legId(u.leg)).attr("aria-label", G.romano(u.leg) + " legislatura: " + G.pct(u.quota));
-        lk.append("rect").attr("x", x0).attr("width", Math.max(2, x1 - x0)).attr("y", y(u.quota)).attr("height", y(0) - y(u.quota)).attr("fill", u === max ? G.ROSSO : G.NERO);
+        lk.attr("data-tip", `${G.pct(u.quota)} delle parole dei deputati\n${G.romano(u.leg)} legislatura, ${G.num(u.n_orat)} oratori`);
+        lk.append("rect").attr("x", x0).attr("width", Math.max(2, x1 - x0)).attr("y", y(u.quota)).attr("height", y(0) - y(u.quota)).attr("fill", u === max ? G.ROSSO : G.BARRA);
         if (x1 - x0 > 26) lk.append("text").attr("x", (x0 + x1) / 2).attr("y", y(u.quota) - 4).attr("text-anchor", "middle").attr("font-size", 12).attr("font-weight", 700).text(G.romano(u.leg));
       });
       [1950, 1970, 1990, 2010].forEach((v) => g.append("text").attr("x", x(v)).attr("y", h - 6).attr("text-anchor", "middle").text(v));
+      const gt = svg.append("g").attr("class", "asse");
+      g.selectAll("text").each(function () { this.classList.add("alone"); gt.node().appendChild(this); });
     });
     document.getElementById("fatti").innerHTML = U.map((u) => `<li><a href="legislatura.html?id=${legId(u.leg)}">${G.romano(u.leg)} legislatura</a>: <b>${G.pct(u.quota)}</b><span class="et">${G.num(u.n_orat)} oratori; al governo ${u.gov == null ? "–" : G.pct(u.gov, 0)} dei giorni</span></li>`).join("");
     // a chi somiglia, legislatura per legislatura (la sua riga della griglia), e i tre partiti più vicini e più lontani
@@ -100,14 +105,23 @@
         svg.append("rect").attr("x", x(0)).attr("y", yy + 6).attr("width", x(o[2] || 0) - x(0)).attr("height", 4).attr("fill", G.GDATI);
         svg.append("circle").attr("cx", x(o[1])).attr("cy", yy).attr("r", 6).attr("fill", colF);
         svg.append("text").attr("x", x(o[1]) + 10).attr("y", yy + 4).attr("font-size", 12).attr("fill", G.GRIGIO).text(G.pct(o[1], 0));
+        svg.append("rect").attr("x", 0).attr("y", yy - rh / 2 + 2).attr("width", w).attr("height", rh).attr("fill", "transparent").attr("data-tip", `${G.pct(o[1], 0)} da opposizione\n${G.romano(o[0])} legislatura; al governo ${G.pct(o[2] || 0, 0)} dei giorni`);
       });
     }); else aop.html('<p class="grigio">Il programma di H67 non dà un punteggio per questo partito.</p>');
+    if (OP.length) {
+      // i dati del grafico, come per ogni tavola
+      const pf = document.createElement("p"); pf.className = "fig-fonte";
+      pf.innerHTML = "Fonte: resoconti stenografici di Camera e Senato. ";
+      const bt = document.createElement("button"); bt.type = "button"; bt.textContent = "Dati del grafico (CSV)";
+      bt.addEventListener("click", () => G.scaricaCSV("opposizione_" + P.slug, [["legislatura", "probabilita_opposizione", "quota_giorni_governo"]].concat(OP.map((o) => [o[0], o[1], o[2]]))));
+      pf.appendChild(bt); aop.node().after(pf);
+    }
     const FT = P.frasi_tipiche || {};
     document.getElementById("frasi-tip").innerHTML = Object.keys(FT).length ? Object.keys(FT).sort((a, b) => a - b).map((l) => `<h3 class="titolo-piccolo" style="margin-top:22px"><a href="legislatura.html?id=repubblica-${l}">${G.romano(+l)} legislatura</a></h3><ul class="elenco-frasi">${FT[l].slice(0, 4).map((f) => `<li><span class="quando"><b>${G.esc(f[0])}</b> · ${G.data(f[1])}, ${f[2] ? (f[3] ? G.lPersona(f[3], G.oratore(f[2])) : G.esc(G.oratore(f[2]))) : "oratore non riconosciuto"}</span><q>${G.frase(f[4], [f[0]])}</q></li>`).join("")}</ul>`).join("") : '<p class="grigio">Nessuna frase disponibile.</p>';
     // linea della famiglia nel tempo, con le altre in grigio
     const area2 = G.figura("#g-linea", {
       titolo: `Dove sta la lingua della famiglia ${G.esc(P.famiglia)} rispetto alle altre`,
-      sotto: "Posizione ricavata dalle parole, Camera, 1948-2022: in basso le parole della sinistra, in alto quelle della destra. Più due linee sono vicine, più le famiglie usano le stesse parole. In rosso la famiglia di questo partito." + (P.asse && P.asse.length ? " Sotto, la scala DC-PCI con il suo margine di incertezza." : ""),
+      sotto: "Posizione ricavata dalle parole, Camera, 1948-2022: in basso le parole della sinistra, in alto quelle della destra. Più due linee sono vicine, più le famiglie usano le stesse parole. Nel suo colore la famiglia di questo partito, le altre in grigio." + (P.asse && P.asse.length ? " Sotto, la scala DC-PCI con il suo margine di incertezza." : ""),
       limite: "La posizione viene dalle parole, non dai voti.",
       csv: () => [["famiglia", "anno", "posizione", "scheda"]].concat([].concat(...Object.entries(IX.linee).map(([f, l]) => l.map((p) => [f, p[0], p[1], p[2]])))), nomeCSV: "linee_famiglie",
     });
@@ -116,7 +130,8 @@
       const fam = P.famiglia;
       const r = G.linee(ar, w, {
         x: [1948, 2022], y: [ext[0] - 0.005, ext[1] + 0.005], yTicks: [], h: w < 560 ? 240 : 300, m: { r: w < 560 ? 60 : 120 }, etichSopra: false,
-        serie: Object.keys(L).filter((f) => f !== fam).map((f) => ({ punti: L[f].map((p) => [p[0], p[1]]), colore: G.GDATI, sp: 1, etich: f })).concat(L[fam] ? [{ punti: L[fam].map((p) => [p[0], p[1]]), colore: G.ROSSO, sp: 2.5, punto: 2.5, etich: fam }] : []),
+        legenda: false,
+        serie: Object.keys(L).filter((f) => f !== fam).map((f) => ({ punti: L[f].map((p) => [p[0], p[1]]), colore: G.GDATI, sp: 1, etich: f })).concat(L[fam] ? [{ punti: L[fam].map((p) => [p[0], p[1]]), colore: fam === "altri" ? G.SCURO : colF, sp: 2.5, punto: 2.5, etich: fam }] : []),
       });
       r.svg.append("text").attr("x", 0).attr("y", r.y(ext[1]) + 4).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di destra");
       r.svg.append("text").attr("x", 0).attr("y", r.y(ext[0]) - 4).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di sinistra");
