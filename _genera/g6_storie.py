@@ -118,7 +118,9 @@ def risolvi(g, rapporto, sid):
     f = (g.get("file") or "").split(";")[0].split(" e ")[0]
     f = re.findall(r"`([^`]+)`", f) or [f]
     f = f[0].strip().rstrip(",")
-    p = os.path.join(BASE, f.replace("/", os.sep))
+    # le tabelline ricavate dalle note dei risultati (numeri copiati dalle note, con la fonte scritta in testa al file)
+    # stanno nel sito, in _genera/dati_storie/: il progetto resta in sola lettura
+    p = os.path.join(SITO if f.startswith("_genera/") else BASE, f.replace("/", os.sep))
     tipo = (g.get("tipo") or "curva").lower()
     col = g.get("colonne", "")
     if not f or not os.path.exists(p):
