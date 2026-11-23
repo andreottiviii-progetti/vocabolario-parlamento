@@ -92,7 +92,11 @@ def main():
             continue
         if c[0] == "Codice" or len(c) < 6:
             continue
-        esp.append({"filone": filone, "cod": c[0], "titolo": c[1], "attesa": c[2], "esito": c[3], "numero": c[4]})
+        # i rimandi ai file di lavoro tra parentesi (es. «h1_h2_h5_primi_risultati.txt») non vanno nel sito pubblico
+        numero_ = re.sub(r"[,;]?\s*[\w./-]*(?:risultati|note_h\d|misure)[\w./-]*|[,;]?\s*[\w./-]+\.(?:txt|csv|md|json|py|parquet)\b", "", c[4])
+        numero_ = re.sub(r"\(\s*[;,]?\s*\)", "", numero_)
+        numero_ = re.sub(r"\(([^()]*?)[;,]\s*\)", r"(\1)", numero_)
+        esp.append({"filone": filone, "cod": c[0], "titolo": c[1], "attesa": c[2], "esito": c[3], "numero": re.sub(r"\s{2,}", " ", numero_).strip()})
     filoni = [c[0] for c in conti if c[0] != "Totale"]
     esp = [e for e in esp if e["filone"] in filoni]
     ipotesi = sorted(set(re.match(r"H\d+", e["cod"]).group(0) for e in esp if re.match(r"H\d+", e["cod"])), key=lambda x: int(x[1:]))

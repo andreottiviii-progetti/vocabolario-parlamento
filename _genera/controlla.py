@@ -29,7 +29,27 @@ class Zitto(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+def percorsi_privati():
+    """Nessun percorso dei file di lavoro del progetto nei file pubblici (quelli che git pubblica, fuori dalle cartelle che
+    cominciano con «_»): risultati/, *_risultati, note_hNN, misure/."""
+    import re
+    import subprocess
+    file_ = subprocess.run(["git", "ls-files"], capture_output=True, cwd=SITO).stdout.decode("utf-8").splitlines()
+    file_ += subprocess.run(["git", "ls-files", "-o", "--exclude-standard"], capture_output=True, cwd=SITO).stdout.decode("utf-8").splitlines()
+    vietato = re.compile(r"risultati/|_risultati|note_h[0-9]|misure/")
+    trovati = []
+    for f in file_:
+        if f.startswith("_") or f.endswith((".png", ".woff2", ".ico")):
+            continue
+        p = os.path.join(SITO, f)
+        if os.path.isfile(p) and vietato.search(open(p, encoding="utf-8", errors="replace").read()):
+            trovati.append(f)
+    print("percorsi dei file di lavoro nei file pubblici:", ", ".join(trovati) if trovati else "nessuno", flush=True)
+    return not trovati
+
+
 def main():
+    percorsi_privati()
     os.makedirs(USCITA, exist_ok=True)
     arg = sys.argv[1:]
     lista = CONSEGNA if not arg else [(arg[i], int(arg[i + 1]), arg[i + 2]) for i in range(0, len(arg), 3)]
