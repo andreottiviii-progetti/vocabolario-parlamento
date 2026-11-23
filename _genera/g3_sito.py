@@ -528,10 +528,11 @@ def tabella_h68():
     differenza in punti con il margine di incertezza."""
     righe = []
     for riga in open(os.path.join(RIS, "note_h68_h75_h77.md"), encoding="utf-8"):
-        m = re.match(r"\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|\s*(\d+)%\s*\|\s*(\d+)\s*\|\s*(\d+)%\s*\|\s*([+-]?\d+)\s*\[([+-]?\d+);\s*([+-]?\d+)\]", riga)
+        # i numeri grandi hanno il punto delle migliaia (Afghanistan 1.441, Iraq 1.057): prima restavano fuori
+        m = re.match(r"\|\s*([^|]+?)\s*\|\s*(\d[\d.]*)\s*\|\s*(\d+)%\s*\|\s*(\d[\d.]*)\s*\|\s*(\d+)%\s*\|\s*([+-]?\d+)\s*\[([+-]?\d+);\s*([+-]?\d+)\]", riga)
         if m:
             a = re.search(r"(19|20)\d\d", m.group(1))
-            righe.append([m.group(1)] + [int(m.group(k)) for k in range(2, 9)] + [int(a.group(0)) if a else None])
+            righe.append([m.group(1)] + [int(m.group(k).replace(".", "")) for k in range(2, 9)] + [int(a.group(0)) if a else None])
         if len(righe) == 10:
             break
     return righe

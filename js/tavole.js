@@ -129,6 +129,89 @@
   /* ---------- 3. amici e nemici: strisce per paese (parole sopra, fatti sotto) ---------- */
   const misto = (c1, c2, t) => d3.interpolateRgb(c1, c2)(Math.max(0, Math.min(1, t)));
   V.tono = (v) => misto(V.tema.tenue, v > 0 ? V.tema.nemico : V.tema.amico, Math.abs(v) / 0.6);
+  /* cinque gradini: nemico forte, nemico, neutro, amico, amico forte (soglie 0,1 e 0,3 dell'indice da −1 a +1) */
+  V.GRADINI = [["nemico, forte", "#C9241C"], ["nemico", "#EE9B95"], ["neutro", "#ECEDEF"], ["amico", "#8FD0D5"], ["amico, forte", "#00838C"]];
+  V.gradino = (v) => V.GRADINI[v >= 0.3 ? 0 : v >= 0.1 ? 1 : v > -0.1 ? 2 : v > -0.3 ? 3 : 4];
+
+  /* amici e nemici, versione a linee: per ogni paese una curva sopra lo zero (rosso, da nemico) e sotto (turchese, da amico);
+     dietro, gli anni di guerra con l'Italia in grigio con la scritta; sotto, una riga turchese sottile per le alleanze */
+  V.amiciLinee = function (sel, X, o) {
+    o = Object.assign({ paesi: ["Austria", "Germania", "Francia", "Gran Bretagna", "Russia/URSS", "Stati Uniti", "Jugoslavia"], hr: 46, wl: 112, x: [1848, 2022], anni: true, note: [] }, o || {});
+    V.fig(sel, (a, w) => {
+      const T = V.tema, stretto = w < 520, wl = stretto ? 0 : o.wl, sopra = stretto || o.wl === 0;
+      const passo = o.hr + 14 + (sopra ? 15 : 0), mt = o.anni ? 18 : 2, h = mt + o.paesi.length * passo + (o.anni ? 4 : 0);
+      const svg = svgDi(a, w, h, "Amici e nemici: come l'aula parla di ogni paese, anno per anno, sopra lo zero da nemico e sotto da amico");
+      const x = d3.scaleLinear().domain([o.x[0], o.x[1] + 1]).range([wl, w - 2]), aw = x(o.x[0] + 1) - x(o.x[0]);
+      if (o.anni) d3.range(Math.ceil(o.x[0] / 20) * 20, o.x[1] + 1, 20).forEach((t) => { svg.append("line").attr("x1", x(t)).attr("x2", x(t)).attr("y1", 13).attr("y2", h).attr("stroke", T.riga); testo(svg, x(t), 10, t, { anc: "middle" }); });
+      let scrittaGuerra = o.anni === false, scrittaAll = o.anni === false;
+      const scritte = []; // le scritte «guerra» e «alleanza» si disegnano alla fine, sopra le aree
+      o.paesi.forEach((p, i) => {
+        const y0 = mt + i * passo + (sopra ? 15 : 0), mid = y0 + o.hr / 2, y = d3.scaleLinear().domain([-0.6, 0.6]).range([y0 + o.hr, y0]).clamp(true);
+        const al = X.alleanze[p] || {};
+        // guerre: banda grigia dietro, con la scritta la prima volta
+        const guerre = Object.keys(al).filter((k) => al[k][1] === "guerra" && +k >= o.x[0] && +k <= o.x[1]).map(Number).sort((q, r) => q - r);
+        const tratti = []; guerre.forEach((k) => { const t = tratti[tratti.length - 1]; if (t && k - t[1] <= 1) t[1] = k; else tratti.push([k, k]); });
+        tratti.forEach((t) => {
+          svg.append("rect").attr("x", x(t[0])).attr("y", y0 - 2).attr("width", Math.max(2, x(t[1] + 1) - x(t[0]))).attr("height", o.hr + 4).attr("fill", "#DADDE1").append("title").text(`${p}: in guerra con l'Italia, ${t[0]}${t[1] > t[0] ? "-" + t[1] : ""}`);
+          if (!scrittaGuerra && x(t[1] + 1) - x(t[0]) > 18) { scritte.push([x(t[1] + 1) + 3, y0 + 9, "guerra", T.ink]); scrittaGuerra = true; }
+        });
+        svg.append("line").attr("x1", wl).attr("x2", w).attr("y1", mid).attr("y2", mid).attr("stroke", T.grigio).attr("stroke-width", 0.8);
+        const nome = svg.append("a").attr("href", V.sito("esteri.html"));
+        if (sopra) testo(nome, wl, y0 - 4, p, { fill: T.ink, peso: 800, fs: T.fs + 1 });
+        else testo(nome, 0, mid + 5, p, { fill: T.ink, peso: 800, fs: T.fs + 2 });
+        if (p === "Jugoslavia" && X.giudice_periodi && X.giudice_periodi.Jugoslavia) {
+          // per la Jugoslavia le parole vicine sbagliano il segno: si usa il giudice automatico (quota di passaggi da nemica)
+          X.giudice_periodi.Jugoslavia.forEach((q) => {
+            const xa = x(Math.max(q[0], o.x[0])), xb = x(Math.min(q[1], o.x[1]) + 1);
+            svg.append("rect").attr("x", xa).attr("y", y(q[2])).attr("width", Math.max(1, xb - xa - 1)).attr("height", mid - y(q[2])).attr("fill", T.nemico).attr("fill-opacity", 0.75).append("title").text(`Jugoslavia, ${q[0]}-${q[1]}: da nemica in ${Math.round(q[2] * 100)} passaggi su 100 (giudice automatico)`);
+            if (xb - xa > 30) testo(svg, (xa + xb) / 2, y(q[2]) - 3, Math.round(q[2] * 100) + "%", { anc: "middle", fill: T.ink, peso: 700, fs: T.fs - 1 });
+          });
+        } else {
+          const t = V.tonoPaese(X, p), pts = d3.range(o.x[0], o.x[1] + 1).map((k) => [k, t[k] != null ? t[k] : null]);
+          const ar = (segno) => d3.area().defined((d) => d[1] != null).x((d) => x(d[0]) + aw / 2).y0(mid).y1((d) => y(segno > 0 ? Math.max(0, d[1]) : Math.min(0, d[1])));
+          svg.append("path").attr("d", ar(1)(pts)).attr("fill", T.nemico);
+          svg.append("path").attr("d", ar(-1)(pts)).attr("fill", T.amico);
+          pts.forEach((d) => { if (d[1] != null) svg.append("rect").attr("x", x(d[0])).attr("y", y0).attr("width", aw).attr("height", o.hr).attr("fill", "transparent").append("title").text(`${p}, ${d[0]}: ${d[1] > 0 ? "da nemico" : "da amico"} (${(d[1] > 0 ? "+" : "−") + V.num(Math.abs(d[1]), 2)})`); });
+        }
+        // alleanze: riga turchese sottile sotto la striscia
+        const all = Object.keys(al).filter((k) => al[k][1] === "alleato" && +k >= o.x[0] && +k <= o.x[1]).map(Number);
+        all.forEach((k) => svg.append("rect").attr("x", x(k)).attr("y", y0 + o.hr + 4).attr("width", aw + 0.4).attr("height", 3).attr("fill", T.alleanza));
+        if (!scrittaAll && all.length) { const k0 = Math.min(...all); scritte.push([x(k0), y0 + o.hr + 16, "alleanza", T.alleanza]); scrittaAll = true; }
+        (o.note || []).filter((n) => n.paese === p && !stretto).forEach((n) => { const px = x(n.anno), anc = n.anc || (px > w - 260 ? "end" : "start"); n.righe.slice(0, 1).forEach((r) => alone(testo(svg, px, y0 + 2, r, { fill: T.ink, fs: T.fs, anc: anc }))); });
+      });
+      scritte.forEach((q) => alone(testo(svg, q[0], q[1], q[2], { fill: q[3], fs: T.fs - 1, peso: 700 })));
+      if (o.anni !== false && o.x[0] <= 1941 && o.x[1] >= 1945 && !stretto) testo(svg, (x(1941) + x(1946)) / 2, h - 1, "1941-45: nessun resoconto", { anc: "middle", fs: T.fs - 1.5 });
+    });
+  };
+  /* amici e nemici, versione a celle: un periodo di cinque anni per cella, cinque gradini */
+  V.amiciCelle = function (sel, X, o) {
+    o = Object.assign({ paesi: ["Austria", "Germania", "Francia", "Gran Bretagna", "Russia/URSS", "Stati Uniti", "Jugoslavia"], hr: 24, wl: 112, passo: 5 }, o || {});
+    V.fig(sel, (a, w) => {
+      const T = V.tema, wl = w < 520 ? 80 : o.wl, mt = 18, step = o.hr + 14, h = mt + o.paesi.length * step;
+      const svg = svgDi(a, w, h, "Amici e nemici per periodi di cinque anni");
+      const x = d3.scaleLinear().domain([1845, 2025]).range([wl, w - 2]);
+      d3.range(1860, 2021, 20).forEach((t) => testo(svg, x(t), 10, t, { anc: "middle" }));
+      o.paesi.forEach((p, i) => {
+        const y0 = mt + i * step, o3 = X.indice[p] || {}, al = X.alleanze[p] || {};
+        testo(svg.append("a").attr("href", V.sito("esteri.html")), 0, y0 + o.hr / 2 + 5, p, { fill: T.ink, peso: 800, fs: T.fs + 1 });
+        for (let a0 = 1845; a0 < 2025; a0 += o.passo) {
+          let sv = 0, sn = 0; for (let k = a0; k < a0 + o.passo; k++) if (o3[k] && o3[k][0] != null && (o3[k][3] || 0) >= 30) { sv += o3[k][0] * o3[k][3]; sn += o3[k][3]; }
+          if (!sn) continue;
+          const m = sv / sn, g = V.gradino(m);
+          svg.append("rect").attr("x", x(a0) + 1).attr("y", y0).attr("width", x(a0 + o.passo) - x(a0) - 2).attr("height", o.hr).attr("fill", g[1]).append("title").text(`${p}, ${a0}-${a0 + o.passo - 1}: ${g[0]} (${(m > 0 ? "+" : "−") + V.num(Math.abs(m), 2)})`);
+        }
+        Object.keys(al).forEach((k) => { const st = al[k][1]; if (st === "alleato") svg.append("rect").attr("x", x(+k)).attr("y", y0 + o.hr + 3).attr("width", x(+k + 1) - x(+k)).attr("height", 3).attr("fill", T.alleanza); else if (st === "guerra") svg.append("rect").attr("x", x(+k)).attr("y", y0 + o.hr + 2).attr("width", x(+k + 1) - x(+k)).attr("height", 6).attr("fill", T.ink); });
+      });
+    });
+  };
+  V.legendaGradini = function () {
+    const T = V.tema;
+    return V.GRADINI.map((g) => `<span class="g-leg"><i class="g-qd" style="background:${g[1]}"></i> ${g[0]}</span>`).join("") + `<span class="g-leg"><i class="g-tr" style="background:${T.alleanza}"></i> alleanza in vigore</span><span class="g-leg"><i class="g-qd" style="background:${T.ink}"></i> guerra con l'Italia</span>`;
+  };
+  V.legendaLinee = function () {
+    const T = V.tema;
+    return `<span class="g-leg"><i class="g-qd" style="background:${T.nemico}"></i> sopra la riga: ne parla da nemico</span><span class="g-leg"><i class="g-qd" style="background:${T.amico}"></i> sotto: da amico</span><span class="g-leg"><i class="g-tr" style="background:${T.alleanza}"></i> alleanza in vigore</span><span class="g-leg"><i class="g-qd" style="background:#DADDE1"></i> anni di guerra con l'Italia</span>`;
+  };
   V.tonoPaese = function (X, p) { // indice per anno, media di tre anni, solo dove ci sono abbastanza frasi
     const o = X.indice[p] || {}, out = {};
     for (let a = 1848; a <= 2022; a++) {
@@ -388,7 +471,7 @@
   /* ---------- pezzi di testo che si ripetono ---------- */
   V.CAPITOLI_NOTE = { // la riga sotto il piccolo grafico di ogni capitolo: dice che cosa si vede
     1: "Quota di parole in francese, Camera, 1848-1870", 2: "Parole per frase, Camera, 1848-1914", 3: "Consenso e dissenso annotati ogni cento interventi, Camera, 1913-1939",
-    4: "Come l'aula parla della Germania, 1848-2022", 5: "PCI e DC sulla mappa delle parole, 1948-1992", 6: "«Tangentopoli» detta in aula, mese per mese, 1992-1996", 7: "Deputati M5S che parlano «da opposizione», XVII e XVIII legislatura"
+    4: "Come l'aula parla della Germania: sopra la riga da nemico, sotto da amico", 5: "Lessico di classe, volte per milione di parole, 1946-1992", 6: "«Tangentopoli» detta in aula, mese per mese, 1992-1996", 7: "«Io» alla Camera, volte ogni mille parole, 1948-2022"
   };
   /* il piccolo grafico vero di ogni capitolo; D = dati già caricati */
   V.graficoCapitolo = function (sel, n, D, o) {
@@ -396,12 +479,12 @@
     if (n === 1) { const fc = D.L.francese.camera; V.mini(sel, Object.keys(fc).map(Number).sort().map((y) => [y, +fc[y]]), { h: h, x: [1848, 1870], assi: [1848, 1861, 1870], punti: [{ x: 1849, testo: "1849: 8,5%" }, { x: 1861, testo: "1861: zero", dy: -8, dx: 4, anc: "start" }], sp: 1.8 }); }
     if (n === 2) { const wp = D.L.regno.wps.camera; V.mini(sel, Object.keys(wp).map(Number).sort().map((y) => [y, +wp[y]]), { h: h, x: [1848, 1914], y: [22, 44], assi: [1848, 1914], area: false, righe: [[1861, "1861", V.tema.evid]], punti: [{ x: 1856, testo: "42", dy: -7, dx: 0, anc: "middle" }, { x: 1867, testo: "32 parole per frase", dy: 17, dx: 5, anc: "start" }], sp: 1.8 }); }
     if (n === 3) V.specchio(sel, D.F, { h: h });
-    if (n === 4) V.strisce(sel, D.X, { paesi: o.paesi || ["Austria", "Germania", "Russia/URSS"], hp: o.hp || 13, hf: 4, vuoto: 5, wl: o.wl != null ? o.wl : 62, anni: false, fsNome: V.tema.fs, pesoNome: 600, sotto: false, vuotoGuerra: false });
-    if (n === 5) V.traiettorie(sel, D.TR, { h: h });
+    if (n === 4) V.amiciLinee(sel, D.X, { paesi: o.paesi || ["Germania"], hr: o.hr || 46, wl: 0, anni: false });
+    if (n === 5) { const g = ((D.FI || {}).grafici || []).find((q) => q.dati && q.dati.serie && q.dati.serie[0] && q.dati.serie[0].punti); if (g) { const pts = g.dati.serie[0].punti.filter((q) => q[0] >= 1946 && q[0] <= 1992); const mx = pts.reduce((a, b) => ((b[1] || 0) > (a[1] || 0) ? b : a), pts[0]); V.mini(sel, pts, { h: h, x: [1946, 1992], assi: [1946, 1970, 1992], punti: [{ x: mx[0], testo: mx[0] + ": " + V.num(mx[1]) }], sp: 1.8, fmt: (v) => V.num(v) + " per milione" }); } }
     if (n === 6) { const g = D.TG.grafici.find((q) => q.dati && q.dati.forma === "colonne"); V.colonne(sel, g.dati.x.map((m, i) => [m, g.dati.serie[0].v[i]]), { h: h, etich: "marzo 1993: 171" }); }
-    if (n === 7) { const O = D.M5.opposizione; V.pendenza(sel, ["2013-18", O[0][1]], ["2018-22", O[1][1]], { h: h, colore: V.tema.ink }); }
+    if (n === 7 && D.IO) { const pts = D.IO.pm.c.map((v, i) => [1848 + i, v == null ? null : v / 1000]).filter((q) => q[0] >= 1948); const v12 = pts.find((q) => q[0] === 2012), v13 = pts.find((q) => q[0] === 2013); V.mini(sel, pts, { h: h, x: [1948, 2022], assi: [1948, 1994, 2022], area: false, punti: [v13 && v13[1] != null ? { x: 2013, testo: "2013: " + V.num(v13[1], 2) } : null].filter(Boolean), righe: [[2013, "", V.tema.evid]], sp: 1.8, fmt: (v) => V.num(v, 2) + " ogni mille parole" }); }
   };
-  V.datiCapitoli = () => Promise.all([V.carica("sezioni/lingue.json"), V.carica("sezioni/fascismo.json"), V.carica("sezioni/esteri.json"), V.carica("partiti/traiettorie.json"), V.carica("storie/tangentopoli-entra-in-aula.json"), V.carica("partiti/m5s.json")]).then(([L, F, X, TR, TG, M5]) => ({ L: L, F: F, X: X, TR: TR, TG: TG, M5: M5 }));
+  V.datiCapitoli = () => Promise.all([V.carica("sezioni/lingue.json"), V.carica("sezioni/fascismo.json"), V.carica("sezioni/esteri.json"), V.carica("partiti/traiettorie.json"), V.carica("storie/tangentopoli-entra-in-aula.json"), V.carica("partiti/m5s.json"), V.carica("storie/fine-delle-ideologie.json").catch(() => null), (window.G && G.curvaParola ? G.curvaParola("io") : Promise.resolve(null))]).then(([L, F, X, TR, TG, M5, FI, IO]) => ({ L: L, F: F, X: X, TR: TR, TG: TG, M5: M5, FI: FI, IO: IO }));
   /* le note dentro il grafico delle strisce (frasi e numeri dal capitolo 4) */
   V.NOTE_STRISCE = [
     { paese: "Austria", anno: 1866, righe: ["«la guerra all'Austria sia per noi suprema necessità»", "Giuseppe Romano, Camera, 1° maggio 1866"] },

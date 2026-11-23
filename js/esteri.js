@@ -37,25 +37,27 @@
       PAESI.forEach((p, i) => G.grafico("#pa" + i, (a, w) => paese(a, w, p, X, media3, i < 4)));
       // nemico principale anno per anno
       const NA = X.nemico_anno.filter((r) => r[1] && r[1].charAt(0) !== "(");
-      const COL = {}; const tav = ["#00A3AD", "#E3120B", "#7B3FE4", "#F56300", "#2454FF", "#00A85A", "#E5007D", "#1B2A7A", "#FFD400", "#00B4D8"];
-      [...new Set(NA.map((r) => r[1]))].forEach((p, k) => { COL[p] = tav[k % tav.length]; });
       const a2 = G.figura("#g-nemico", {
         titolo: (() => { const conta = {}; NA.forEach((r) => { conta[r[1]] = (conta[r[1]] || 0) + 1; }); const primi = Object.keys(conta).sort((a, b) => conta[b] - conta[a]).slice(0, 3); const ord = primi.sort((a, b) => NA.find((r) => r[1] === a)[0] - NA.find((r) => r[1] === b)[0]); return "Il nemico principale cambia con la storia: " + ord.join(", poi ") + " sono quelli che lo sono più a lungo"; })(),
-        sotto: "Il paese di cui l'aula parla più da nemico, anno per anno (punteggio di ostilità più alto), Camera e Senato",
+        sotto: "Una riga per paese: una tacca rossa per ogni anno in cui è il paese di cui l'aula parla più da nemico (punteggio di ostilità più alto), Camera e Senato. A destra, quanti anni in tutto.",
         csv: () => [["anno", "nemico", "punteggio", "amico", "punteggio_amico"]].concat(X.nemico_anno), nomeCSV: "nemico_principale",
       });
       G.grafico(a2, (a, w) => {
-        const h = 120;
+        // una riga per paese, una tacca rossa per ogni anno in cui è il nemico principale: nessun colore per paese
+        const conta = {}; NA.forEach((r) => { conta[r[1]] = (conta[r[1]] || 0) + 1; });
+        const paesi = Object.keys(conta).filter((p) => conta[p] >= 2).sort((p, q) => NA.find((r) => r[1] === p)[0] - NA.find((r) => r[1] === q)[0]);
+        const rh = 19, lw = w < 560 ? 92 : 130, top = 30, h = top + paesi.length * rh + 22;
         const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "Nemico principale per anno");
-        const x = d3.scaleLinear().domain([1848, 2023]).range([0, w]);
-        G.bandaEpoche(svg, x, 0, 22, w < 560);
-        const tratti = [];
-        NA.forEach((r) => { const t = tratti[tratti.length - 1]; if (t && t.p === r[1] && r[0] - t.a <= 2) t.a = r[0]; else tratti.push({ p: r[1], da: r[0], a: r[0] }); });
-        tratti.forEach((t) => {
-          svg.append("rect").attr("x", x(t.da)).attr("y", 34).attr("width", Math.max(2, x(t.a + 1) - x(t.da) - 0.5)).attr("height", 34).attr("fill", COL[t.p]).append("title").text(`${t.p}, ${t.da}-${t.a}`);
-          if (x(t.a + 1) - x(t.da) > t.p.length * 7 + 6) svg.append("text").attr("x", x(t.da) + 4).attr("y", 56).attr("font-size", 12.5).attr("font-weight", 700).attr("fill", ["#FFD400", "#00A3AD", "#00B4D8", "#00A85A", "#F56300"].includes(COL[t.p]) ? G.INK : "#fff").text(t.p);
+        const x = d3.scaleLinear().domain([1848, 2023]).range([lw, w]);
+        G.bandaEpoche(svg, x, 0, 20, w < 560);
+        paesi.forEach((p, k) => {
+          const y0 = top + k * rh;
+          svg.append("line").attr("x1", lw).attr("x2", w).attr("y1", y0 + rh / 2).attr("y2", y0 + rh / 2).attr("stroke", G.RIGA);
+          svg.append("text").attr("x", lw - 8).attr("y", y0 + rh / 2 + 4).attr("text-anchor", "end").attr("font-size", 13).attr("font-weight", 700).attr("fill", G.INK).text(p);
+          svg.append("text").attr("x", w).attr("y", y0 + rh / 2 - 3).attr("text-anchor", "end").attr("font-size", 12).attr("fill", G.GRIGIO).text(conta[p] + (conta[p] === 1 ? " anno" : " anni"));
+          NA.filter((r) => r[1] === p).forEach((r) => svg.append("rect").attr("x", x(r[0])).attr("y", y0 + 3).attr("width", Math.max(1.5, x(r[0] + 1) - x(r[0]) - 0.6)).attr("height", rh - 6).attr("fill", G.ROSSO).append("title").text(`${r[0]}: il nemico principale è ${p}`));
         });
-        [1860, 1900, 1940, 1980, 2020].forEach((y) => svg.append("text").attr("x", x(y)).attr("y", 92).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(y));
+        [1860, 1900, 1940, 1980, 2020].forEach((y) => svg.append("text").attr("x", x(y)).attr("y", h - 4).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(y));
       });
       // PCI e DC su URSS e Stati Uniti
       const PP = X.partiti.filter((r) => ["PCI", "DC"].includes(r[2]) && ["Russia/URSS", "Stati Uniti"].includes(r[1]));

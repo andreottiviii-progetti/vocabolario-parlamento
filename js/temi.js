@@ -23,20 +23,20 @@
         csv: () => [["tema"].concat(G.ANNI)].concat(temi.map((t) => [t.nome].concat(t.q))), nomeCSV: "temi",
       });
       G.grafico(area, (a, w) => {
-        const stretto = w < 560, lw = stretto ? 120 : 280, rw = stretto ? 0 : 50, rh = 16;
+        const stretto = w < 560, lw = stretto ? 150 : 360, rw = stretto ? 0 : 50, rh = stretto ? 20 : 24; // righe più alte, etichette intere
         const svg = a.append("svg").attr("width", w).attr("height", cont.length * rh + 22).attr("role", "img").attr("aria-label", "Temi anno per anno");
         const x = d3.scaleLinear().domain([1848, 2023]).range([lw, w - rw]);
         const cw = Math.max(0.6, x(1849) - x(1848));
         const passi = ["#FFFFFF", "#E6E8EB", "#BFC4CB", "#858C96", "#454B53"]; // grigi: più scuro, più se ne parla; in rosso l'anno di punta
         cont.forEach((o, i) => {
           const yy = i * rh;
-          svg.append("a").attr("href", "tema.html?id=" + o.id).append("text").attr("x", lw - 6).attr("y", yy + 12).attr("text-anchor", "end").attr("font-size", 12.5).text(stretto ? o.nome.slice(0, 18) : o.nome.slice(0, 46));
+          svg.append("a").attr("href", "tema.html?id=" + o.id).append("text").attr("x", lw - 6).attr("y", yy + rh / 2 + 5).attr("text-anchor", "end").attr("font-size", 14).text(stretto && o.nome.length > 24 ? o.nome.slice(0, 23) + "…" : o.nome);
           o.q.forEach((q, k) => {
             if (q == null) return;
             const c = 1848 + k === o.picco ? G.ROSSO : passi[Math.min(4, Math.floor((q / o.max) * 4.999))];
             if (c !== "#FFFFFF") svg.append("rect").attr("x", x(1848 + k)).attr("y", yy).attr("width", cw + 0.3).attr("height", rh - 1).attr("fill", c).append("title").text(`${o.nome}, ${1848 + k}: ${G.pct(q)} delle parole`);
           });
-          if (!stretto) svg.append("text").attr("x", w - rw + 6).attr("y", yy + 12).attr("font-size", 12).attr("font-weight", 700).attr("fill", G.INK).text(o.picco);
+          if (!stretto) svg.append("text").attr("x", w - rw + 6).attr("y", yy + rh / 2 + 5).attr("font-size", 13).attr("font-weight", 700).attr("fill", G.INK).text(o.picco);
         });
         d3.range(1860, 2021, stretto ? 50 : 20).forEach((v) => svg.append("text").attr("x", x(v)).attr("y", cont.length * rh + 16).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", G.GRIGIO).text(v));
       });

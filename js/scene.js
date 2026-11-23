@@ -30,7 +30,7 @@
   S.amiciNemici = function (sel, X) {
     const PAESI = ["Austria", "Germania", "Francia", "Gran Bretagna", "Russia/URSS", "Stati Uniti", "Jugoslavia"];
     const scena = { stati: [], stato: () => {} };
-    const colore = (v) => (v == null ? "#fff" : v > 0 ? d3.interpolateRgb("#F4F5F7", ROSSO)(Math.min(1, v / 0.6)) : d3.interpolateRgb("#F4F5F7", TURCHESE)(Math.min(1, -v / 0.6)));
+    const colore = (v) => (v == null ? "#fff" : v >= 0.3 ? "#C9241C" : v >= 0.1 ? "#EE9B95" : v > -0.1 ? "#ECEDEF" : v > -0.3 ? "#8FD0D5" : "#00838C"); // cinque gradini
     const m3 = (o, a) => { const v = []; for (let y = a - 1; y <= a + 1; y++) if (o[y] && o[y][0] != null && (o[y][3] || 0) >= 30) v.push(o[y][0]); return v.length >= 2 ? d3.mean(v) : null; };
     const giud = X.giudice_periodi || {};
     const area = G.figura(sel, {
