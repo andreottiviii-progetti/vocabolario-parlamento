@@ -5,7 +5,7 @@
     G.testata({ attivo: "Parole" });
     G.piede();
     const el = document.getElementById("contenuto");
-    return Promise.all([G.indiceParole(), G.carica("home.json")]).then(([IX, H]) => {
+    return Promise.all([G.indiceParole(), G.carica("home.json"), G.carica("prime/senso.json").catch(() => ({}))]).then(([IX, H, PS]) => {
       const P = IX.p;
       const vuote = new Set("che non per con una del della dei delle degli nel nella sono stato anche come questo questa piu essere alla dal dalla sia gli governo legge presidente".split(" "));
       const lettere = "abcdefghijklmnopqrstuvwxyz".split("");
@@ -24,7 +24,8 @@
       const lk = (r) => G.lParola(r[0], r[1] || r[0]);
       const top = P.filter((r) => !vuote.has(r[0]) && r[0].length > 3).sort((a, b) => b[2] - a[2]).slice(0, 15);
       document.getElementById("top").innerHTML = G.barre(top.map((r, i) => [lk(r), r[2], i === 0]));
-      const nuove = P.filter((r) => r[4] >= 1990).sort((a, b) => b[2] - a[2]).slice(0, 15);
+      // le parole nuove: curva dal 1990, senza i nomi propri e senza quelle che c'erano già (prime volte nel senso di oggi)
+      const nuove = P.filter((r) => r[4] >= 1990 && !(PS[r[0]] && (PS[r[0]].np || /non nuova|incerta/.test(PS[r[0]].stato)))).sort((a, b) => b[2] - a[2]).slice(0, 15);
       document.getElementById("nuove").innerHTML = G.barre(nuove.map((r, i) => [lk(r) + ` <span class="grigio">${r[4]}</span>`, r[2], i === 0]));
       const vecchie = P.filter((r) => r[3] < 1900 && r[0].length > 3 && !vuote.has(r[0])).sort((a, b) => b[2] - a[2]).slice(0, 15);
       document.getElementById("vecchie").innerHTML = G.barre(vecchie.map((r, i) => [lk(r) + ` <span class="grigio">${r[3]}</span>`, r[2], i === 0]));

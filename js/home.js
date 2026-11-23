@@ -9,6 +9,7 @@
   const $ = (id) => document.getElementById(id);
   const minuscola = (s) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
   const SERIE = ["#1B3FA8", "#D2281F", "#0B8F52", "#7B3FE4", "#B84A00"];
+  let PSG = {}; // prime volte nel senso di oggi, con i nomi propri segnati
 
   G.avvia(function () {
     G.testata({ compatta: false });
@@ -16,6 +17,7 @@
     G.suggerisci($("q"), $("sugg-home"));
     return Promise.all([G.carica("home.json"), G.carica("base.json"), G.carica("capitoli/indice.json"), G.carica("storie/indice.json"), V.datiCapitoli(), G.carica("sezioni/risate.json"), G.carica("sezioni/h68_governi.json").catch(() => ({})), G.carica("percorsi/indice.json").catch(() => ({ percorsi: [] })), G.carica("prime/senso.json").catch(() => ({})), G.carica("sezioni/risate_migliori.json").catch(() => null)])
       .then(([H, B, IX, SI, D, R, GV, PI, PS, RM]) => {
+        PSG = PS || {};
         const c = B.conti;
         const pronto = asse(H);
         brevi(H);
@@ -75,7 +77,7 @@
       $("asse-gettoni").innerHTML = serie.length > 1 ? "togli: " + serie.map((s) => `<button class="togli" type="button" style="color:${s.col}" data-w="${s.w}" aria-label="Togli ${G.esc(s.c.forma)} dal confronto">${G.esc(s.c.forma)} ×</button>`).join(" ") : "";
       document.querySelectorAll("#asse-gettoni .togli").forEach((b) => b.addEventListener("click", () => { attive = attive.filter((w) => w !== b.dataset.w); aggiornaURL(); disegna(); }));
       // le parole del confronto come voci, nella colonna accanto
-      $("tre").innerHTML = serie.map((s) => `<p class="voce"><a class="lemma" href="parola.html?p=${s.w}" style="color:${s.col}">${G.esc(s.c.forma)}</a> <span class="anni">[${s.c.y0}-2022]</span>${s.c.y0 >= 1990 ? ' <i class="gram">neol.</i>' : ""} Detta ${G.num(s.c.tot)} volte. Anno di punta il <a class="lk" href="anno.html?a=${s.vero.anno}">${s.vero.anno}</a>, con ${G.num1(s.vero.val)} volte ogni milione di parole.</p>`).join("");
+      $("tre").innerHTML = serie.map((s) => `<p class="voce"><a class="lemma" href="parola.html?p=${s.w}" style="color:${s.col}">${G.esc(s.c.forma)}</a> <span class="anni">[${s.c.y0}-2022]</span>${s.c.y0 >= 1990 && !(PSG[s.w] && (PSG[s.w].np || /non nuova|incerta/.test(PSG[s.w].stato))) ? ' <i class="gram">neol.</i>' : ""} Detta ${G.num(s.c.tot)} volte. Anno di punta il <a class="lk" href="anno.html?a=${s.vero.anno}">${s.vero.anno}</a>, con ${G.num1(s.vero.val)} volte ogni milione di parole.</p>`).join("");
       fig.datum(serie);
       G.ridisegna("#asse-fig .fig-area");
     }
@@ -239,8 +241,8 @@
     pp.forEach((p, i) => V.mini("#v" + i, V.curvaParola(H, p), { h: 28, assi: false, mt: 5, sp: 1.2, punti: [{ x: V.annoDiPunta(H, p), testo: "" }], fmt: (v) => V.num(v, v < 10 ? 1 : 0) + " per milione" }));
     const tre = (q, k) => [1, 2, 3].map((j) => (j === k ? `<b>${G.num1(q[j])}</b>` : G.num1(q[j]))).join(" · ");
     // «neol.» solo per le parole davvero nuove: la prima volta nel senso di oggi viene dalla lettura delle prime comparse
-    const neol = (w) => { const x = PS[w]; return x && (x.stato === "confermata" || x.stato === "corretta") ? ` <i class="gram" title="parola nuova: prima volta nel senso di oggi ${x.nuova ? x.nuova[0].slice(0, 4) : ""}">neol. ${x.nuova ? x.nuova[0].slice(0, 4) : ""}</i>` : ""; };
-    $("nate").innerHTML = `<p class="did">Volte per milione nel 1848-1900 · 1901-89 · 1990-2022. <i>neol.</i> e l'anno: parola nuova, con la prima volta nel senso di oggi; le altre c'erano già.</p>` + H.nate.slice(0, 12).map((q) => `<p><a class="lemma piccolo" href="parola.html?p=${encodeURIComponent(q[0])}">${G.esc(q[4] || q[0])}</a>${neol(q[0])} <span class="cifre">${tre(q, 3)}</span></p>`).join("");
+    const neol = (w) => { const x = PS[w]; return x && !x.np && (x.stato === "confermata" || x.stato === "corretta") ? ` <i class="gram" title="parola nuova: prima volta nel senso di oggi ${x.nuova ? x.nuova[0].slice(0, 4) : ""}">neol. ${x.nuova ? x.nuova[0].slice(0, 4) : ""}</i>` : ""; };
+    $("nate").innerHTML = `<p class="did">Volte per milione nel 1848-1900 · 1901-89 · 1990-2022. <i>neol.</i> e l'anno: parola nuova, con la prima volta nel senso di oggi; le altre c'erano già.</p>` + H.nate.filter((q) => !(PS[q[0]] && PS[q[0]].np)).slice(0, 12).map((q) => `<p><a class="lemma piccolo" href="parola.html?p=${encodeURIComponent(q[0])}">${G.esc(q[4] || q[0])}</a>${neol(q[0])} <span class="cifre">${tre(q, 3)}</span></p>`).join("");
     $("morte").innerHTML = `<p class="did">Volte per milione nel 1848-1900 · 1901-89 · 1990-2022</p>` + H.morte.slice(0, 12).map((q) => `<p><a class="lemma piccolo" href="parola.html?p=${encodeURIComponent(q[0])}">† ${G.esc(q[4] || q[0])}</a> <span class="cifre">${tre(q, 1)}</span></p>`).join("");
   }
 
@@ -276,10 +278,13 @@
     const epoca = (s) => (s.occhiello || "").split(",")[0];
     const ord = SI.storie.slice().sort((a, b) => (+b.interesse || 0) - (+a.interesse || 0) || (+b.forza || 0) - (+a.forza || 0) || (+a.n || 0) - (+b.n || 0));
     const scelte = [], perEpoca = {};
-    ord.filter((s) => s.verdetto === "smentita").slice(0, 4).forEach((s) => { scelte.push(s); perEpoca[epoca(s)] = (perEpoca[epoca(s)] || 0) + 1; });
+    // le storie nuove (gli esperimenti più recenti, in fondo all'indice): le quattro più interessanti entrano sempre
+    const nMax = d3.max(SI.storie, (s) => +s.n || 0), nuove = ord.filter((s) => +s.n > nMax - 21).slice(0, 4);
+    nuove.forEach((s) => { scelte.push(s); perEpoca[epoca(s)] = (perEpoca[epoca(s)] || 0) + 1; });
+    ord.filter((s) => s.verdetto === "smentita" && scelte.indexOf(s) < 0).slice(0, 4).forEach((s) => { scelte.push(s); perEpoca[epoca(s)] = (perEpoca[epoca(s)] || 0) + 1; });
     ord.forEach((s) => { if (scelte.length < 18 && scelte.indexOf(s) < 0 && (perEpoca[epoca(s)] || 0) < 3) { scelte.push(s); perEpoca[epoca(s)] = (perEpoca[epoca(s)] || 0) + 1; } });
     scelte.sort((a, b) => ((a.anni || [])[0] || 0) - ((b.anni || [])[0] || 0));
-    $("n-storie").textContent = "diciotto storie scelte tra le più sorprendenti e le più solide, di epoche diverse, in ordine di tempo";
+    $("n-storie").textContent = "diciotto storie scelte tra le più sorprendenti e le più solide, con le quattro più nuove, di epoche diverse, in ordine di tempo";
     $("muro").innerHTML = G.tessere(scelte, 18);
     $("sezioni").innerHTML = [["parole.html", "Parole", c.parole], ["persone.html", "Persone", c.persone], ["partiti.html", "Partiti", c.partiti], ["legislature.html", "Legislature", c.legislature], ["anni.html", "Anni", G.ANNI.length], ["temi.html", "Temi", c.temi], ["esperimenti.html", "Storie", c.storie], ["esperimenti.html", "Esperimenti", c.esperimenti]]
       .map((s) => `<li><a href="${s[0]}">${s[1]}</a><span>${G.num(s[2])}</span></li>`).join("");

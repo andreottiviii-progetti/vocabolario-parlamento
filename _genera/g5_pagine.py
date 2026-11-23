@@ -413,6 +413,74 @@ def sintesi_legislature():
     scrivi_json("legislature/sintesi.json", out)
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Attribuzioni corrette: frasi che il resoconto mette nel turno sbagliato (sigla dell'oratore rovinata dallo scanner) o
+# legate all'omonimo sbagliato. Ogni correzione è verificata sul testo dei turni e sull'anagrafe (_genera/correzioni_oratori.json,
+# con la prova). Si applica a tutte le frasi del sito che portano data, ramo e oratore: risate, insulti, frasi delle parole,
+# prime volte, francese, frasi dei partiti.
+# ---------------------------------------------------------------------------------------------------------------------
+def applica_correzioni_oratori():
+    import glob as _g
+    fc = os.path.join(os.path.dirname(os.path.abspath(__file__)), "correzioni_oratori.json")
+    if not os.path.exists(fc):
+        return 0
+    C = json.load(open(fc, encoding="utf-8"))["correzioni"]
+    per_data = {}
+    for c in C:
+        c["_tutte"] = str(c.get("tutte_le_frasi_del_giorno")).lower() == "true"
+        c["_inizio"] = re.sub(r"\s+", " ", (c.get("frase_inizia") or "")).strip().lower()[:30]
+        per_data.setdefault(c["data"], []).append(c)
+    pulisci = lambda t: re.sub(r"^[…\.\s«\"']+", "", re.sub(r"\s+", " ", t)).lower()
+
+    def correggi(v):
+        if not (isinstance(v, list) and len(v) >= 4 and isinstance(v[0], str) and v[0][:10] in per_data and v[1] in ("camera", "senato")):
+            return False
+        for c in per_data[v[0][:10]]:
+            if c["ramo"] != v[1]:
+                continue
+            vecchio = c["chi_era"].lower()
+            k = next((i for i in range(2, len(v)) if isinstance(v[i], str) and v[i].strip().lower() == vecchio), None)
+            if k is None:
+                continue
+            if not c["_tutte"] and not any(isinstance(x, str) and len(x) > 25 and pulisci(x).startswith(c["_inizio"]) for x in v):
+                continue
+            if vecchio.startswith("camera:"):  # l'oratore è riconosciuto per persona: cambia la persona e il nome prima
+                v[k] = c.get("pid") or ""
+                if k - 1 >= 2 and isinstance(v[k - 1], str):
+                    v[k - 1] = c["chi_e"] if not v[k - 1].isupper() else c["chi_e"].upper()
+            else:
+                v[k] = c["chi_e"].upper() if v[k].isupper() else c["chi_e"]
+                if len(v) > k + 2 and isinstance(v[k + 1], str) and (v[k + 1] == "" or v[k + 1].startswith("camera:")):
+                    v[k + 1] = c.get("pid") or ""
+                    if len(v) > k + 3 and isinstance(v[k + 2], str) and len(v[k + 2]) < 25 and c.get("partito"):
+                        v[k + 2] = c["partito"]
+            return True
+        return False
+
+    def cammina(x):
+        n = 0
+        if isinstance(x, list):
+            if correggi(x):
+                n += 1
+            for y in x:
+                n += cammina(y)
+        elif isinstance(x, dict):
+            for y in x.values():
+                n += cammina(y)
+        return n
+
+    tot = 0
+    for f in (_g.glob(os.path.join(DATI, "sezioni", "*.json")) + _g.glob(os.path.join(DATI, "sezioni", "insulti", "*.json")) +
+              _g.glob(os.path.join(DATI, "prime", "d", "*.json")) + _g.glob(os.path.join(DATI, "parole", "d", "*.json")) +
+              _g.glob(os.path.join(DATI, "partiti", "*.json"))):
+        d = json.load(open(f, encoding="utf-8"))
+        n = cammina(d)
+        if n:
+            scrivi_json(os.path.relpath(f, DATI).replace(os.sep, "/"), d)
+            tot += n
+    return tot
+
+
 def main():
     ESP = json.load(open(os.path.join(DATI, "esperimenti.json"), encoding="utf-8"))
     pagine = {
@@ -487,7 +555,13 @@ def main():
     # prime volte nel senso di oggi: il file della lettura (g9b) passa al sito così com'è
     fs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prime_senso.json")
     if os.path.exists(fs):
-        scrivi_json("prime/senso.json", json.load(open(fs, encoding="utf-8")))
+        PS = json.load(open(fs, encoding="utf-8"))
+        fn = os.path.join(os.path.dirname(os.path.abspath(__file__)), "nomi_propri.txt")
+        np_ = set(w for r in open(fn, encoding="utf-8") if not r.startswith("#") for w in r.split()) if os.path.exists(fn) else set()
+        for w, v in PS.items():
+            if w in np_:
+                v["np"] = True  # nome proprio: niente «neol.», fuori dagli elenchi delle parole nuove
+        scrivi_json("prime/senso.json", PS)
     # la tabella di «Missione o guerra» con tutte e dieci le operazioni (g3 ora legge anche i numeri con il punto delle
     # migliaia): si riscrive solo quel campo della home, così non serve rifare tutto g3
     from g3_sito import tabella_h68
@@ -497,6 +571,9 @@ def main():
     scrivi_json("home.json", Hh)
     governi_h68()
     sintesi_legislature()
+    nc = applica_correzioni_oratori()
+    if nc:
+        print("frasi con l'oratore corretto:", nc)
     nr = risate_migliori()
     if nr:
         print("risate e insulti migliori:", nr)

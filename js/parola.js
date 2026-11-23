@@ -98,7 +98,7 @@
     const reW = new RegExp("(^|[^a-zà-ù])" + f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-zà-ù]|$)", "i");
     const esp = E.elenco.filter((e) => reW.test(e.titolo + " " + e.attesa + " " + e.numero));
     el.innerHTML = `
-      <h1 class="titolo-pagina">${G.esc(f)}<span class="accanto"><span class="anni">[${C.y0}-2022]</span>${C.y0 >= 1990 && !(D.senso && /non nuova|incerta/.test(D.senso.stato)) ? ' <i class="gram">neol.</i>' : ""} <i class="gram">voce con la curva anno per anno</i></span></h1>
+      <h1 class="titolo-pagina">${G.esc(f)}<span class="accanto"><span class="anni">[${C.y0}-2022]</span>${C.y0 >= 1990 && !(D.senso && (/non nuova|incerta/.test(D.senso.stato) || D.senso.np)) ? ' <i class="gram">neol.</i>' : ""} <i class="gram">voce con la curva anno per anno</i></span></h1>
       <p class="sommario"><b class="n">1</b> Detta <b>${G.num(C.tot)}</b> volte in aula dal ${C.y0} al 2022, ${G.num(tc)} alla Camera e ${G.num(ts)} al Senato. <b class="n">2</b> L'anno di punta è il <a class="lk" href="anno.html?a=${pk.anno}">${pk.anno}</a>, con ${G.num1(pk.val)} volte per milione di parole. ${prima ? '<b class="n">3</b> ' + prima : ""}</p>
       ${G.notaSenso({ senso: D.senso }) ? `<p class="piccolo grigio">${G.notaSenso({ senso: D.senso })}</p>` : ""}
       <div id="nel-racconto"></div>

@@ -10,11 +10,19 @@
 
   function pagina(el, E, S) {
     const tot = E.conti.find((c) => c[0] === "Totale");
-    let filone = G.param("filone") || "", esito = G.param("esito") || "", testo = "";
+    let filone = G.param("filone") || "", esito = G.param("esito") || "", epoca = G.param("epoca") || "", testo = "";
+    // l'epoca di un esperimento: gli anni scritti nell'ipotesi e nel risultato, e quelli delle sue storie
+    const EPOCHE = [["regno", "Regno, 1848-1921", 1848, 1921], ["fascismo", "Fascismo, 1922-1943", 1922, 1943], ["prima", "Prima Repubblica, 1946-1993", 1944, 1993], ["seconda", "Seconda Repubblica, 1994-2022", 1994, 2022]];
     // le storie stanno sotto l'esperimento che raccontano (campo «ipotesi» dell'indice delle storie)
     const storieDi = {}, conEsp = new Set();
     E.elenco.forEach((e) => { storieDi[e.cod] = (S.storie || []).filter((s) => (s.ipotesi || []).some((c) => c === e.cod || (e.cod.startsWith(c) && !/\d$/.test(e.cod.slice(c.length, c.length + 1))))); storieDi[e.cod].forEach((s) => conEsp.add(s.id)); });
     const descrittive = (S.storie || []).filter((s) => !conEsp.has(s.id));
+    const anniDi = (e) => {
+      if (e._anni) return e._anni;
+      const a = [].concat(...((e.attesa + " " + e.numero + " " + (storieDi[e.cod] || []).map((s) => s.occhiello).join(" ")).match(/(18[4-9]\d|19\d\d|20[0-2]\d)/g) || []).map(Number), ...(storieDi[e.cod] || []).map((s) => (s.anni || []).map(Number)));
+      e._anni = a.length ? [Math.min(...a), Math.max(...a)] : [1848, 2022];
+      return e._anni;
+    };
     el.innerHTML = `
       <h1 class="titolo-pagina">Che cosa abbiamo scoperto</h1>
       <p class="sommario"><b>${tot[7]} esperimenti su ${E.n_ipotesi} ipotesi: ${tot[1]} reggono, ${tot[2]} in parte, ${tot[3]} smentite.</b> Qui ogni voce è un esperimento: che cosa ci aspettavamo, che cosa abbiamo trovato, il verdetto e, sotto, le storie che lo raccontano (${(S.storie || []).length} in tutto). Ogni ipotesi è stata scritta prima di guardare i numeri, con la regola che l'avrebbe smentita. Il verdetto è quello della regola, alla lettera. Degli altri ${tot[4] + tot[5] + tot[6]}, ${tot[6]} sono in coda e non sono stati misurati, ${tot[5]} è solo descrittivo, ${tot[4]} ha una misura che non vale.</p>
@@ -28,6 +36,7 @@
         <li><a href="metodo.html">Metodo e limiti</a><span class="et">la regola del verdetto, le prove con le date finte, il giudice automatico</span></li></ul></aside></section>
       <section class="sezione">
         <div class="cerca-grande"><input id="cerca" type="search" placeholder="cerca negli esperimenti: una parola, un codice" aria-label="Cerca negli esperimenti"></div>
+        <div class="filtri" id="f-epoca" role="group" aria-label="Epoca"></div>
         <div class="filtri" id="f-esito" role="group" aria-label="Esito"></div>
         <div class="filtri" id="f-filone" role="group" aria-label="Filone"></div>
         <p class="fig-sotto" id="quanti"></p>
@@ -62,17 +71,20 @@
     function filtri() {
       document.getElementById("f-esito").innerHTML = esiti.map((x) => `<button type="button" data-v="${x}" class="${x === esito ? "attivo" : ""}">${x ? (x === "altro" ? "altri esiti" : x) : "tutti gli esiti"}</button>`).join("");
       document.getElementById("f-filone").innerHTML = [""].concat(E.filoni).map((x) => `<button type="button" data-v="${G.esc(x)}" class="${x === filone ? "attivo" : ""}">${x ? G.esc(x) : "tutti i filoni"}</button>`).join("");
+      document.getElementById("f-epoca").innerHTML = [["", "tutte le epoche"]].concat(EPOCHE).map((x) => `<button type="button" data-v="${x[0]}" class="${x[0] === epoca ? "attivo" : ""}">${x[1]}</button>`).join("");
+      document.querySelectorAll("#f-epoca button").forEach((b) => b.addEventListener("click", () => { epoca = b.dataset.v; aggiorna(); }));
       document.querySelectorAll("#f-esito button").forEach((b) => b.addEventListener("click", () => { esito = b.dataset.v; aggiorna(); }));
       document.querySelectorAll("#f-filone button").forEach((b) => b.addEventListener("click", () => { filone = b.dataset.v; aggiorna(); G.ridisegna("#g-conti .fig-area"); }));
     }
     function aggiorna() {
       filtri();
       const t = G.norma(testo) ? testo.toLowerCase() : "";
-      const righe = E.elenco.filter((e) => (!filone || e.filone === filone) && (!esito || (esito === "altro" ? !["regge", "in parte", "smentita"].includes(e.esito) : e.esito === esito)) &&
+      const ep = EPOCHE.find((x) => x[0] === epoca);
+      const righe = E.elenco.filter((e) => (!ep || (anniDi(e)[0] <= ep[3] && anniDi(e)[1] >= ep[2])) && (!filone || e.filone === filone) && (!esito || (esito === "altro" ? !["regge", "in parte", "smentita"].includes(e.esito) : e.esito === esito)) &&
         (!t || (e.cod + " " + e.titolo + " " + e.attesa + " " + e.numero).toLowerCase().includes(t)));
-      document.getElementById("quanti").textContent = righe.length + " esperimenti" + (filone ? " nel filone «" + filone + "»" : "") + ", raggruppati per filone.";
-      const voce = (e) => { const st = storieDi[e.cod] || []; return `<div class="esp"><p class="testa">${G.lEsp(e.cod)} <b>${G.esc(e.titolo)}</b> ${G.esito(e.esito)}</p>
-        <p><i class="gram">ci aspettavamo</i> ${G.esc(e.attesa)}</p>${/^Vedi nota/.test(e.numero) ? "" : `<p><i class="gram">trovato</i> ${G.esc(e.numero)}</p>`}${st.length ? `<div class="rimandi una">${st.map(G.voceStoria).join("")}</div>` : ""}</div>`; };
+      document.getElementById("quanti").textContent = righe.length + " esperimenti" + (filone ? " nel filone «" + filone + "»" : "") + (ep ? ", " + ep[1] : "") + ", raggruppati per filone. Clicca un esperimento per aprirlo: che cosa ci aspettavamo, che cosa abbiamo trovato, le storie.";
+      const voce = (e) => { const st = storieDi[e.cod] || []; return `<details class="esp"><summary>${G.esc(e.cod)} <b>${G.esc(e.titolo)}</b> ${G.esito(e.esito)}${st.length ? ` <span class="n-st">· ${st.length} ${st.length === 1 ? "storia" : "storie"}</span>` : ""}</summary>
+        <p><i class="gram">ci aspettavamo</i> ${G.esc(e.attesa)}</p>${/^Vedi nota/.test(e.numero) ? "" : `<p><i class="gram">trovato</i> ${G.esc(e.numero)}</p>`}<p class="piccolo">${G.lEsp(e.cod)} la scheda dell'esperimento</p>${st.length ? `<div class="rimandi una">${st.map(G.voceStoria).join("")}</div>` : ""}</details>`; };
       const filoni = E.filoni.filter((f) => righe.some((e) => e.filone === f));
       document.getElementById("voci-esp").innerHTML = filoni.map((f) => `<h3 class="rubrica filone-esp">${G.esc(f)}</h3><div class="voci-esp">${righe.filter((e) => e.filone === f).map(voce).join("")}</div>`).join("");
     }

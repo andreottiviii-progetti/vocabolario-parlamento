@@ -471,7 +471,7 @@
   /* ---------- pezzi di testo che si ripetono ---------- */
   V.CAPITOLI_NOTE = { // la riga sotto il piccolo grafico di ogni capitolo: dice che cosa si vede
     1: "Quota di parole in francese, Camera, 1848-1870", 2: "Parole per frase, Camera, 1848-1914", 3: "Consenso e dissenso annotati ogni cento interventi, Camera, 1913-1939",
-    4: "Come l'aula parla della Germania: sopra la riga da nemico, sotto da amico", 5: "Lessico di classe, volte per milione di parole, 1946-1992", 6: "«Tangentopoli» detta in aula, mese per mese, 1992-1996", 7: "«Io» alla Camera, volte ogni mille parole, 1948-2022"
+    4: "Come l'aula parla della Germania: sopra la riga da nemico, sotto da amico", 5: "Lessico di classe, volte per milione di parole, 1946-1992", 6: "«Tangentopoli» detta in aula, mese per mese, 1992-1996", 7: "«Io» alla Camera, ogni mille parole; in grigio le medie del 2009-12 e del 2014-17"
   };
   /* il piccolo grafico vero di ogni capitolo; D = dati già caricati */
   V.graficoCapitolo = function (sel, n, D, o) {
@@ -482,7 +482,15 @@
     if (n === 4) V.amiciLinee(sel, D.X, { paesi: o.paesi || ["Germania"], hr: o.hr || 46, wl: 0, anni: false });
     if (n === 5) { const g = ((D.FI || {}).grafici || []).find((q) => q.dati && q.dati.serie && q.dati.serie[0] && q.dati.serie[0].punti); if (g) { const pts = g.dati.serie[0].punti.filter((q) => q[0] >= 1946 && q[0] <= 1992); const mx = pts.reduce((a, b) => ((b[1] || 0) > (a[1] || 0) ? b : a), pts[0]); V.mini(sel, pts, { h: h, x: [1946, 1992], assi: [1946, 1970, 1992], punti: [{ x: mx[0], testo: mx[0] + ": " + V.num(mx[1]) }], sp: 1.8, fmt: (v) => V.num(v) + " per milione" }); } }
     if (n === 6) { const g = D.TG.grafici.find((q) => q.dati && q.dati.forma === "colonne"); V.colonne(sel, g.dati.x.map((m, i) => [m, g.dati.serie[0].v[i]]), { h: h, etich: "marzo 1993: 171" }); }
-    if (n === 7 && D.IO) { const pts = D.IO.pm.c.map((v, i) => [1848 + i, v == null ? null : v / 1000]).filter((q) => q[0] >= 1948); const v12 = pts.find((q) => q[0] === 2012), v13 = pts.find((q) => q[0] === 2013); V.mini(sel, pts, { h: h, x: [1948, 2022], assi: [1948, 1994, 2022], area: false, punti: [v13 && v13[1] != null ? { x: 2013, testo: "2013: " + V.num(v13[1], 2) } : null].filter(Boolean), righe: [[2013, "", V.tema.evid]], sp: 1.8, fmt: (v) => V.num(v, 2) + " ogni mille parole" }); }
+    if (n === 7 && D.IO) {
+      // stessa definizione del testo del capitolo: Camera, «io» ogni mille parole, media dei periodi 2009-12 e 2014-17 (volte / parole del periodo)
+      const pts = D.IO.pm.c.map((v, i) => [1848 + i, v == null ? null : v / 1000]).filter((q) => q[0] >= 1948);
+      const tot = (window.G && G.B && G.B.tot) ? G.B.tot[0] : null, nc = D.IO.pm.nc;
+      const media = (a, b) => { let n = 0, t = 0; for (let y = a; y <= b; y++) { n += nc[y - 1848] || 0; t += tot ? tot[y - 1848] || 0 : 0; } return t ? (n / t) * 1000 : null; };
+      const m1 = media(2009, 2012), m2 = media(2014, 2017);
+      V.mini(sel, pts, { h: h, x: [1948, 2022], assi: [1948, 1994, 2022], area: false, fasce: m1 != null ? [[2009, 2013, "", "#EEF0F2"], [2014, 2018, "", "#EEF0F2"]] : [],
+        punti: m1 != null ? [{ x: 2010.5, y: m1, testo: V.num(m1, 2), dy: -6, dx: -4, anc: "end" }, { x: 2015.5, y: m2, testo: V.num(m2, 2), dy: -8, dx: 0, anc: "middle" }] : [], sp: 1.6, fmt: (v) => V.num(v, 2) + " ogni mille parole" });
+    }
   };
   V.datiCapitoli = () => Promise.all([V.carica("sezioni/lingue.json"), V.carica("sezioni/fascismo.json"), V.carica("sezioni/esteri.json"), V.carica("partiti/traiettorie.json"), V.carica("storie/tangentopoli-entra-in-aula.json"), V.carica("partiti/m5s.json"), V.carica("storie/fine-delle-ideologie.json").catch(() => null), (window.G && G.curvaParola ? G.curvaParola("io") : Promise.resolve(null))]).then(([L, F, X, TR, TG, M5, FI, IO]) => ({ L: L, F: F, X: X, TR: TR, TG: TG, M5: M5, FI: FI, IO: IO }));
   /* le note dentro il grafico delle strisce (frasi e numeri dal capitolo 4) */

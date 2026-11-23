@@ -1,0 +1,10 @@
+# Nomi propri tra le parole «nuove» (curva che comincia dal 1990, o parole presentate come nuove): persone, luoghi,
+# partiti, enti e aziende. Non sono parole nuove della lingua: restano nelle loro pagine di parola, ma non hanno
+# l'abbreviazione «neol.» e non entrano negli elenchi delle parole nuove. Scelta a mano sull'elenco di prime_senso.json.
+# persone
+azzollini berlusconi bertolaso bindi bressa buontempo calderoli delrio diliberto fornero gubert lunardi manzione merkel
+milosevic obama prestigiacomo previti putin realacci scanio schifani taradash
+# luoghi
+kosovo kyoto
+# partiti, enti, aziende, missioni
+agea bce ccd consip equitalia isaf mediaset mef miur ncd pds telecom trenitalia udc udeur upt
