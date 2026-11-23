@@ -100,7 +100,9 @@
     const n = serie.length;
     const fam = serie.map((s) => { const f = G.famigliaDi(s.nome); return f ? G.FAMIGLIA[f] : null; });
     if (n > 1 && fam.some(Boolean) && new Set(fam.filter(Boolean)).size === fam.filter(Boolean).length) {
-      const grigi = [G.SCURO, G.NERO, G.GDATI]; // i partiti senza famiglia: grigi diversi, mai un colore di un'altra famiglia
+      // i partiti senza famiglia: il primo in arancio (colore di nessuna famiglia, controllato con lo script contro rosso, blu e blu notte),
+      // salvo quando c'è il giallo M5S, troppo vicino; gli altri in grigi diversi, mai un colore di un'altra famiglia
+      const grigi = (fam.indexOf(G.FAMIGLIA.M5S) < 0 ? [G.SERIE[4]] : []).concat([G.SCURO, G.NERO, G.GDATI]);
       return fam.map((c) => c || grigi.shift() || G.GDATI);
     }
     const dalTesto = n > 1 ? serie.map((s) => coloreDi(nome(s), coloriDalTesto(sotto))) : [null];
