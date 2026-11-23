@@ -30,21 +30,7 @@
     });
   }
 
-  /* PCI e DC sulla mappa delle parole, legislatura per legislatura (I-X), gli altri partiti in grigio */
-  function pciDc(sel, TR) {
-    const P = TR.partiti, pci = (P.PCI || []).filter((q) => q[0] <= 10), dc = (P.DC || []).filter((q) => q[0] <= 10);
-    const area = G.figura(sel, { titolo: "PCI e DC sulla mappa delle parole, legislatura per legislatura", sotto: "Posizione dalle parole, legislatura per legislatura, Camera, 1948-1992: PCI in rosso, DC in blu, gli altri partiti in grigio. Il punto grande è la VII legislatura (1976-79).", limite: "Le due direzioni riassumono poco più di un terzo delle differenze; la posizione viene dalle parole, non dai voti.", csv: () => [["partito", "legislatura", "d1", "d2"]].concat(pci.map((q) => ["PCI", q[0], q[2], q[3]])).concat(dc.map((q) => ["DC", q[0], q[2], q[3]])), nomeCSV: "pci_dc" });
-    G.grafico(area, (a, w) => {
-      const tutti = [].concat(...Object.values(P)), h = 360, m = 24;
-      const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "PCI e DC");
-      const x = d3.scaleLinear().domain(d3.extent(tutti, (q) => q[2])).range([m, w - m]), y = d3.scaleLinear().domain(d3.extent(tutti, (q) => q[3])).range([h - m, m]);
-      tutti.forEach((q) => svg.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", 2.5).attr("fill", G.GDATI).attr("fill-opacity", 0.5));
-      [[pci, "#E3120B", "PCI"], [dc, "#1E78E6", "DC"]].forEach(([v, c, nome]) => {
-        svg.append("path").attr("d", d3.line().x((q) => x(q[2])).y((q) => y(q[3]))(v)).attr("fill", "none").attr("stroke", c).attr("stroke-width", 2.5);
-        v.forEach((q) => { svg.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", q[0] === 7 ? 7 : 4).attr("fill", c); if (q[0] === 7 || q[0] === 1) svg.append("text").attr("x", x(q[2]) + 9).attr("y", y(q[3]) + 4).attr("class", "etich alone").attr("fill", G.INK).text((q[0] === 1 ? nome + " " : "") + G.romano(q[0])); });
-      });
-    });
-  }
+
 
   function calendario(sel) {
     const area = G.figura(sel, {
@@ -92,7 +78,7 @@
         <section class="sezione" id="fondo"></section>`;
       const fondo = document.getElementById("fondo");
       if (P.id === "prima-repubblica" || P.id === "partiti") {
-        G.carica("partiti/traiettorie.json").then((TR) => (P.id === "partiti" ? G.scie("g-ingresso", TR) : pciDc("#g-ingresso", TR)));
+        G.carica("partiti/traiettorie.json").then((TR) => (P.id === "partiti" ? G.griglia("#g-ingresso") : G.griglia("#g-ingresso", { righe: ["PCI, PDS, DS, PD", "DC", "PSI"], legs: d3.range(1, 12) })));
       }
       if (P.id === "parole") {
         primeVolte("#g-ingresso", ["camorra", "maffia", "telefono", "automobile", "aviazione", "televisione", "immigrati", "computer", "privacy", "spread", "ndrangheta", "ambientalismo", "tangentopoli", "internet", "femminicidio", "smartphone", "covid"]);

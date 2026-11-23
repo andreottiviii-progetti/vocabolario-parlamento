@@ -577,110 +577,79 @@
     </div>`;
   };
 
-  /* la mappa dei partiti che si muove: un cursore con le legislature e un pulsante Avvia (guida v2, capitolo 5) */
-  G.scie = function (idBox, TR) {
-    const P = TR.partiti;
-    const tutti = [].concat(...Object.values(P));
-    const legs = [...new Set(tutti.map((q) => q[0]))].sort((a, b) => a - b);
-    let k = legs.length - 1, timer = null;
-    const box = document.getElementById(idBox);
-    const area = G.figura(box.appendChild(document.createElement("div")) && d3.select(box.lastChild), {
-      titolo: "I partiti si muovono: ogni legislatura la loro lingua si sposta sulla mappa",
-      sotto: "Ogni punto è un partito in una legislatura, Camera, 1948-2022: più due punti sono vicini, più usano le stesse parole. La scia mostra da dove viene ogni partito. L'area del punto è la sua quota di parole. Colori delle famiglie: rosso PCI-PD, blu DC, rosa PSI, blu notte MSI-AN-FdI, azzurro FI-PdL, verde Lega, giallo M5S, grigio gli altri.",
-      limite: "Le due direzioni riassumono poco più di un terzo delle differenze; la posizione viene dalle parole, non dai voti.",
-      csv: () => [["partito", "legislatura", "anno", "d1", "d2", "quota", "famiglia", "governo"]].concat([].concat(...Object.entries(P).map(([n, v]) => v.map((q) => [n].concat(q))))), nomeCSV: "traiettorie_partiti",
-    });
-    const fig = area.node().parentNode;
-    const cur = document.createElement("div");
-    cur.className = "cursore";
-    cur.innerHTML = `<button type="button" id="avvia">Avvia</button><input type="range" id="leg" min="0" max="${legs.length - 1}" value="${k}" aria-label="Legislatura"><output id="leg-out"></output>`;
-    fig.insertBefore(cur, area.node());
-    const ri = () => { document.getElementById("leg-out").textContent = G.romano(legs[k]) + " legislatura"; G.ridisegna("#" + idBox + " .fig-area"); };
-    document.getElementById("leg").addEventListener("input", (e) => { k = +e.target.value; ri(); });
-    document.getElementById("avvia").addEventListener("click", (e) => {
-      if (timer) { clearInterval(timer); timer = null; e.target.textContent = "Avvia"; return; }
-      e.target.textContent = "Ferma"; if (k >= legs.length - 1) k = 0;
-      timer = setInterval(() => { k++; document.getElementById("leg").value = k; ri(); if (k >= legs.length - 1) { clearInterval(timer); timer = null; e.target.textContent = "Avvia"; } }, 900);
-    });
-    document.getElementById("leg-out").textContent = G.romano(legs[k]) + " legislatura";
-    G.grafico(area, (a, w) => {
-      const h = w < 560 ? 340 : 520, m = 30;
-      const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "Mappa dei partiti in movimento");
-      const x = d3.scaleLinear().domain(d3.extent(tutti, (q) => q[2])).nice().range([m, w - m - 70]);
-      const y = d3.scaleLinear().domain(d3.extent(tutti, (q) => q[3])).nice().range([h - m, m]);
-      svg.append("text").attr("x", m).attr("y", 14).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di destra ↑");
-      svg.append("text").attr("x", m).attr("y", h - 6).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di sinistra ↓");
-      const L = legs[k];
-      const et = [];
-      Object.entries(P).forEach(([nome, v]) => {
-        const fino = v.filter((q) => q[0] <= L);
-        const ora = v.find((q) => q[0] === L);
-        if (!ora) return;
-        const col = G.FAMIGLIA[ora[5]] || G.GDATI;
-        const scia = fino.slice(-4);
-        if (scia.length > 1) svg.append("path").attr("d", d3.line().x((q) => x(q[2])).y((q) => y(q[3]))(scia)).attr("fill", "none").attr("stroke", col).attr("stroke-width", 2).attr("stroke-opacity", 0.55);
-        scia.slice(0, -1).forEach((q) => svg.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", 2.5).attr("fill", col).attr("fill-opacity", 0.5));
-        const r = 5 + 24 * Math.sqrt(ora[4] || 0);
-        const lk = svg.append("a").attr("href", "partito.html?id=" + encodeURIComponent(nome));
-        lk.append("circle").attr("cx", x(ora[2])).attr("cy", y(ora[3])).attr("r", r).attr("fill", col).attr("stroke", ora[5] === "M5S" ? G.INK : "#fff").attr("stroke-width", 1.2);
-        et.push({ x: x(ora[2]) + r + 4, y: y(ora[3]) + 4, t: nome.replace("Unita'", "Unità"), lk });
+  /* «A chi somiglia»: per ogni partito principale e ogni legislatura, il partito di un'altra famiglia che parla più simile,
+     con la sua legislatura e la vicinanza. Dati: la somiglianza della mappa dei partiti (risultati della mappa, campo
+     «somiglianze» delle schede partito, i cinque più simili di qualunque legislatura); nessun conto nuovo. Si esclude la
+     propria famiglia (il PCI non «somiglia» al PDS che ne è l'erede). */
+  G.RIGHE_GRIGLIA = [["PCI, PDS, DS, PD", ["PCI", "PDS/DS/PD"]], ["DC", ["DC"]], ["PSI", ["PSI"]], ["MSI, AN, FdI", ["MSI", "AN", "FdI"]], ["PLI", ["PLI"]], ["PRI", ["PRI"]], ["FI, PdL", ["FI/PdL"]], ["Lega", ["Lega"]], ["M5S", ["M5S"]]];
+  G.TESTO_FAM = { "PCI-PD": "#C4100A", DC: "#1A64C4", PSI: "#C2306A", "MSI-AN-FdI": "#1B2A7A", "FI-PdL": "#00799A", Lega: "#00804A", M5S: "#8A6D00", altri: "#5C636D" };
+  G.NOME_BREVE = (n) => ({ "PDS/DS/PD": "PDS-DS-PD", "FI/PdL": "FI-PdL", "UDC/CCD": "UDC-CCD", "SEL/LeU/SI": "SEL-LeU", "Scelta Civica": "Sc. Civica", "Rosa nel Pugno": "Rosa n. P.", "Unita' Socialista": "Un. Soc.", "PSI-PSDI unificati": "PSI-PSDI", "La Rete": "Rete" }[n] || n);
+  G.datiGriglia = function () {
+    return Promise.all([G.carica("partiti/indice.json"), G.carica("base.json")]).then(([IX, B]) => {
+      const fam = {}, slug = {};
+      IX.partiti.forEach((p) => { fam[p.id] = p.famiglia; slug[p.id] = p.slug; });
+      const servono = [...new Set([].concat(...G.RIGHE_GRIGLIA.map((r) => r[1])))].filter((id) => slug[id]);
+      return Promise.all(servono.map((id) => G.carica("partiti/" + slug[id] + ".json").catch(() => null))).then((schede) => {
+        const S = {}; schede.forEach((s) => { if (s) S[s.id] = s; });
+        const anni = {}; (B.legislature || []).filter((l) => l.epoca === "repubblica").forEach((l) => { anni[l.n] = [l.da, l.a]; });
+        const stessa = (a, b) => (fam[a] && fam[a] !== "altri" ? fam[a] === fam[b] : a === b);
+        // vicino di un partito in una legislatura: il primo dei cinque più simili che non è della sua famiglia
+        const vicino = (id, L) => { const so = ((S[id] || {}).somiglianze || {})[String(L)]; if (!so) return null; const v = (so.altro_partito || []).find((q) => !stessa(id, q[0])); return v ? { p: v[0], leg: v[1], s: v[2], fam: fam[v[0]] || "altri" } : null; };
+        return { S, fam, anni, vicino, stessa, slug };
       });
-      G.separa(et, 14, 14, h - 10);
-      et.forEach((e) => e.lk.append("text").attr("class", "etich").attr("x", e.x).attr("y", e.y).attr("fill", G.INK).text(e.t));
-      svg.append("text").attr("x", w - m).attr("y", 24).attr("text-anchor", "end").attr("font-size", 20).attr("font-weight", 800).attr("fill", G.INK).text(G.romano(L) + " legislatura");
     });
   };
-
-  /* la mappa dei partiti, ferma: quattro epoche, in ognuna i percorsi dei partiti principali con le legislature scritte
-     sul percorso, gli altri punti in grigio. Si capisce senza premere nulla (il cursore resta sotto, come extra). */
-  G.mappaFerma = function (sel, TR) {
-    const P = TR.partiti, tutti = [].concat(...Object.entries(P).map(([n, v]) => v.map((q) => ({ n, q }))));
-    const EPOCHE = [[1, 4, "1948-1968: DC al governo, PCI all'opposizione"], [5, 10, "1968-1992: il centro-sinistra, il compromesso storico, il pentapartito"], [11, 14, "1992-2006: la Seconda Repubblica, due coalizioni"], [15, 18, "2006-2022: PD, PdL, Lega, M5S"]];
-    // da che parte stanno governo e opposizione: la media della prima direzione per chi governa e per chi si oppone
-    const mg = d3.mean(tutti.filter((t) => t.q[6] >= 0.5), (t) => t.q[2]), mo = d3.mean(tutti.filter((t) => t.q[6] < 0.5), (t) => t.q[2]);
-    const govDestra = mg > mo;
-    const area = G.figura(sel, {
-      titolo: "Come si muovono i partiti: a sinistra e a destra, al governo e all'opposizione",
-      sotto: `Ogni punto è un partito in una legislatura della Camera: più due punti sono vicini, più usano le stesse parole. In verticale le parole di destra (in alto) e di sinistra (in basso); in orizzontale le parole di chi governa (a ${govDestra ? "destra" : "sinistra"}) e di chi sta all'opposizione (a ${govDestra ? "sinistra" : "destra"}). In ogni epoca i partiti principali sono colorati, con il numero della legislatura sul percorso; gli altri sono in grigio.`,
-      limite: "Le due direzioni riassumono poco più di un terzo delle differenze; la posizione viene dalle parole, non dai voti.",
-      csv: () => [["partito", "legislatura", "anno", "d1", "d2", "quota", "famiglia", "governo"]].concat(tutti.map((t) => [t.n].concat(t.q))), nomeCSV: "mappa_partiti_epoche",
+  G.griglia = function (sel, o) {
+    o = o || {};
+    const el = document.querySelector(sel);
+    if (!el) return Promise.resolve();
+    return (o.D ? Promise.resolve(o.D) : G.datiGriglia()).then((D) => {
+      const righe = (o.righe ? G.RIGHE_GRIGLIA.filter((r) => o.righe.indexOf(r[0]) >= 0) : G.RIGHE_GRIGLIA).concat(o.extra || []);
+      const legs = o.legs || d3.range(1, 19);
+      const cella = (ids, L) => {
+        const id = ids.find((x) => D.S[x] && (D.S[x].somiglianze || {})[String(L)]);
+        if (!id) return `<td class="vuota"></td>`;
+        const v = D.vicino(id, L);
+        if (!v) return `<td class="vuota">·</td>`;
+        const c = G.TESTO_FAM[v.fam] || G.TESTO_FAM.altri;
+        return `<td title="${G.esc(id.replace("Unita'", "Unità"))} nella ${G.romano(L)} legislatura parla come ${G.esc(v.p.replace("Unita'", "Unità"))} della ${v.leg}: vicinanza ${G.num(v.s, 2)}"><b style="color:${c}">${G.esc(G.NOME_BREVE(v.p))}</b><span>${v.leg} · ${G.num(v.s, 2)}</span></td>`;
+      };
+      el.innerHTML = `<div class="griglia-scorre"><table class="griglia-somiglia"><caption class="nascosto">A chi somiglia la lingua di ogni partito, legislatura per legislatura</caption><thead><tr><th scope="col">partito</th>${legs.map((L) => `<th scope="col">${G.romano(L)}<span>${D.anni[L] ? D.anni[L][0] + "-" + String(D.anni[L][1]).slice(2) : ""}</span></th>`).join("")}</tr></thead><tbody>` +
+        righe.map((r) => `<tr${o.evid && r[1].some((x) => o.evid.indexOf(x) >= 0) ? ' class="evid"' : ""}><th scope="row">${r[1].length === 1 && D.slug[r[1][0]] ? `<a href="partito.html?id=${encodeURIComponent(r[1][0])}">${G.esc(r[0])}</a>` : G.esc(r[0])}</th>${legs.map((L) => cella(r[1], L)).join("")}</tr>`).join("") + `</tbody></table></div>`;
+      return D;
     });
-    G.grafico(area, (a, w) => {
-      const col = w < 700 ? 1 : 2, pw = (w - (col - 1) * 24) / col, ph = col === 1 ? 300 : 330, m = 22;
-      const x = d3.scaleLinear().domain(d3.extent(tutti, (t) => t.q[2])).nice().range([m, pw - m - 54]);
-      const y = d3.scaleLinear().domain(d3.extent(tutti, (t) => t.q[3])).nice().range([ph - m - 6, m + 22]);
-      const righe = Math.ceil(EPOCHE.length / col), H = righe * (ph + 16);
-      const svg = a.append("svg").attr("width", w).attr("height", H).attr("role", "img").attr("aria-label", "La mappa dei partiti in quattro epoche");
-      EPOCHE.forEach((e, k) => {
-        const g = svg.append("g").attr("transform", `translate(${(k % col) * (pw + 24)},${Math.floor(k / col) * (ph + 16)})`);
-        g.append("rect").attr("x", 0).attr("y", 0).attr("width", pw).attr("height", ph).attr("fill", "none").attr("stroke", G.RIGA);
-        g.append("text").attr("x", 8).attr("y", 16).attr("font-size", 14).attr("font-weight", 800).attr("fill", G.INK).text(e[2]);
-        g.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 24).attr("y2", ph - 4).attr("stroke", G.RIGA);
-        g.append("line").attr("x1", 4).attr("x2", pw - 4).attr("y1", y(0)).attr("y2", y(0)).attr("stroke", G.RIGA);
-        g.append("text").attr("x", 8).attr("y", 34).attr("font-size", 11.5).attr("fill", G.GRIGIO).text("↑ destra");
-        g.append("text").attr("x", 8).attr("y", ph - 8).attr("font-size", 11.5).attr("fill", G.GRIGIO).text("↓ sinistra");
-        g.append("text").attr("x", pw - 8).attr("y", ph - 8).attr("text-anchor", "end").attr("font-size", 11.5).attr("fill", G.GRIGIO).text(govDestra ? "governo →" : "opposizione →");
-        g.append("text").attr("x", 64).attr("y", ph - 8).attr("font-size", 11.5).attr("fill", G.GRIGIO).text(govDestra ? "← opposizione" : "← governo");
-        const nelle = tutti.filter((t) => t.q[0] >= e[0] && t.q[0] <= e[1]);
-        nelle.forEach((t) => g.append("circle").attr("cx", x(t.q[2])).attr("cy", y(t.q[3])).attr("r", 2.6).attr("fill", G.GDATI).append("title").text(`${t.n}, ${G.romano(t.q[0])} legislatura`));
-        // i partiti principali dell'epoca: almeno il 6% delle parole in una legislatura, al massimo sei
-        const qmax = {}; nelle.forEach((t) => { qmax[t.n] = Math.max(qmax[t.n] || 0, t.q[4] || 0); });
-        const princ = Object.keys(qmax).filter((n) => qmax[n] >= 0.06).sort((p, q) => qmax[q] - qmax[p]).slice(0, 6);
-        const fine = [];
-        princ.forEach((n) => {
-          const v = P[n].filter((q) => q[0] >= e[0] && q[0] <= e[1]), c = G.FAMIGLIA[v[0][5]] || "#8C939D";
-          if (v.length > 1) g.append("path").attr("d", d3.line().x((q) => x(q[2])).y((q) => y(q[3])).curve(d3.curveCatmullRom.alpha(0.5))(v)).attr("fill", "none").attr("stroke", c).attr("stroke-width", 2.2);
-          v.forEach((q, i) => {
-            g.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", 4.2).attr("fill", c).attr("stroke", v[0][5] === "M5S" ? G.INK : "#fff").attr("stroke-width", 1).append("title").text(`${n.replace("Unita'", "Unità")}, ${G.romano(q[0])} legislatura (${Math.round(q[1])}): ${Math.round((q[4] || 0) * 100)}% delle parole`);
-            g.append("text").attr("x", x(q[2])).attr("y", y(q[3]) - 7).attr("text-anchor", "middle").attr("font-size", 10.5).attr("font-weight", 700).attr("fill", G.INK).attr("class", "alone").text(G.romano(q[0]));
-          });
-          const u = v[v.length - 1];
-          fine.push({ x: x(u[2]) + 8, y: y(u[3]) + 4, t: n.replace("Unita'", "Unità").replace("PDS/DS/PD", "PDS-DS-PD"), c: v[0][5] === "M5S" ? G.INK : c });
-        });
-        G.separa(fine, 13, 30, ph - 14);
-        fine.forEach((f) => g.append("text").attr("x", Math.min(f.x, pw - 4)).attr("y", f.y).attr("text-anchor", f.x > pw - 50 ? "end" : "start").attr("font-size", 12.5).attr("font-weight", 800).attr("fill", f.c).attr("class", "alone").text(f.t));
-      });
+  };
+  /* le frasi sopra la griglia: ricavate dalla stessa tabella */
+  G.frasiGriglia = function (D) {
+    const leg = (L) => (D.anni[L] ? `${G.romano(L)} legislatura (${D.anni[L][0]}-${D.anni[L][1]})` : G.romano(L) + " legislatura");
+    // articolo come si legge la sigla: «l'MSI», «il PSI», «la DC», «l'IdV»
+    const art = (p) => (/^(MSI|M5S|AN|IdV|UDC|UDEUR)/.test(p) ? "l'" : /^(DC|Lega|Margherita|Rete|Rosa)/.test(p) ? "la " : /^(Radicali|Verdi)/.test(p) ? "i " : "il ");
+    const v = (id, L) => D.vicino(id, L);
+    const out = [];
+    const a = v("M5S", 17), b = v("M5S", 18);
+    if (a && b) out.push(`Nella ${leg(17)} il M5S parla come ${art(a.p)}${G.esc(a.p)} della ${a.leg} (vicinanza ${G.num(a.s, 2)}); nella ${leg(18)}, al governo, come ${art(b.p)}${G.esc(b.p)} della ${b.leg} (${G.num(b.s, 2)}).`);
+    const c = v("PCI", 6), d = v("PCI", 7);
+    if (c && d) out.push(`Il PCI fino alla ${G.romano(6)} legislatura somiglia ${c.p === "PSIUP" ? "al PSIUP" : "a " + G.esc(c.p)} (${G.num(c.s, 2)}); nella ${leg(7)}, gli anni del compromesso storico, al ${G.esc(d.p)} della ${d.leg} (${G.num(d.s, 2)}).`);
+    const e = v("Lega", 11), f = v("Lega", 18);
+    if (e && f) out.push(`La Lega del ${D.anni[11] ? D.anni[11][0] : ""} parla come ${art(e.p)}${G.esc(e.p)} della ${e.leg} (${G.num(e.s, 2)}); quella del ${D.anni[18] ? D.anni[18][0] : ""} come ${art(f.p)}${G.esc(f.p)} della ${f.leg} (${G.num(f.s, 2)}).`);
+    const g = v("FI/PdL", 12);
+    if (g) out.push(`Forza Italia, appena arrivata nel ${D.anni[12] ? D.anni[12][0] : ""}, parla come ${art(g.p)}${G.esc(g.p)} della ${g.leg} (${G.num(g.s, 2)}).`);
+    return out;
+  };
+  /* più vicini e più lontani di un partito. Vicini: la somiglianza della mappa (il valore più alto in tutte le sue
+     legislature). Lontani: la distanza sulla mappa delle parole, media delle legislature in comune (traiettorie). */
+  G.viciniLontani = function (id, D, TR) {
+    const S = D.S[id] || {}, best = {};
+    Object.values(S.somiglianze || {}).forEach((so) => (so.altro_partito || []).forEach((q) => { if (!D.stessa(id, q[0]) && (best[q[0]] == null || q[2] > best[q[0]][0])) best[q[0]] = [q[2], q[1]]; }));
+    const vicini = Object.entries(best).sort((a, b) => b[1][0] - a[1][0]).slice(0, 3);
+    const P = TR.partiti, mio = P[id] || [], dist = {};
+    Object.entries(P).forEach(([n, v]) => {
+      if (D.stessa(id, n) || vicini.some((v) => v[0] === n)) return; // un partito non può stare tra i vicini e tra i lontani
+      const d = mio.map((q) => { const r = v.find((x) => x[0] === q[0]); return r ? Math.hypot(r[2] - q[2], r[3] - q[3]) : null; }).filter((x) => x != null);
+      if (d.length >= 2) dist[n] = [d3.mean(d), d.length];
     });
+    const lontani = Object.entries(dist).sort((a, b) => b[1][0] - a[1][0]).slice(0, 3);
+    return { vicini, lontani };
   };
   /* il filo del tempo: i sette capitoli del racconto sull'asse 1848-2022 (il 4 attraversa tutti gli anni) */
   G.filoDelTempo = function (sel, capitoli, attivo) {

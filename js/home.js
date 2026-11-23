@@ -219,8 +219,7 @@
   /* ---------------- i tagli: partiti, chi fa ridere più del previsto, smentite ---------------- */
   function tagli(H, SI, R) {
     const mp = SI.storie.find((s) => s.id === "mappa-partiti-governo-opposizione");
-    if (mp) $("pa-titolo").textContent = mp.titolo;
-    V.scie("#g-scie", H.mappa_linee, { h: 285 });
+    G.griglia("#g-somiglia-home", { righe: ["PCI, PDS, DS, PD", "MSI, AN, FdI", "FI, PdL", "Lega", "M5S"], legs: d3.range(13, 19) });
     const E = (R.efficaci || []).slice(0, 8), b = E[0];
     if (b) {
       const attese = b.ila / b.rapporto;

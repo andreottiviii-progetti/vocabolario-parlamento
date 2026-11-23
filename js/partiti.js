@@ -10,12 +10,14 @@
       el.innerHTML = `<h1 class="titolo-pagina" style="font-size:clamp(48px,7vw,96px)">${P.length} partiti, ${G.num(G.conti.schede_partito)} schede: a chi somiglia ognuno, legislatura per legislatura</h1>
         <p class="sommario">Ogni partito è misurato sulle parole che usa alla Camera, dal 1948 al 2022: dove sta tra sinistra e destra, a quale altro partito somiglia, quali parole guadagna e quali perde a ogni legislatura, come cambia quando passa dal governo all'opposizione.</p>
         <p class="piccolo grigio">«Parole guadagnate e perse» sono misurate rispetto al resto dell'aula: una parola può risultare persa anche se il partito la dice quanto prima, quando gli altri la dicono di più. La quota di parole non somma a cento perché mancano i gruppi minori.</p>
-        <div id="g-mappa-ferma"></div>
+        <section class="sezione"><div class="testa"><h2>A chi somiglia la lingua di ogni partito</h2></div>
+          <ul class="frasi-griglia" id="frasi-griglia"></ul>
+          <p class="sotto-titolo">In ogni casella il partito di un'altra famiglia che parla più simile, con la legislatura in cui lo fa e la vicinanza: 0 vuol dire nessuna somiglianza; intorno a 1 è la vicinanza tipica di un partito con sé stesso nella legislatura dopo. Il colore è quello della famiglia del partito nella casella. Camera, 1948-2022; passa sopra una casella per la frase intera.</p>
+          <div id="g-griglia"></div>
+          <p class="fig-fonte">Fonte: resoconti stenografici di Camera e Senato. La somiglianza confronta le parole che ogni partito usa più o meno del resto dell'aula nella sua legislatura; si cercano i cinque più simili in tutte le legislature, esclusa la propria famiglia. Viene dalle parole, non dai voti.</p></section>
         <section class="sezione"><div id="g-linee"></div></section>
-        <section class="sezione"><div class="testa"><h2>La stessa mappa, una legislatura alla volta</h2></div><p class="sotto-titolo">Per chi vuole vedere il movimento: il cursore sceglie la legislatura, «Avvia» le fa scorrere tutte; la scia mostra da dove viene ogni partito.</p><div id="g-scie"></div></section>
         <section class="sezione"><div class="testa"><h2>Tutti i partiti</h2></div><div class="tab-scorre" id="tab"></div></section>`;
-      G.mappaFerma("#g-mappa-ferma", TR);
-      G.scie("g-scie", TR);
+      G.griglia("#g-griglia").then((D) => { if (D) document.getElementById("frasi-griglia").innerHTML = G.frasiGriglia(D).map((f) => `<li>${f}</li>`).join(""); });
       const area = G.figura("#g-linee", {
         titolo: (() => {
           const L = IX.linee, pci = L["PCI-PD"] || [];

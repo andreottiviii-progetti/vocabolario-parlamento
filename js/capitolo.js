@@ -155,20 +155,6 @@
         });
       });
     });
-    if (n === 5) return G.carica("partiti/traiettorie.json").then((TR) => {
-      const P = TR.partiti, pci = P.PCI || [], dc = P.DC || [];
-      const area = G.figura(box, { titolo: "Nel 1976-79 il PCI va verso la lingua della DC; la DC resta ferma", sotto: "Posizione dalle parole, legislatura per legislatura, Camera, 1948-1992: PCI in rosso, DC in blu, gli altri partiti in grigio", csv: () => [["partito", "legislatura", "d1", "d2"]].concat(pci.map((q) => ["PCI", q[0], q[2], q[3]])).concat(dc.map((q) => ["DC", q[0], q[2], q[3]])), nomeCSV: "pci_dc" });
-      G.grafico(area, (a, w) => {
-        const tutti = [].concat(...Object.values(P)); const h = 320, m = 20;
-        const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "PCI e DC");
-        const x = d3.scaleLinear().domain(d3.extent(tutti, (q) => q[2])).range([m, w - m]), y = d3.scaleLinear().domain(d3.extent(tutti, (q) => q[3])).range([h - m, m]);
-        tutti.forEach((q) => svg.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", 2.5).attr("fill", G.GDATI).attr("fill-opacity", 0.5));
-        [[pci.filter((q) => q[0] <= 10), "#E3120B"], [dc.filter((q) => q[0] <= 10), "#1E78E6"]].forEach(([v, c]) => {
-          svg.append("path").attr("d", d3.line().x((q) => x(q[2])).y((q) => y(q[3]))(v)).attr("fill", "none").attr("stroke", c).attr("stroke-width", 2.5);
-          v.forEach((q) => { svg.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", q[0] === 7 ? 7 : 4).attr("fill", c); if (q[0] === 7 || q[0] === 1) svg.append("text").attr("x", x(q[2]) + 9).attr("y", y(q[3]) + 4).attr("class", "etich").attr("fill", G.INK).text(G.romano(q[0])); });
-        });
-      });
-    });
     if (n === 6) return G.carica("storie/tangentopoli-entra-in-aula.json").then((St) => {
       const g = St.grafici.find((x) => x.dati && x.dati.forma === "colonne"); if (!g) return;
       const pts = g.dati.serie[0].punti || g.dati.x.map((x, i) => [x, g.dati.serie[0].v[i]]);

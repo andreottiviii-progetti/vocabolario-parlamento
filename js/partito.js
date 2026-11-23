@@ -32,7 +32,7 @@
       <h1 class="titolo-pagina">${G.esc(nome)}</h1>
       <p class="sommario">Alla Camera in ${U.length} ${U.length === 1 ? "legislatura" : "legislature"}, ${U.length === 1 ? "la " + G.romano(U[0].leg) : "dalla " + G.romano(U[0].leg) + " alla " + G.romano(U[U.length - 1].leg)}. Il massimo è nella <a class="lk" href="legislatura.html?id=${legId(max.leg)}">${G.romano(max.leg)} legislatura</a>: ${G.pct(max.quota)} delle parole dei deputati, con ${G.num(max.n_orat)} oratori. Famiglia: ${G.esc(P.famiglia)}.${gov ? ` Al governo in ${gov} governi.` : ""}</p>
       <section class="griglia"><div class="c8" id="g-quota"></div><aside class="c4 fil"><h3 class="titolo-piccolo">Legislatura per legislatura</h3><ul class="fatti" id="fatti"></ul></aside></section>
-      <section class="sezione griglia"><div class="c8" id="g-scia"></div><div class="c4 fil"><h3 class="titolo-piccolo">Da opposizione o da governo?</h3><p class="fig-sotto">Probabilità che la lingua dei suoi deputati sia «da opposizione», legislatura per legislatura, secondo il programma che riconosce il ruolo dalle parole (H67). La barra sotto è la quota di giorni passati al governo.</p><div id="g-opp"></div></div></section>
+      <section class="sezione griglia"><div class="c8" id="g-somiglia"></div><div class="c4 fil"><h3 class="titolo-piccolo">Da opposizione o da governo?</h3><p class="fig-sotto">Probabilità che la lingua dei suoi deputati sia «da opposizione», legislatura per legislatura, secondo il programma che riconosce il ruolo dalle parole (H67). La barra sotto è la quota di giorni passati al governo.</p><div id="g-opp"></div></div></section>
       <section class="sezione"><div class="testa"><h2>Le sue parole, con le frasi vere</h2></div><p class="sotto-titolo">Per ogni legislatura, alcune delle parole che il partito dice più del resto dell'aula, ognuna con una frase detta da un suo deputato.</p><div id="frasi-tip"></div></section>
       <section class="sezione" id="temi-su" hidden><div class="testa"><h2>Di che cosa parla più degli altri</h2></div><p class="sotto-titolo">I temi in cui il partito supera di più il suo peso: volte per milione delle sue parole contro tutta l'aula della Camera repubblicana, contando le parole più forti di ogni tema. Accanto, alcune di quelle parole.</p><div class="c8" id="g-temi"></div></section>
       <section class="sezione griglia"><div class="c8" id="g-linea"></div><div class="c4 fil"><h3 class="titolo-piccolo">A chi somiglia</h3><p class="fig-sotto">Il partito di un'altra famiglia con la lingua più simile, legislatura per legislatura (somiglianza più alta = più simile)</p><ul class="elenco-n" id="somiglia"></ul></div></section>
@@ -73,30 +73,19 @@
       [1950, 1970, 1990, 2010].forEach((v) => g.append("text").attr("x", x(v)).attr("y", h - 6).attr("text-anchor", "middle").text(v));
     });
     document.getElementById("fatti").innerHTML = U.map((u) => `<li><a href="legislatura.html?id=${legId(u.leg)}">${G.romano(u.leg)} legislatura</a>: <b>${G.pct(u.quota)}</b><span class="et">${G.num(u.n_orat)} oratori; al governo ${u.gov == null ? "–" : G.pct(u.gov, 0)} dei giorni</span></li>`).join("");
-    // scia: dove sta il partito, legislatura per legislatura, sullo stesso piano di tutti gli altri
-    G.carica("partiti/traiettorie.json").then((TR) => {
-      const tutti = [].concat(...Object.values(TR.partiti));
-      const mio = P.traiettoria && P.traiettoria.length ? P.traiettoria : (TR.partiti[P.id] || []);
-      const area = G.figura("#g-scia", {
-        titolo: `Dove sta la lingua di ${G.esc(nome)}, legislatura per legislatura`,
-        sotto: "Ogni punto grigio è un partito in una legislatura (Camera, 1948-2022), sullo stesso piano: più due punti sono vicini, più usano le stesse parole. La scia colorata è questo partito; il numero è la legislatura.",
-        limite: "Le due direzioni riassumono poco più di un terzo delle differenze tra i partiti; la posizione viene dalle parole, non dai voti.",
-        csv: () => [["legislatura", "anno", "d1", "d2", "quota"]].concat(mio.map((q) => q.slice(0, 5))), nomeCSV: "scia_" + P.slug,
-      });
-      G.grafico(area, (a, w) => {
-        const h = w < 560 ? 300 : 420, m = 24;
-        const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "Scia del partito");
-        const x = d3.scaleLinear().domain(d3.extent(tutti, (q) => q[2])).nice().range([m, w - m]);
-        const y = d3.scaleLinear().domain(d3.extent(tutti, (q) => q[3])).nice().range([h - m, m]);
-        svg.append("text").attr("x", m).attr("y", 14).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di destra ↑");
-        svg.append("text").attr("x", m).attr("y", h - 4).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di sinistra ↓");
-        tutti.forEach((q) => svg.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", 3).attr("fill", G.GDATI).attr("fill-opacity", 0.55));
-        svg.append("path").attr("d", d3.line().curve(d3.curveLinear).x((q) => x(q[2])).y((q) => y(q[3]))(mio)).attr("fill", "none").attr("stroke", colF).attr("stroke-width", 3);
-        mio.forEach((q, i) => {
-          svg.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", 5 + 20 * Math.sqrt(q[4] || 0)).attr("fill", colF).attr("fill-opacity", i === mio.length - 1 ? 1 : 0.75).attr("stroke", "#fff").attr("stroke-width", 1.5);
-          svg.append("text").attr("x", x(q[2]) + 8 + 20 * Math.sqrt(q[4] || 0)).attr("y", y(q[3]) + 4).attr("class", "etich").attr("fill", G.INK).text(G.romano(q[0]));
-        });
-      });
+    // a chi somiglia, legislatura per legislatura (la sua riga della griglia), e i tre partiti più vicini e più lontani
+    Promise.all([G.carica("partiti/traiettorie.json"), G.datiGriglia()]).then(([TR, D]) => {
+      const riga = G.RIGHE_GRIGLIA.find((r) => r[1].indexOf(P.id) >= 0) || [nome, [P.id]];
+      const legs = d3.range(1, 19).filter((L) => riga[1].some((x) => D.S[x] && (D.S[x].somiglianze || {})[String(L)]) || (P.somiglianze || {})[String(L)]);
+      if (!D.S[P.id]) D.S[P.id] = P;
+      const box = document.getElementById("g-somiglia");
+      const vl = G.viciniLontani(P.id, D, TR);
+      const lista = (v, fmt) => v.length ? v.map(fmt).join("") : '<li class="grigio">nessuno con abbastanza dati</li>';
+      box.innerHTML = `<figure class="fig"><figcaption><h3 class="fig-tit">A chi somiglia la lingua di ${G.esc(riga[0])}, legislatura per legislatura</h3><p class="fig-sotto">In ogni casella il partito di un'altra famiglia che parla più simile, con la legislatura in cui lo fa e la vicinanza (0 nessuna somiglianza; intorno a 1 come un partito con sé stesso nella legislatura dopo). Camera.</p></figcaption><div id="griglia-partito"></div>
+        <div class="griglia vl"><div class="c6"><h4 class="rubrica">I tre più vicini</h4><ol class="brevi">${lista(vl.vicini, (q) => `<li><a href="partito.html?id=${encodeURIComponent(q[0])}">${G.esc(q[0].replace("Unita'", "Unità"))}</a> <span class="anni">della ${q[1][1]}</span> · vicinanza ${G.num(q[1][0], 2)}</li>`)}</ol></div>
+        <div class="c6 fil"><h4 class="rubrica">I tre più lontani</h4><ol class="brevi">${lista(vl.lontani, (q) => `<li><a href="partito.html?id=${encodeURIComponent(q[0])}">${G.esc(q[0].replace("Unita'", "Unità"))}</a> <span class="anni">in ${q[1][1]} legislature in comune</span></li>`)}</ol></div></div>
+        <p class="fig-fonte">Fonte: resoconti stenografici di Camera e Senato. Vicini: la somiglianza più alta della mappa dei partiti, esclusa la propria famiglia. Lontani: la distanza media sulla mappa delle parole nelle legislature in cui ci sono tutti e due. Viene dalle parole, non dai voti.</p></figure>`;
+      return G.griglia("#griglia-partito", { D: D, extra: G.RIGHE_GRIGLIA.some((r) => r[1].indexOf(P.id) >= 0) ? [] : [riga], righe: G.RIGHE_GRIGLIA.filter((r) => r[1].indexOf(P.id) >= 0).map((r) => r[0]).concat(["__nessuna__"]), legs: legs.length ? legs : d3.range(1, 19) });
     });
     const OP = P.opposizione || [];
     const aop = d3.select("#g-opp");

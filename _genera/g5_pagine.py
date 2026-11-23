@@ -108,8 +108,8 @@ def home():
 <p class="did" id="gu-did"></p></figure>
 </section>
 <section class="blocco g12" aria-label="Partiti, risate, smentite">
-<figure class="tavola media s5"><figcaption><span class="num">Tav. IV</span> <a id="pa-titolo" href="storia.html?id=mappa-partiti-governo-opposizione">La mappa dei partiti</a></figcaption><div id="g-scie"></div>
-<p class="did">Una linea per famiglia di partiti, un punto per legislatura della Camera. La posizione viene dalle parole, non dai voti. <a href="partiti.html">Tutti i partiti, legislatura per legislatura →</a></p></figure>
+<figure class="tavola media s5"><figcaption><span class="num">Tav. IV</span> <a href="partiti.html">A chi somiglia la lingua dei partiti, 1996-2022</a></figcaption><div id="g-somiglia-home"></div>
+<p class="did">In ogni casella il partito di un'altra famiglia che parla più simile, con la sua legislatura e la vicinanza (intorno a 1: come un partito con sé stesso nella legislatura dopo). Dalle parole, non dai voti. <a href="partiti.html">Tutti i partiti, dal 1948 →</a></p></figure>
 <figure class="tavola media s4"><figcaption><span class="num">Tav. V</span> <a id="ri-titolo" href="risate.html">Chi fa ridere più del previsto</a></figcaption><p class="voce" id="ri-spiega"></p><div id="g-risate"></div>
 <p class="did">Risate annotate durante i suoi interventi divise per quelle che ci si aspetta: 1 vuol dire come l'aula del suo tempo. Oratori con almeno 200.000 parole. <a href="risate_migliori.html">Le risate migliori, scelte leggendo →</a></p></figure>
 <div class="s3"><h2 class="rubrica">Ci aspettavamo altro</h2><ul class="brevi" id="smentite"></ul><h2 class="rubrica"><a href="esperimenti.html"><span id="n-esp"></span> esperimenti</a></h2><div id="g-verdetti"></div>
