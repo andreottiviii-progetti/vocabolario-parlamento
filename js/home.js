@@ -61,8 +61,8 @@
       const serie = attive.map((w, i) => ({ w, c: curve[w], col: SERIE[i], m3: G.media3(curve[w].pm.m), vero: G.picco(curve[w].pm.m) }));
       if (serie.length) {
         const a = serie[0];
-        // la parola resta nell'inchiostro; il tratto del suo colore, accanto, dice qual è la sua linea
-        const nome = (s, maiusc) => `<span class="con-chiave">${G.chiave(s.col)}<a href="parola.html?p=${s.w}">${G.esc(maiusc ? G.maiusc(s.c.forma) : s.c.forma)}</a></span>`;
+        // nel titolo la parola porta il colore della sua linea: fa da legenda (scelta del sito, 23/11)
+        const nome = (s, maiusc) => `<a class="parola-col" style="color:${s.col}" href="parola.html?p=${s.w}">${G.esc(maiusc ? G.maiusc(s.c.forma) : s.c.forma)}</a>`;
         let t = `${nome(a, true)} tocca il massimo nel ${a.vero.anno}`, dal = null;
         if (serie.length > 1) {
           const b = serie[1];
@@ -193,7 +193,7 @@
       const T = V.tema, passo = 46, mt = 30, h = mt + righe.length * passo + 4, wl = 0;
       const svg = a.append("svg").attr("width", w).attr("height", h).attr("viewBox", `0 0 ${w} ${h}`).attr("role", "img").attr("aria-label", "Missione o guerra: quota di «guerra» detta da chi governa e da chi sta all'opposizione, operazione per operazione").style("display", "block").style("overflow", "visible");
       const x = d3.scaleLinear().domain([0, 100]).range([wl + 4, w - 30]);
-      [0, 25, 50, 75, 100].forEach((t) => { svg.append("line").attr("x1", x(t)).attr("x2", x(t)).attr("y1", mt - 6).attr("y2", h).attr("stroke", T.riga); svg.append("text").attr("x", x(t)).attr("y", mt - 10).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", T.grigio).text(t + (t === 100 ? " volte su 100" : "")); });
+      [0, 25, 50, 75, 100].forEach((t) => { svg.append("line").attr("x1", x(t)).attr("x2", x(t)).attr("y1", mt - 6).attr("y2", h).attr("stroke", T.riga); svg.append("text").attr("x", x(t)).attr("y", mt - 10).attr("text-anchor", "middle").attr("font-size", 12).attr("fill", T.grigio).attr("text-anchor", t === 100 ? "end" : "middle").attr("x", t === 100 ? x(t) + 30 : x(t)).text(t + (t === 100 ? " volte su 100" : "")); });
       // la spiegazione dentro il grafico
       svg.append("circle").attr("cx", x(0) + 4).attr("cy", 6).attr("r", 4.5).attr("fill", "#fff").attr("stroke", T.ink).attr("stroke-width", 1.4);
       svg.append("text").attr("x", x(0) + 12).attr("y", 10).attr("font-size", 12.5).attr("fill", T.ink).text("chi governa");

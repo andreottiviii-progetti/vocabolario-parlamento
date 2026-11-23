@@ -132,7 +132,7 @@
         return;
       }
       // etichette dirette in fondo alle linee solo se i nomi sono brevi; altrimenti bastano la legenda e il riquadro
-      const lungo = d3.max(D.serie, (s) => nome(s).length), dirette = D.serie.length > 1 && D.serie.length <= 4 && lungo <= 26;
+      const lungo = d3.max(D.serie, (s) => nome(s).length), dirette = D.serie.length > 1 && D.serie.length <= 5 && lungo <= 32;
       const ss = D.serie.map((s, i) => {
         const pk = s.punti.reduce((b, p) => (p[1] != null && (b == null || p[1] > b[1]) ? p : b), null);
         const uno = D.serie.length === 1;
