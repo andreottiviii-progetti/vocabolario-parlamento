@@ -9,7 +9,7 @@ Tutti i numeri del sito vengono da file generati dai programmi di questa cartell
 - Alla fine il programma controlla che nessun file superi 2 MB, che ogni pagina abbia il noindex e che nei file pubblici non ci siano parole vietate. Se scrive «TUTTO A POSTO» si può pubblicare.
 - Poi: `git add -A`, `git commit`, `git push` (GitHub Pages si aggiorna da solo).
 
-Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` → `g3_sito.py` → `g3b_distanze.py` → `g7_scansione2.py` → `g8_sezioni.py` → `g9_prime_volte.py` → `g6b_tabelline.py` → `g6c_correzioni.py` → `g6_storie.py` → `g5_pagine.py` → `g11_home_veloce.py`; poi `g10_rapporti.py` scrive in `_progetto/` la copertura dei risultati e il conto delle frasi scartate. I file intermedi stanno in `_genera/cache/` (fuori dal repository).
+Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` → `g3_sito.py` → `g3b_distanze.py` → `g7_scansione2.py` → `g8_sezioni.py` → `g9_prime_volte.py` → `g6b_tabelline.py` → `g6c_correzioni.py` → `g6_storie.py` → `g5_pagine.py` → `g11_home_veloce.py` → `g12_tracker.py`; poi `g10_rapporti.py` scrive in `_progetto/` la copertura dei risultati e il conto delle frasi scartate. I file intermedi stanno in `_genera/cache/` (fuori dal repository).
 
 Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salta e le elenca in `_genera/cache/storie_rapporto.txt`. Tolto il marcatore, basta il comando «solo storie».
 
@@ -53,6 +53,7 @@ Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salt
 | Percorsi nuovi (Prima Repubblica, partiti, parole, resoconto) | `dati/percorsi/*.json` | `_progetto/racconto/PERCORSI.md`, sezioni 3, 4, 7, 8; titoli delle storie dall'indice delle storie | g6 |
 | Temi della pagina partito | `dati/partiti/<id>.json` (`temi_su`) | conteggi per partito di g4 e parole forti dei 40 temi (`h37_temi_K40.txt`, `h37_etichette_temi.csv`) | g4, g8 |
 | Testo della pagina del metodo | `metodo.html` | `_progetto/TESTI_PAGINE.md`, capitolo 3 | g6, g5 |
+| Collegamento alla scheda su primarepubblica.net (chi ha una scheda lì) | `dati/persone/tracker.json` | `base_pulita/oratori/oratori_persone.csv` (QID di ogni persona) e l'elenco del tracker `data/elenco.json` del tracker (percorso locale, non pubblicato) (solo lettura); abbinamento esatto per QID, scartati i casi in cui l'id della Camera non coincide | g12 |
 | Pagine HTML, file scaricabili | `*.html`, `scarica/*.csv`, `dati/scarica.json` | dati qui sopra | g5 |
 
 | Anni di ogni legislatura | `dati/base.json`, `dati/legislature/*.json` | anni con almeno l'1% delle parole dell'archivio in `misure/parole/totali/*.parquet` | g3 |

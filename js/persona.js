@@ -9,11 +9,13 @@
     return G.carica("persone/indice.json").then((IX) => {
       const i = IX.p.findIndex((r) => r[0] === id);
       if (i < 0) return G.nonTrovato(el, "Questa persona non c'è tra gli oratori riconosciuti della Repubblica.");
-      return Promise.all([G.carica("persone/" + G.pad(Math.floor(i / IX.pezzo)) + ".json"), G.carica("base.json")]).then(([D, B]) => pagina(el, D[id], IX.p[i], B));
+      // il collegamento con primarepubblica.net è un di più: se il file non si legge, la pagina resta com'è
+      const tracker = G.carica("persone/tracker.json").catch(() => null);
+      return Promise.all([G.carica("persone/" + G.pad(Math.floor(i / IX.pezzo)) + ".json"), G.carica("base.json"), tracker]).then(([D, B, T]) => pagina(el, D[id], IX.p[i], B, T && T.p[id] ? T.u + "#" + T.p[id] : null));
     });
   });
 
-  function pagina(el, P, R, B) {
+  function pagina(el, P, R, B, schedaTracker) {
     const nome = G.oratore(P.nome);
     document.title = nome + " · Il vocabolario del Parlamento";
     document.getElementById("bric").textContent = nome;
@@ -31,6 +33,7 @@
     el.innerHTML = `
       <h1 class="titolo-pagina" style="font-size:clamp(48px,7vw,96px)">${G.esc(nome)}</h1>
       <p class="sommario">${G.num(turni)} interventi e ${G.num(parole)} parole in aula, ${L.length === 1 ? "nella " + G.romano(L[0].leg) + " legislatura" : "dalla " + G.romano(L[0].leg) + " alla " + G.romano(L[L.length - 1].leg) + " legislatura"}${partiti.length ? " (" + partiti.map((p) => G.esc(p)).join(", ") + ")" : ""}.${P.wiki ? ` <a class="lk" href="https://it.wikipedia.org/?curid=${P.wiki}" rel="noopener">La pagina di Wikipedia</a>.` : ""}</p>
+      ${schedaTracker ? `<p class="piccolo" id="tracker">Vita e carriera: <a class="lk" href="${G.esc(schedaTracker)}" rel="noopener">scheda su primarepubblica.net →</a></p>` : ""}
       <section class="griglia">
         <div class="c8" id="g-legs"></div>
         <aside class="c4 fil"><h3 class="titolo-piccolo">Come ha parlato</h3><ul class="fatti" id="fatti"></ul></aside>
