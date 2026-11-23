@@ -88,7 +88,7 @@
   function coloriDalTesto(sotto) {
     const out = [], t = String(sotto || "");
     let m;
-    const r1 = /(?:punto|linea|in)\s+(nero|nera|rosso|rossa|grigio|grigia)\s+(?:la |il |le |i |gli |lo |l')?([A-Za-zÀ-ú]+)/gi;
+    const r1 = /(?:punto|linea|in)\s+(nero|nera|rosso|rossa|grigio|grigia)\s+(?:la |il |le |i |gli |lo |l')?(?:(?:due|tre|quattro|cinque|sei|sette|otto|nove|dieci|\d+) )?([A-Za-zÀ-ú]+)/gi;
     while ((m = r1.exec(t))) out.push([m[2], m[1]]);
     const r2 = /([A-Za-zÀ-ú]+)\s*\((?:punto |linea )?(nero|nera|rosso|rossa|grigio|grigia)/gi;
     while ((m = r2.exec(t))) out.push([m[1], m[2]]);
@@ -152,7 +152,7 @@
       const mese = (q) => ETMESI && /^\d{4}-\d{2}$/.test(String(q));
       if (due) a.append("div").html(G.legenda([{ c: G.SCURO, nome: nome(D.serie[0]), quadro: true }, { c: G.GDATI, nome: nome(D.serie[1]), quadro: true }]));
       // categorie con nomi lunghi (eventi, periodi): tutte le etichette, su due righe sfalsate, così non si sovrappongono
-      const due_righe = !ETMESI && pts.length > 1 && d3.max(pts, (q) => etX(q[0]).length) * 6.4 > (w - 6) / pts.length - 6;
+      const due_righe = !ETMESI && pts.length > 1 && !pts.every((q) => /^\d{4}/.test(String(q[0]))) && d3.max(pts, (q) => etX(q[0]).length) * 6.4 > (w - 6) / pts.length - 6;
       const h = (w < 560 ? 220 : 280) + (due_righe ? 14 : 0), m = { t: 24, r: 6, b: due_righe ? 38 : 24, l: 0 };
       const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "colonne");
       const x = d3.scaleBand().domain(pts.map((p) => p[0])).range([m.l, w - m.r]).paddingInner(due ? 0.28 : 0.18);
@@ -168,7 +168,7 @@
         rett(p, 0, due ? G.SCURO : i === imax ? G.ROSSO : G.NERO);
         if (due) rett(pts2[i], bw + 2, G.GDATI);
         if (due_righe) g.append("text").attr("x", i === 0 ? x(p[0]) : i === pts.length - 1 ? x(p[0]) + x.bandwidth() : x(p[0]) + x.bandwidth() / 2).attr("y", h - (i % 2 ? 6 : 20)).attr("text-anchor", i === 0 ? "start" : i === pts.length - 1 ? "end" : "middle").text(etX(p[0]));
-        else if ((mese(p[0]) && /-01$/.test(String(p[0]))) || (!mese(p[0]) && i % passo === 0)) g.append("text").attr("x", x(p[0]) + x.bandwidth() / 2).attr("y", h - 6).attr("text-anchor", "middle").text(mese(p[0]) ? String(p[0]).slice(0, 4) : etX(p[0]));
+        else if ((mese(p[0]) && /-01$/.test(String(p[0]))) || (!mese(p[0]) && i % passo === 0)) g.append("text").attr("x", i === 0 ? x(p[0]) : x(p[0]) + x.bandwidth() / 2).attr("y", h - 6).attr("text-anchor", i === 0 ? "start" : "middle").text(mese(p[0]) ? String(p[0]).slice(0, 4) : etX(p[0]));
         const tip = due ? `${fmt(p[1])} ${nome(D.serie[0])} · ${fmt(pts2[i][1])} ${nome(D.serie[1])}\n${etX(p[0])}` : `${fmt(p[1])}\n${etX(p[0])}`;
         svg.append("rect").attr("x", x(p[0]) - (x.step() - x.bandwidth()) / 2).attr("width", x.step()).attr("y", m.t).attr("height", h - m.t - m.b).attr("fill", "transparent").attr("data-tip", tip);
       });

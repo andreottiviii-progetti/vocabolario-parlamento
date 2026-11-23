@@ -521,3 +521,4 @@ h2 .chiave,h3 .chiave,.fig-tit .chiave{width:18px;border-top-width:4px;vertical-
 .punto.vuoto{border:1.6px solid var(--k);background:#fff}
 .numero-solo{font-size:17px;margin:6px 0 0}.numero-solo b{font-size:30px;font-weight:800;margin-right:4px}
 .legenda .quadro + .quadro{margin-left:-2px}
+.barre.con-zero td.b{background:linear-gradient(90deg,transparent calc(var(--zero) - .5px),#5C636D calc(var(--zero) - .5px),#5C636D calc(var(--zero) + .5px),transparent calc(var(--zero) + .5px))}

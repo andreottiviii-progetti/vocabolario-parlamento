@@ -540,7 +540,10 @@
     o = o || {};
     const max = o.max || d3.max(righe, (r) => r[1]) || 1;
     const nudo = (t) => String(t).replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
-    return `<table class="barre${o.classe ? " " + o.classe : ""}">` + righe.map((r) => `<tr${r[2] ? ' class="tesi"' : ""}><td class="e">${r[0]}</td><td class="b" data-tip="${G.esc((o.fmt || G.num)(r[1]) + "\n" + nudo(r[0]))}"><i style="width:${Math.max(0.5, (100 * r[1]) / max).toFixed(1)}%${r[3] ? ";background:" + r[3] : ""}"></i></td><td class="n">${(o.fmt || G.num)(r[1])}</td></tr>`).join("") + "</table>";
+    // con valori sotto zero le barre partono da una riga dello zero: a sinistra i negativi, a destra i positivi
+    const min = Math.min(0, d3.min(righe, (r) => r[1]) || 0), tot = Math.max(max, 0) - min || 1, z = (-min / tot) * 100;
+    const barra = (v) => (min < 0 ? `margin-left:${(v < 0 ? z - (-v / tot) * 100 : z).toFixed(1)}%;width:${Math.max(0.5, (Math.abs(v) / tot) * 100).toFixed(1)}%` : `width:${Math.max(0.5, (100 * v) / max).toFixed(1)}%`);
+    return `<table class="barre${o.classe ? " " + o.classe : ""}${min < 0 ? " con-zero" : ""}"${min < 0 ? ` style="--zero:${z.toFixed(1)}%"` : ""}>` + righe.map((r) => `<tr${r[2] ? ' class="tesi"' : ""}><td class="e">${r[0]}</td><td class="b" data-tip="${G.esc((o.fmt || G.num)(r[1]) + "\n" + nudo(r[0]))}"><i style="${barra(r[1])}${r[3] ? ";background:" + r[3] : ""}"></i></td><td class="n">${(o.fmt || G.num)(r[1])}</td></tr>`).join("") + "</table>";
   };
 
   /* tabella ordinabile: colonne [{t, k, n:true, fmt}] */

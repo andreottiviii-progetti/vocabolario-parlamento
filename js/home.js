@@ -204,8 +204,10 @@
         const una = (g.governi || []).length && (g.governi.length <= 2) && !(g.tecnico || []).length;
         svg.append("text").attr("x", wl).attr("y", y0 + 11).attr("font-size", 13).attr("font-weight", 800).attr("fill", T.ink).text(r[0].replace(/ \d{4}(-\d{2})?$/, "") + (g.da ? " " + g.da.slice(0, 4) + (g.a.slice(0, 4) !== g.da.slice(0, 4) ? "-" + g.a.slice(2, 4) : "") : ""));
         const chi = una ? `gov. ${g.governi.join(", ")}: ${g.governo.slice(0, 5).join(", ")} · opp.: ${g.opposizione.slice(0, 4).join(", ")}` : g.governi ? `${g.governi.length > 3 ? g.governi[0] + " … " + g.governi[g.governi.length - 1] : g.governi.join(", ")}: maggioranze diverse` : "";
-        const t = svg.append("text").attr("x", x(0) + 168 > w - 30 ? wl : wl + 0).attr("y", y0 + 11).attr("font-size", 11.5).attr("fill", T.grigio).attr("text-anchor", "end").attr("x", w).text(chi.length > 70 ? chi.slice(0, 68) + "…" : chi);
-        t.append("title").text(chi);
+        // al telefono i governi non stanno accanto al nome: si leggono nel riquadro della riga
+        if (w >= 560) { const t = svg.append("text").attr("x", x(0) + 168 > w - 30 ? wl : wl + 0).attr("y", y0 + 11).attr("font-size", 11.5).attr("fill", T.grigio).attr("text-anchor", "end").attr("x", w).text(chi.length > 70 ? chi.slice(0, 68) + "…" : chi);
+        t.append("title").text(chi); }
+        svg.append("rect").attr("x", 0).attr("y", y0).attr("width", w).attr("height", passo).attr("fill", "transparent").attr("data-tip", `${r[4]} chi sta all'opposizione · ${r[2]} chi governa\n${r[0]}${chi ? ": " + chi : ""}`);
         const qm = r[2], qo = r[4], forte = r[6] > 0, nonMis = r[0] === "Bosnia";
         svg.append("line").attr("x1", x(qm)).attr("x2", x(qo)).attr("y1", cy).attr("y2", cy).attr("stroke", T.dati).attr("stroke-width", forte ? 3 : 2).attr("stroke-dasharray", nonMis ? "3 3" : null);
         svg.append("circle").attr("cx", x(qm)).attr("cy", cy).attr("r", 5).attr("fill", "#fff").attr("stroke", T.ink).attr("stroke-width", 1.4).append("title").text(`${r[0]}: chi governa dice «guerra» ${qm} volte su 100`);
