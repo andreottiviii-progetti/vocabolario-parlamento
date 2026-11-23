@@ -474,12 +474,20 @@ def main():
         import bisect
         inizi = json.load(open(mp, encoding="utf-8"))["inizi"]
         scelte, pezzi_p = {}, {}
+        fs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prime_senso.json")
+        SENSO = json.load(open(fs, encoding="utf-8")) if os.path.exists(fs) else {}
         for w in SCELTE:
             k = bisect.bisect_right(inizi, w) - 1
             if k not in pezzi_p:
                 pezzi_p[k] = json.load(open(os.path.join(DATI, "prime", "d", "%03d.json" % k), encoding="utf-8"))
             sp = pezzi_p[k].get(w)
-            if sp and sp.get("p"):
+            # prima volta nel senso di oggi (letta nelle prime comparse, _genera/prime_senso.json)
+            ps = SENSO.get(w)
+            if ps and ps.get("stato") == "incerta":
+                continue
+            if ps and ps.get("stato") in ("corretta", "non nuova") and ps.get("nuova"):
+                scelte[w] = {"f": sp.get("f") if sp else w, "data": ps["nuova"][0]}
+            elif sp and sp.get("p"):
                 scelte[w] = {"f": sp.get("f") or w, "data": sp["p"][0][0]}
         scrivi_json("prime/scelte.json", scelte)
 

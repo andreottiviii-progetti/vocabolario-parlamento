@@ -17,7 +17,9 @@
       return Promise.all([G.curvaParola(w), G.schedaParola(w), G.schedaPrime(w)].concat(con.map((c) => G.curvaParola(c)))).then((r) => {
         const D = r[1] || {};
         // la prima volta e le frasi passano dal filtro di qualita' dell'archivio delle prime volte
+        if (r[2] && r[2].senso) { D.senso = r[2].senso; if (D.senso.stato !== "confermata") r[2].g = null; }
         if (r[2] && r[2].p && r[2].p.length) { const v = r[2].p[0]; D.pv = [v[0], v[1], v[2], v[3], v[5] || ""]; D.pv_illeggibile = !v[5]; D.prime = r[2].p; D.grezza = r[2].g; }
+        else if (D.senso && D.senso.stato === "incerta") { D.pv = null; D.prime = []; }
         return pagina(el, r[0], D, r.slice(3).filter(Boolean), B, E, S, IX);
       });
     });
@@ -51,14 +53,15 @@
       const imax = pm.reduce((b, v, i) => (v > pm[b] ? i : b), 0);
       el.innerHTML = `
         <h1 class="titolo-pagina">${G.esc(f)}<span class="accanto">${p0 ? `<span class="anni">[${String(p0[0]).slice(0, 4)}-2022]</span> ` : ""}<i class="gram">${espr ? "espressione" : "voce breve, detta meno di mille volte"}</i></span></h1>
-        <p class="sommario">${espr ? "Espressione detta" : "Detta"} <b>${G.num(S.t)}</b> volte in aula tra il 1848 e il 2022. ${p0 ? `La prima volta è il ${G.data(p0[0])}, ${G.alRamo(p0[1])}${p0[2] ? ", " + G.esc(G.oratore(p0[2])) : ""}.` : ""} Il decennio in cui si dice di più sono gli anni ${DEC[imax] === 1840 ? "1848-49" : DEC[imax]}.</p>
+        <p class="sommario">${espr ? "Espressione detta" : "Detta"} <b>${G.num(S.t)}</b> volte in aula tra il 1848 e il 2022. ${S.senso && S.senso.stato === "incerta" ? "Prima volta nel senso di oggi: incerta. " : ""}${p0 ? `La prima volta${S.senso && S.senso.stato === "corretta" ? " nel senso di oggi" : ""} è il ${G.data(p0[0])}, ${G.alRamo(p0[1])}${p0[2] ? ", " + G.esc(G.oratore(p0[2])) : ""}.` : ""} Il decennio in cui si dice di più sono gli anni ${DEC[imax] === 1840 ? "1848-49" : DEC[imax]}.</p>
+        ${G.notaSenso(S) ? `<p class="piccolo grigio">${G.notaSenso(S)}</p>` : ""}
         <section class="griglia">
           <div class="c7"><h2 class="titolo-medio">Le prime volte</h2><ul class="frasi" id="prime"></ul></div>
           <div class="c5 fil" id="g-dec"></div>
         </section>
         <p class="piccolo grigio" style="margin-top:24px">${espr ? "Le espressioni sono un elenco scelto e dichiarato nella pagina del metodo; si contano con spazio o trattino tra le parole." : "Le parole dette meno di 1.000 volte hanno questa scheda breve; quelle più frequenti hanno la curva anno per anno, chi le dice, i partiti."} La prima volta si cerca dal primo anno in cui ${espr ? "l'espressione" : "la parola"} compare almeno tre volte in tre anni.</p>`;
       const forme = [f, k];
-      let h = (S.p || []).map((v, i) => `<li>${i === 0 ? "<b>La prima volta</b> · " : ""}${G.voceVolta(v, forme)}${i === 0 && !v[5] ? '<br><span class="piccolo grigio">Testo della prima comparsa illeggibile nella scansione: sotto, le prime frasi pulite.</span>' : ""}</li>`).join("");
+      let h = (S.p || []).map((v, i) => `<li>${i === 0 ? (S.senso && S.senso.stato === "corretta" ? "<b>La prima volta nel senso di oggi</b> · " : "<b>La prima volta</b> · ") : ""}${G.voceVolta(v, forme)}${i === 0 && !v[5] ? '<br><span class="piccolo grigio">Testo della prima comparsa illeggibile nella scansione: sotto, le prime frasi pulite.</span>' : ""}</li>`).join("");
       if (S.sp) h += '<li class="piccolo grigio">Non arriva mai a tre volte in tre anni: queste sono le prime comparse così come sono.</li>';
       if (S.g) h += `<li class="piccolo grigio">Comparsa più vecchia, ${G.data(S.g[0])}, ${G.ramo(S.g[1])}: probabile errore di lettura del testo stampato.</li>`;
       document.getElementById("prime").innerHTML = h;
@@ -89,13 +92,15 @@
     const pk = G.picco(C.pm.m);
     const pv = D.pv;
     const legPk = G.legDiAnno(pk.anno, B.legislature);
-    const prima = pv ? `La prima volta è il ${G.data(pv[0])}, ${G.alRamo(pv[1])}: ${pv[3] ? G.lPersona(pv[3], G.oratore(pv[2])) : G.esc(G.oratore(pv[2]))}.` : "";
+    const nuovo = D.senso && D.senso.stato === "corretta";
+    const prima = D.senso && D.senso.stato === "incerta" ? "Prima volta nel senso di oggi: incerta." : pv ? `La prima volta${nuovo ? " nel senso di oggi" : ""} è il ${G.data(pv[0])}, ${G.alRamo(pv[1])}: ${pv[3] ? G.lPersona(pv[3], G.oratore(pv[2])) : G.esc(G.oratore(pv[2]))}.` : "";
     const storie = (S.storie || []).filter((s) => (s.parole || []).map(G.norma).includes(w));
     const reW = new RegExp("(^|[^a-zà-ù])" + f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-zà-ù]|$)", "i");
     const esp = E.elenco.filter((e) => reW.test(e.titolo + " " + e.attesa + " " + e.numero));
     el.innerHTML = `
-      <h1 class="titolo-pagina">${G.esc(f)}<span class="accanto"><span class="anni">[${C.y0}-2022]</span>${C.y0 >= 1990 ? ' <i class="gram">neol.</i>' : ""} <i class="gram">voce con la curva anno per anno</i></span></h1>
+      <h1 class="titolo-pagina">${G.esc(f)}<span class="accanto"><span class="anni">[${C.y0}-2022]</span>${C.y0 >= 1990 && !(D.senso && /non nuova|incerta/.test(D.senso.stato)) ? ' <i class="gram">neol.</i>' : ""} <i class="gram">voce con la curva anno per anno</i></span></h1>
       <p class="sommario"><b class="n">1</b> Detta <b>${G.num(C.tot)}</b> volte in aula dal ${C.y0} al 2022, ${G.num(tc)} alla Camera e ${G.num(ts)} al Senato. <b class="n">2</b> L'anno di punta è il <a class="lk" href="anno.html?a=${pk.anno}">${pk.anno}</a>, con ${G.num1(pk.val)} volte per milione di parole. ${prima ? '<b class="n">3</b> ' + prima : ""}</p>
+      ${G.notaSenso({ senso: D.senso }) ? `<p class="piccolo grigio">${G.notaSenso({ senso: D.senso })}</p>` : ""}
       <div id="nel-racconto"></div>
       <section class="griglia">
         <div class="c8">
@@ -126,7 +131,7 @@
       [`<b>${pk.anno}</b>, anno di punta`, `${G.num1(pk.val)} volte per milione di parole; <a href="anno.html?a=${pk.anno}">l'anno</a>`],
     ];
     if (legPk) fatti.push([`<a href="legislatura.html?id=${legPk.id}">${G.esc(legPk.nome)}</a>`, `la legislatura dell'anno di punta (${legPk.da}-${legPk.a})`]);
-    if (pv) fatti.push([`<b>${G.data(pv[0])}</b>, la prima volta`, `${G.ramo(pv[1])}, ${pv[3] ? G.lPersona(pv[3], G.oratore(pv[2])) : G.esc(G.oratore(pv[2]))}`]);
+    if (pv) fatti.push([`<b>${G.data(pv[0])}</b>, la prima volta${nuovo ? " nel senso di oggi" : ""}`, `${G.ramo(pv[1])}, ${pv[3] ? G.lPersona(pv[3], G.oratore(pv[2])) : G.esc(G.oratore(pv[2]))}`]);
     if (D.pv_illeggibile) fatti.push([`Testo della prima comparsa illeggibile`, "nella scansione: la data resta, le frasi sono quelle pulite che seguono"]);
     if (D.grezza) fatti.push([`Comparsa più vecchia, ${G.data(D.grezza[0])}`, "probabile errore di lettura del testo stampato"]);
     if (D.sp) fatti.push([`<b>${G.num(D.sp[0])}</b> comparse sparse prima del ${C.y0}`, `negli anni ${D.sp[1].join(", ")}: spesso sono errori dello scanner, e non entrano nella curva`]);
@@ -134,7 +139,7 @@
     // frasi
     const forme = [f, w];
     const fr = [];
-    if (pv && pv[4]) fr.push(["La prima volta", pv]);
+    if (pv && pv[4]) fr.push([nuovo ? "La prima volta nel senso di oggi" : "La prima volta", pv]);
     (D.prime || []).slice(1).forEach((v) => { if (v[5]) fr.push(["Le prime volte", [v[0], v[1], v[2], v[3], v[5]]]); });
     (D.fr || []).forEach((x) => { if (!pv || x[4] !== pv[4]) fr.push([String(x[0]).slice(0, 4) === String(pk.anno) ? "Anno di punta" : "", x]); });
     document.getElementById("frasi").innerHTML = fr.length ? fr.map(([et, x]) => `<li><span class="quando">${et ? "<b>" + et + "</b> · " : ""}${G.data(x[0])}, ${G.ramo(x[1])}, ${x[3] ? G.lPersona(x[3], G.oratore(x[2])) : G.esc(G.oratore(x[2]))}</span><q>${G.frase(x[4], forme)}</q></li>`).join("") : '<li class="grigio">Nessuna frase breve trovata.</li>';
