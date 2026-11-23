@@ -9,7 +9,7 @@ Tutti i numeri del sito vengono da file generati dai programmi di questa cartell
 - Alla fine il programma controlla che nessun file superi 2 MB, che ogni pagina abbia il noindex e che nei file pubblici non ci siano parole vietate. Se scrive «TUTTO A POSTO» si può pubblicare.
 - Poi: `git add -A`, `git commit`, `git push` (GitHub Pages si aggiorna da solo).
 
-Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` → `g3_sito.py` → `g7_scansione2.py` → `g8_sezioni.py` → `g9_prime_volte.py` → `g6b_tabelline.py` → `g6c_correzioni.py` → `g6_storie.py` → `g5_pagine.py`; poi `g10_rapporti.py` scrive in `_progetto/` la copertura dei risultati e il conto delle frasi scartate. I file intermedi stanno in `_genera/cache/` (fuori dal repository).
+Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` → `g3_sito.py` → `g3b_distanze.py` → `g7_scansione2.py` → `g8_sezioni.py` → `g9_prime_volte.py` → `g6b_tabelline.py` → `g6c_correzioni.py` → `g6_storie.py` → `g5_pagine.py`; poi `g10_rapporti.py` scrive in `_progetto/` la copertura dei risultati e il conto delle frasi scartate. I file intermedi stanno in `_genera/cache/` (fuori dal repository).
 
 Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salta e le elenca in `_genera/cache/storie_rapporto.txt`. Tolto il marcatore, basta il comando «solo storie».
 
@@ -35,6 +35,7 @@ Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salt
 | Quote di parole ricontate (tutti i ruoli e solo parlamentari) | `dati/legislature/*.json` | `misure/persone/turni_camera_repubblica_*.parquet` | g3 |
 | Parole di destra e di sinistra | `dati/legislature/*.json` | `risultati/mappa_partiti_destra_sinistra_parole.csv` | g3 |
 | Passaggi di lessico, continuità, scala DC-PCI | `dati/partiti/*.json` | `risultati/h54_parole_passaggi.csv`, `h54_somiglianze.csv`, `h56_asse_serie.csv` | g3 |
+| Distanza tra le parole di PCI e DC, e di PSI e DC, anno per anno (Tavola I dei partiti) | `dati/partiti/distanze.json` | `risultati/h32_anno.csv`, `rilettura_h32_h54/532_dcpci.csv` (base 100 = DC-PCI 1953-68), `h56_dc_psi.txt` (DC-PSI 1962-63) | g3b |
 | Parole tipiche di una legislatura | `dati/legislature/*.json` | conteggi di g1 | g3 |
 | Parola dell'anno | `dati/base.json`, `dati/anni.json`, `scarica/parole_dell_anno.csv` | `risultati/h22_parole_anno.csv` | g3 |
 | Temi | `dati/temi.json`, `scarica/temi.csv` | `risultati/h37_etichette_temi.csv`, `h37_quote_K40.csv`, `h37_temi_K40.txt` | g3 |

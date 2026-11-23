@@ -5,7 +5,7 @@
     G.testata({ attivo: "Partiti" });
     G.piede();
     const el = document.getElementById("contenuto");
-    return Promise.all([G.carica("partiti/indice.json"), G.carica("partiti/traiettorie.json")]).then(([IX, TR]) => {
+    return Promise.all([G.carica("partiti/indice.json"), G.carica("partiti/distanze.json")]).then(([IX, DI]) => {
       const P = IX.partiti;
       el.innerHTML = `<h1 class="titolo-pagina" style="font-size:clamp(48px,7vw,96px)">${P.length} partiti, ${G.num(G.conti.schede_partito)} schede: a chi somiglia ognuno, legislatura per legislatura</h1>
         <p class="sommario">Ogni partito è misurato sulle parole che usa alla Camera, dal 1948 al 2022: dove sta tra sinistra e destra, a quale altro partito somiglia, quali parole guadagna e quali perde a ogni legislatura, come cambia quando passa dal governo all'opposizione.</p>
@@ -18,32 +18,39 @@
         <section class="sezione"><div id="g-linee"></div></section>
         <section class="sezione"><div class="testa"><h2>Tutti i partiti</h2></div><div class="tab-scorre" id="tab"></div></section>`;
       G.griglia("#g-griglia").then((D) => { if (D) document.getElementById("frasi-griglia").innerHTML = G.frasiGriglia(D).map((f) => `<li>${f}</li>`).join(""); });
+      // Tav. I: la distanza tra le parole di PCI e DC anno per anno, con DC e PSI come confronto (dati in partiti/distanze.json)
+      const S = DI.serie, dcpci = S.find((s) => s.coppia === "DC-PCI"), dcpsi = S.find((s) => s.coppia === "DC-PSI");
+      const ultimo = (s) => s.punti.filter((p) => p[1] != null).slice(-1)[0][0];
       const area = G.figura("#g-linee", {
-        titolo: (() => {
-          const L = IX.linee, pci = L["PCI-PD"] || [];
-          const d = pci.map((p) => { const altri = Object.keys(L).filter((f) => f !== "PCI-PD").map((f) => L[f].find((q) => q[3] === p[3])).filter(Boolean); return altri.length ? [p[0], d3.min(altri, (q) => Math.abs(q[1] - p[1]))] : null; }).filter(Boolean);
-          if (!d.length) return "La lingua delle famiglie di partiti, 1948-2022";
-          const mx = d.reduce((u, v) => (v[1] > u[1] ? v : u)), mn = d.reduce((u, v) => (v[1] < u[1] ? v : u));
-          return `La lingua del PCI-PD è più lontana dal partito più vicino nel ${Math.floor(mx[0])}, più vicina nel ${Math.floor(mn[0])}`;
-        })(),
-        sotto: "Posizione di ogni famiglia di partiti ricavata dalle parole, Camera, 1948-2022: in basso le parole della sinistra, in alto quelle della destra. Più due linee sono vicine, più le famiglie usano le stesse parole. Le bande segnano le fasi del PCI-PD: il compromesso storico, la svolta del 1989-91 da PCI a PDS, i DS, il PD.",
-        limite: "La posizione viene dalle parole, non dai voti. La mappa parte dal 1948.",
-        csv: () => [["famiglia", "anno", "posizione", "scheda"]].concat([].concat(...Object.entries(IX.linee).map(([f, l]) => l.map((p) => [f, p[0], p[1], p[2]])))), nomeCSV: "linee_famiglie",
+        titolo: `Negli anni del compromesso storico la distanza tra le parole di PCI e DC si dimezza: da 100 a ${G.num(DI.legislature["7"][0], 0)}, poco sopra quella tra DC e PSI nel 1962-63 (${G.num(DI.dc_psi_1962_63, 0)}), alla vigilia del primo governo con i socialisti`,
+        sotto: `Quanto si distinguono dalle parole i deputati di due partiti, alla Camera, ${dcpci.punti[0][0]}-${Math.max(ultimo(dcpci), ultimo(dcpsi))}. 0 vuol dire che usano le stesse parole e non si capisce chi è dell'uno o dell'altro; 100 è la distanza tra DC e PCI negli anni della guerra fredda (1953-68). Ogni punto è la media di tre anni. Le bande segnano due fasi del PCI.`,
+        limite: "La distanza viene dalle 5.000 parole più comuni, non dai voti; il valore di ogni singolo anno è nei dati del grafico. Negli anni delle elezioni conta la parte con più deputati. Nel 1969-71 socialisti e socialdemocratici sono un partito solo: la coppia DC e PSI manca. Nel 1979 e nel 1987 cambia il modo di trascrivere i resoconti. La DC finisce nel 1994: per DS e PD non c'è un confronto uguale.",
+        csv: () => [["coppia", "anno", "distanza_media_tre_anni", "distanza_anno", "oratori_DC", "oratori_altro_partito", "distinguibilita_corretta"]].concat(...S.map((s) => s.punti.map((p) => [s.coppia, p[0], p[2], p[1], p[3], p[4], p[5]]))),
+        nomeCSV: "distanza_pci_dc",
       });
       G.grafico(area, (a, w) => {
-        const L = IX.linee, tutti = [].concat(...Object.values(L)).map((p) => p[1]), ext = d3.extent(tutti);
-        const r = G.linee(a, w, {
-          x: [1948, 2022], y: [ext[0] - 0.005, ext[1] + 0.005], yTicks: [], h: w < 560 ? 260 : 360, m: { r: w < 560 ? 60 : 150 }, etichSopra: false, legenda: false,
-          serie: Object.keys(L).filter((f) => f !== "PCI-PD").map((f) => ({ punti: L[f].map((p) => [p[0], p[1]]), colore: G.GDATI, sp: 1, etich: f })).concat([{ punti: L["PCI-PD"].map((p) => [p[0], p[1]]), colore: G.ROSSO, sp: 2.5, punto: 2.5, etich: "PCI, poi PDS, DS e PD" }]),
+        const stretto = w < 560, m3 = (s) => s.punti.map((p) => [p[0], p[2]]);
+        const fasi = [[1976.5, 1979.1, "compromesso storico"], [1989.9, 1991.1, "svolta: PCI → PDS"]];
+        G.linee(a, w, {
+          x: [1948, 1993], y: [-12, 135], yTicks: [0, 50, 100], yFmt: (v) => G.num(v, 0), h: stretto ? 280 : 360, m: { r: stretto ? 74 : 110, t: stretto ? 40 : 30 },
+          etichSopra: false, legenda: false, xPasso: stretto ? 10 : 5, unitaLettura: "media di tre anni",
+          fasce: fasi.map((f) => ({ da: f[0], a: f[1] })),
+          serie: [{ punti: m3(dcpsi), colore: G.FAMIGLIA.PSI, sp: 1.5, etich: "PSI e DC" }, { punti: m3(dcpci), colore: G.ROSSO, sp: 2.5, etich: "PCI e DC" }],
+          dopo: (svg, x, y, h, m) => {
+            // i nomi delle fasi sopra il disegno; al telefono su due righe, ognuno finisce dove finisce la sua banda
+            fasi.forEach((f, k) => {
+              const xt = stretto ? x(f[1]) : x(f[0]), riga = stretto ? k * 15 : 0;
+              svg.append("text").attr("x", xt).attr("y", m.t - 6 - riga).attr("text-anchor", stretto ? "end" : "start").attr("class", "nota-t").attr("font-weight", 700).text(f[2]);
+              svg.append("line").attr("x1", xt).attr("x2", xt).attr("y1", m.t - 18 - riga).attr("y2", m.t).attr("stroke", G.GRIGIO).attr("stroke-width", 1);
+            });
+            // il punto di riferimento: DC e PSI nel 1963, quando il PSI entra al governo (contesto storico, non dato del progetto)
+            const p63 = dcpsi.punti.find((p) => p[0] === 1963);
+            if (p63 && p63[2] != null) {
+              svg.append("circle").attr("cx", x(1963)).attr("cy", y(p63[2])).attr("r", 3.5).attr("fill", G.FAMIGLIA.PSI).attr("stroke", "#fff").attr("stroke-width", 1.5);
+              G.nota(svg, x(1963), y(p63[2]), x(1963), y(p63[2]) + 34, "1963: il PSI entra al governo", { maxch: stretto ? 18 : 40, anchor: stretto ? "end" : "start" });
+            }
+          },
         });
-        // le fasi del PCI-PD (contesto storico, non dati del progetto): bande chiare con il nome scritto
-        [[1976, 1979.9, "compromesso storico"], [1989, 1991.9, "svolta: PCI → PDS"], [1998, 2007.4, "DS"], [2007.8, 2022.9, "PD"]].forEach((f, k) => {
-          const x0 = r.x(f[0]), x1 = r.x(f[1]);
-          r.svg.insert("rect", ":first-child").attr("x", x0).attr("y", r.m.t).attr("width", Math.max(2, x1 - x0)).attr("height", r.h - r.m.t - r.m.b).attr("fill", "#F2F3F5");
-          r.svg.append("text").attr("x", x0 + 3).attr("y", r.m.t + 12 + (k % 2) * 13).attr("font-size", 12).attr("font-weight", 700).attr("fill", G.INK).attr("class", "alone").text(f[2]);
-        });
-        r.svg.append("text").attr("x", 0).attr("y", r.y(ext[1]) + 4).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di destra");
-        r.svg.append("text").attr("x", 0).attr("y", r.y(ext[0]) - 4).attr("font-size", 12).attr("fill", G.GRIGIO).text("parole di sinistra");
       });
       const R = (n) => G.romano(n);
       G.tabella(document.getElementById("tab"), [
