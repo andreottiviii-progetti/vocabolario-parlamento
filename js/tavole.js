@@ -9,10 +9,13 @@
   V.RADICE = window.RADICE || "";
   V.tema = {
     ink: "#15181C", grigio: "#5C636D", dati: "#B8BEC7", riga: "#DFE2E6", tenue: "#EEF0F2",
-    amico: "#00A3AD", nemico: "#D2281F", alleanza: "#00757D", guerra: "#A50E09",
-    serie: ["#1B3FA8", "#D2281F", "#0B8F52"], evid: "#D2281F", fs: 12.5, fondo: "#fff"
+    amico: "#00A3AD", nemico: "#D2281F", alleanza: "#008F9C", guerra: "#A50E09",
+    serie: ["#2349BD", "#D2281F", "#0E9F6E", "#9B5DE5", "#C47F00"], evid: "#D2281F", scuro: "#3F4650", fs: 12.5, fondo: "#fff"
   };
-  V.FAM = { "PCI-PD": "#E3120B", DC: "#1E78E6", PSI: "#FF7BAC", "MSI-AN-FdI": "#1B2A7A", "FI-PdL": "#00B4D8", Lega: "#00A85A", M5S: "#F5C400", altri: "#B8BEC7" };
+  // le stesse tavolozze di comune.js (controllate con lo script della guida): una sola fonte quando comune.js c'è
+  if (window.G && G.SERIE) V.tema.serie = G.SERIE.slice();
+  V.FAM = (window.G && G.FAMIGLIA) ? G.FAMIGLIA : { "PCI-PD": "#D2281F", DC: "#3375E3", PSI: "#F96DA6", "MSI-AN-FdI": "#314B92", "FI-PdL": "#32ADD7", Lega: "#22A56A", M5S: "#D8AA32", altri: "#B8BEC7" };
+  const chiave = (g, x, y, c, tratt) => g.append("line").attr("x1", x).attr("x2", x + 12).attr("y1", y).attr("y2", y).attr("stroke", c).attr("stroke-width", 2.5).attr("stroke-dasharray", tratt ? "4 2" : null);
   V.FAMNOME = { "PCI-PD": "PCI, PDS, PD", DC: "DC", PSI: "PSI", "MSI-AN-FdI": "MSI, AN, FdI", "FI-PdL": "FI, PdL", Lega: "Lega", M5S: "M5S" };
 
   /* ---------- dati e formati ---------- */
@@ -73,11 +76,12 @@
       for (let i = 1; i < fine.length; i++) if (fine[i].y - fine[i - 1].y < 15) fine[i].y = fine[i - 1].y + 15;
       serie.forEach((s) => {
         const i = d3.maxIndex(s.v), px = x(1848 + i), py = y(s.v[i]);
-        svg.append("circle").attr("cx", px).attr("cy", py).attr("r", 3.5).attr("fill", s.c);
-        const iv = d3.maxIndex(s.vero); if (o.picchi !== false) alone(testo(svg, px + (px > w - 150 ? -7 : 7), py - 7, s.nome + " " + (1848 + iv) + ": " + V.num(s.vero[iv]), { fill: s.c, peso: 700, fs: T.fs + 0.5, anc: px > w - 150 ? "end" : "start" }));
+        svg.append("circle").attr("cx", px).attr("cy", py).attr("r", 4).attr("fill", s.c).attr("stroke", T.fondo).attr("stroke-width", 2);
+        const iv = d3.maxIndex(s.vero); if (o.picchi !== false) alone(testo(svg, px + (px > w - 150 ? -7 : 7), py - 7, s.nome + " " + (1848 + iv) + ": " + V.num(s.vero[iv]), { fill: T.ink, peso: 700, fs: T.fs + 0.5, anc: px > w - 150 ? "end" : "start" }));
       });
-      if (!stretto && mr >= 40) fine.forEach((f) => testo(svg, w - mr + 6, f.y + 4, f.s.nome, { fill: f.s.c, peso: 700, fs: T.fs + 0.5 }));
-      else if (stretto) a.append("div").attr("class", "g-chiave").html(serie.map((s) => `<span style="color:${s.c}"><b>${V.esc(s.nome)}</b></span>`).join(" · "));
+      if (!stretto && mr >= 40) fine.forEach((f) => { chiave(svg, w - mr + 5, f.y, f.s.c); testo(svg, w - mr + 21, f.y + 4, f.s.nome, { fill: T.ink, peso: 700, fs: T.fs + 0.5 }); });
+      else if (stretto) a.append("div").attr("class", "g-chiave").html(serie.map((s) => `<span><span class="chiave" style="--k:${s.c}"></span><b>${V.esc(s.nome)}</b></span>`).join(" · "));
+      if (window.G && G.mirino) G.mirino(svg, x, y, serie.map((s) => ({ nome: s.nome, colore: s.c, punti: s.v.map((v, i) => [1848 + i, v]), leggi: s.vero.map((v, i) => [1848 + i, v]) })), { fmt: (v) => V.num(v, v < 10 ? 1 : 0), unita: "volte per milione di parole, anno per anno" });
     });
   };
 
@@ -97,21 +101,23 @@
       if (o.area) svg.append("path").attr("d", d3.area().defined((p) => p[1] != null).x((p) => x(p[0])).y0(y(dy[0])).y1((p) => y(p[1]))(dentro)).attr("fill", o.riempi || T.tenue);
       svg.append("line").attr("x1", 0).attr("x2", w).attr("y1", h - mb).attr("y2", h - mb).attr("stroke", T.dati);
       svg.append("path").attr("d", d3.line().defined((p) => p[1] != null).x((p) => x(p[0])).y((p) => y(p[1]))(dentro)).attr("fill", "none").attr("stroke", c).attr("stroke-width", o.sp || 1.6).attr("stroke-linejoin", "round");
-      (o.righe || []).forEach((r) => { svg.append("line").attr("x1", x(r[0])).attr("x2", x(r[0])).attr("y1", mt - 4).attr("y2", h - mb).attr("stroke", r[2] || T.evid).attr("stroke-width", 1.5); if (r[1]) testo(svg, x(r[0]) + 4, mt + 4, r[1], { fill: r[2] || T.evid, peso: 700 }); });
+      (o.righe || []).forEach((r) => { svg.append("line").attr("x1", x(r[0])).attr("x2", x(r[0])).attr("y1", mt - 4).attr("y2", h - mb).attr("stroke", r[2] || T.evid).attr("stroke-width", 1.5); if (r[1]) alone(testo(svg, x(r[0]) + 4, mt + 4, r[1], { fill: T.ink, peso: 700 })); });
       (o.punti || []).forEach((q) => {
         const p = val.find((v) => v[0] === q.x) || [q.x, q.y]; const px = x(p[0]), py = y(p[1]);
         if (!q.testo) svg.append("line").attr("x1", px).attr("x2", px).attr("y1", h - mb).attr("y2", py).attr("stroke", c).attr("stroke-width", 1);
-        svg.append("circle").attr("cx", px).attr("cy", py).attr("r", 3.2).attr("fill", q.colore || T.evid);
+        svg.append("circle").attr("cx", px).attr("cy", py).attr("r", 3.5).attr("fill", q.colore || T.evid).attr("stroke", T.fondo).attr("stroke-width", 1.5);
         const dx_ = q.dx != null ? q.dx : (px > w * 0.6 ? -6 : 6), anc = q.anc || (dx_ < 0 ? "end" : "start");
         alone(testo(svg, px + dx_, py + (q.dy != null ? q.dy : -5), q.testo, { fill: T.ink, peso: 700, anc: anc, fs: T.fs }));
       });
       if (o.assi !== false) (o.assi || [dx[0], dx[1]]).forEach((t, i, arr) => testo(svg, x(t), h - 3, t, { anc: i === 0 ? "start" : i === arr.length - 1 ? "end" : "middle", fs: T.fs - 0.5 }));
-      V.lettura(svg, x, y, val, w, h, mb, o.fmt);
+      V.lettura(svg, x, y, val, w, h, mb, o.fmt, c);
     });
   };
   /* valore al passaggio del mouse: una riga verticale e l'anno con il valore */
-  V.lettura = function (svg, x, y, val, w, h, mb, fmt) {
+  V.lettura = function (svg, x, y, val, w, h, mb, fmt, colore) {
     if (!val.length) return;
+    // con comune.js il mirino e il riquadro sono quelli di tutto il sito
+    if (window.G && G.mirino) return G.mirino(svg, x, y, [{ nome: "", colore: colore || V.tema.ink, punti: val }], { fmt: fmt || ((v) => V.num(v, v < 10 ? 1 : 0)) });
     const T = V.tema, g = svg.append("g").style("display", "none").attr("pointer-events", "none");
     const ln = g.append("line").attr("y1", 0).attr("y2", h - mb).attr("stroke", T.grigio).attr("stroke-width", 1);
     const pt = g.append("circle").attr("r", 2.8).attr("fill", T.ink);
@@ -130,7 +136,7 @@
   const misto = (c1, c2, t) => d3.interpolateRgb(c1, c2)(Math.max(0, Math.min(1, t)));
   V.tono = (v) => misto(V.tema.tenue, v > 0 ? V.tema.nemico : V.tema.amico, Math.abs(v) / 0.6);
   /* cinque gradini: nemico forte, nemico, neutro, amico, amico forte (soglie 0,1 e 0,3 dell'indice da −1 a +1) */
-  V.GRADINI = [["nemico, forte", "#C9241C"], ["nemico", "#EE9B95"], ["neutro", "#ECEDEF"], ["amico", "#8FD0D5"], ["amico, forte", "#00838C"]];
+  V.GRADINI = [["nemico, forte", "#C9241C"], ["nemico", "#EE9B95"], ["neutro", "#ECEDEF"], ["amico", "#6CC0C6"], ["amico, forte", "#00838C"]];
   V.gradino = (v) => V.GRADINI[v >= 0.3 ? 0 : v >= 0.1 ? 1 : v > -0.1 ? 2 : v > -0.3 ? 3 : 4];
 
   /* amici e nemici, versione a linee: per ogni paese una curva sopra lo zero (rosso, da nemico) e sotto (turchese, da amico);
@@ -176,7 +182,7 @@
         // alleanze: riga turchese sottile sotto la striscia
         const all = Object.keys(al).filter((k) => al[k][1] === "alleato" && +k >= o.x[0] && +k <= o.x[1]).map(Number);
         all.forEach((k) => svg.append("rect").attr("x", x(k)).attr("y", y0 + o.hr + 4).attr("width", aw + 0.4).attr("height", 3).attr("fill", T.alleanza));
-        if (!scrittaAll && all.length) { const k0 = Math.min(...all); scritte.push([x(k0), y0 + o.hr + 16, "alleanza", T.alleanza]); scrittaAll = true; }
+        if (!scrittaAll && all.length) { const k0 = Math.min(...all); scritte.push([x(k0), y0 + o.hr + 16, "alleanza", T.ink]); scrittaAll = true; }
         (o.note || []).filter((n) => n.paese === p && !stretto).forEach((n) => { const px = x(n.anno), anc = n.anc || (px > w - 260 ? "end" : "start"); n.righe.slice(0, 1).forEach((r) => alone(testo(svg, px, y0 + 2, r, { fill: T.ink, fs: T.fs, anc: anc }))); });
       });
       scritte.forEach((q) => alone(testo(svg, q[0], q[1], q[2], { fill: q[3], fs: T.fs - 1, peso: 700 })));
@@ -282,6 +288,7 @@
       const im = d3.maxIndex(pts, (p) => p[1] || 0);
       pts.forEach((p, i) => {
         if (p[1]) svg.append("rect").attr("x", x(p[0])).attr("width", x.bandwidth()).attr("y", y(p[1])).attr("height", y(0) - y(p[1])).attr("fill", i === im ? T.evid : T.dati);
+        svg.append("rect").attr("x", x(p[0]) - 1).attr("width", x.step()).attr("y", 0).attr("height", h - 16).attr("fill", "transparent").attr("data-tip", V.num(p[1] || 0) + "\n" + p[0]);
         if (String(p[0]).endsWith("-01")) testo(svg, x(p[0]), h - 3, String(p[0]).slice(0, 4), { fs: T.fs - 0.5 });
       });
       svg.append("line").attr("x1", 0).attr("x2", w).attr("y1", h - 16).attr("y2", h - 16).attr("stroke", T.dati);
@@ -302,7 +309,7 @@
         svg.append("path").attr("d", d3.line().x((q) => x(q[2])).y((q) => y(q[3]))(v)).attr("fill", "none").attr("stroke", c).attr("stroke-width", 1.8);
         v.forEach((q) => svg.append("circle").attr("cx", x(q[2])).attr("cy", y(q[3])).attr("r", q[0] === 7 ? 5 : 2.6).attr("fill", c));
         const p1 = v[0], p7 = v.find((q) => q[0] === 7);
-        if (p1) alone(testo(svg, x(p1[2]) + 6, y(p1[3]) + (n === "PCI" ? 14 : -6), n + " 1948", { fill: c, peso: 700 }));
+        if (p1) alone(testo(svg, x(p1[2]) + 6, y(p1[3]) + (n === "PCI" ? 14 : -6), n + " 1948", { fill: T.ink, peso: 700 }));
         if (p7 && o.etich !== false) alone(testo(svg, x(p7[2]) + 8, y(p7[3]) + 4, n === "PCI" ? "1976-79" : "", { fill: T.ink, peso: 700 }));
       });
     });
@@ -361,7 +368,7 @@
         const u = v[v.length - 1]; fine.push({ f: f, x: x(u[0]), y: y(u[1]), c: c });
       });
       fine.sort((p, q) => p.y - q.y); for (let i = 1; i < fine.length; i++) if (fine[i].y - fine[i - 1].y < 14) fine[i].y = fine[i - 1].y + 14;
-      fine.forEach((q) => alone(testo(svg, Math.min(q.x + 7, w - 4), q.y + 4, (V.FAMNOME[q.f] || q.f).split(", ").pop(), { fill: q.f === "M5S" ? T.ink : q.c, peso: 700, anc: q.x + 7 > w - 40 ? "end" : "start" })));
+      fine.forEach((q) => { const fuori = q.x + 7 > w - 40; if (!fuori) chiave(svg, q.x + 6, q.y, q.c); alone(testo(svg, fuori ? w - 4 : q.x + 21, q.y + 4, (V.FAMNOME[q.f] || q.f).split(", ").pop(), { fill: T.ink, peso: 700, anc: fuori ? "end" : "start" })); });
     });
   };
 
@@ -389,11 +396,13 @@
     o = Object.assign({ passo: 20, wl: 96, fmt: (v) => V.num(v), hb: 9 }, o || {});
     V.fig(sel, (a, w) => {
       const T = V.tema, h = righe.length * o.passo + 2, svg = svgDi(a, w, h, o.nome || "barre");
-      const x = d3.scaleLinear().domain([0, o.max || d3.max(righe, (r) => r[1])]).range([o.wl, w - 44]);
+      const lungo = d3.max(righe, (r) => String(o.fmt(r[1])).length) || 4;
+      const x = d3.scaleLinear().domain([0, o.max || d3.max(righe, (r) => r[1])]).range([o.wl, w - Math.max(44, lungo * 6.6 + 10)]);
       righe.forEach((r, i) => {
         const cy = i * o.passo + o.passo / 2;
         testo(svg, 0, cy + 4, r[0], { fill: T.ink, fs: T.fs + 0.5 });
         svg.append("rect").attr("x", o.wl).attr("y", cy - o.hb / 2).attr("width", Math.max(1, x(r[1]) - o.wl)).attr("height", o.hb).attr("fill", r[2] ? (o.colore || T.evid) : T.dati);
+        svg.append("rect").attr("x", 0).attr("y", cy - o.passo / 2).attr("width", w).attr("height", o.passo).attr("fill", "transparent").attr("data-tip", o.fmt(r[1]) + "\n" + r[0]);
         testo(svg, x(r[1]) + 5, cy + 4, o.fmt(r[1]), { fill: T.ink, peso: r[2] ? 700 : null });
       });
     });
@@ -405,10 +414,13 @@
     V.fig(sel, (a, w) => {
       const T = V.tema, stretto = o.wl > 0 ? w < 280 : true, wl = stretto ? 0 : o.wl, righe = conti.filter((c) => c[0] !== "Totale");
       const passo = o.passo + (stretto ? 13 : 0), h = righe.length * passo + 2, svg = svgDi(a, w, h, "Verdetti degli esperimenti");
+      // «in parte» è il quadretto mezzo pieno, come nei verdetti di tutto il sito
+      const gr = svg.append("defs").append("linearGradient").attr("id", "mezzo-ver"); gr.append("stop").attr("offset", "50%").attr("stop-color", T.ink); gr.append("stop").attr("offset", "50%").attr("stop-color", T.fondo);
       righe.forEach((r, i) => {
         const y0 = i * passo + (stretto ? 13 : 0); let k = 0;
         testo(svg, stretto ? 0 : wl - 8, stretto ? y0 - 2 : y0 + o.q + 3, ((t) => (stretto || t.length * 6.1 < wl - 10 ? t : t.slice(0, Math.floor((wl - 16) / 6.1)) + "…"))(r[0].replace(/^Temi: /, "").replace(/ \(.*\)$/, "").slice(0, 34)), { anc: stretto ? "start" : "end", fill: T.ink, fs: T.fs });
-        [[r[1], T.ink, 0], [r[2], T.dati, 0], [r[3], T.nemico, 0], [r[4] + r[5] + r[6], T.fondo, 1]].forEach(([n, c, vuoto]) => { for (let j = 0; j < n; j++, k++) svg.append("rect").attr("x", wl + k * (o.q + 2)).attr("y", y0 + 2).attr("width", o.q).attr("height", o.q).attr("fill", c).attr("stroke", vuoto ? T.dati : "none"); });
+        [[r[1], T.ink, "none"], [r[2], "url(#mezzo-ver)", T.ink], [r[3], T.nemico, "none"], [r[4] + r[5] + r[6], T.fondo, T.dati]].forEach(([n, c, bordo]) => { for (let j = 0; j < n; j++, k++) svg.append("rect").attr("x", wl + k * (o.q + 2)).attr("y", y0 + 2).attr("width", o.q).attr("height", o.q).attr("fill", c).attr("stroke", bordo).attr("stroke-width", 0.8); });
+        svg.append("rect").attr("x", 0).attr("y", y0).attr("width", w).attr("height", passo).attr("fill", "transparent").attr("data-tip", `${r[1]} reggono · ${r[2]} in parte · ${r[3]} smentite · ${r[4] + r[5] + r[6]} altri\n${r[0]}`);
       });
     });
   };
@@ -463,7 +475,7 @@
       [25, 30, 35, 40].forEach((t) => { svg.append("line").attr("x1", ml).attr("x2", w).attr("y1", y(t)).attr("y2", y(t)).attr("stroke", T.riga); testo(svg, ml ? 0 : 3, y(t) + (ml ? 4 : -3), t + (t === 40 && !ml ? " parole per frase" : "")); });
       L.forEach((r, i) => { const x1 = i < L.length - 1 ? L[i + 1].da : +r.a + 1; svg.append("rect").attr("x", x(+r.da)).attr("y", y(+r.frase) - 1.5).attr("width", Math.max(2, x(x1) - x(+r.da) - 1)).attr("height", 3).attr("fill", +r.da < 1861 ? T.dati : T.ink); });
       svg.append("line").attr("x1", x(1861)).attr("x2", x(1861)).attr("y1", 4).attr("y2", h - 16).attr("stroke", T.evid).attr("stroke-width", 1.5);
-      testo(svg, x(1861) + 4, o.ml != null ? h - 20 : 12, "1861", { fill: T.evid, peso: 700 });
+      alone(testo(svg, x(1861) + 4, o.ml != null ? h - 20 : 12, "1861", { fill: T.ink, peso: 700 }));
       if (o.anni !== false) [1848, 1900, 1948, 1994, 2022].forEach((t) => testo(svg, x(t), h - 3, t, { anc: t === 2022 ? "end" : t === 1848 ? "start" : "middle", fs: T.fs - 0.5 }));
     });
   };

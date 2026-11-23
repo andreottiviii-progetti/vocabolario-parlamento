@@ -2,9 +2,40 @@
 (function () {
   "use strict";
   const G = (window.G = {});
-  G.INK = "#16181D"; G.ROSSO = "#E3120B"; G.NERO = "#111111"; G.GIALLO = "#FFE600"; G.GRIGIO = "#6B6B6B"; G.GDATI = "#9A9A9A"; G.RIGA = "#D9D9D9";
-  G.SERIE = ["#2454FF", "#E3120B", "#00A85A", "#7B3FE4", "#F56300"];
-  G.FAMIGLIA = { "PCI-PD": "#E3120B", DC: "#1E78E6", PSI: "#FF7BAC", "MSI-AN-FdI": "#1B2A7A", "FI-PdL": "#00B4D8", Lega: "#00A85A", M5S: "#F5C400", altri: "#B8BEC7" };
+  /* Colori dei grafici (revisione v7, controllati con lo script della guida di visualizzazione: luminosità, saturazione,
+     distanza per chi vede i colori in modo diverso, distanza normale, contrasto sul bianco). Ogni colore ha un significato:
+     - BLU: la parola di cui si parla (le curve delle parole);
+     - ROSSO: la cosa da guardare (anno di punta, barra in evidenza, smentita); nelle pagine degli esteri rosso e turchese
+       sono nemico e amico;
+     - SERIE: parole o misure messe a confronto, sempre in questo ordine (blu, rosso, verde, viola, arancio); passano il
+       controllo su tutte le coppie, non solo su quelle vicine;
+     - FAMIGLIA: i colori delle famiglie di partito, solo nei grafici dei partiti, sempre con la sigla scritta accanto;
+     - tutto il resto in grigi: SCURO per una misura senza colore, NERO (grigio medio) per il confronto, GDATI per il contesto. */
+  G.INK = "#15181C"; G.ROSSO = "#D2281F"; G.BLU = "#2349BD"; G.SCURO = "#3F4650"; G.BARRA = "#C4C9D0"; G.NERO = "#8C939D"; G.GIALLO = "#FFE600"; G.GRIGIO = "#5C636D"; G.GDATI = "#B8BEC7"; G.RIGA = "#DFE2E6";
+  G.SERIE = ["#2349BD", "#D2281F", "#0E9F6E", "#9B5DE5", "#C47F00"];
+  G.FAMIGLIA = { "PCI-PD": "#D2281F", DC: "#3375E3", PSI: "#F96DA6", "MSI-AN-FdI": "#314B92", "FI-PdL": "#32ADD7", Lega: "#22A56A", M5S: "#D8AA32", altri: "#B8BEC7" };
+  /* la famiglia di un partito scritto per nome (nelle storie i nomi delle serie sono sigle) */
+  G.famigliaDi = function (nome) {
+    const n = String(nome || "").replace(/[«»]/g, "").trim();
+    if (/^(PCI|PDS|DS|PD|PDS\/DS\/PD|PCI-PD)(\b|$)/.test(n) && !/^PD[IU]/.test(n)) return "PCI-PD";
+    if (/^(DC|PPI|UDC|CCD|Margherita)(\b|$)/.test(n)) return "DC";
+    if (/^PSI(\b|$)/.test(n) && !/PSDI|PSIUP/.test(n)) return "PSI";
+    if (/^(MSI|AN|FdI|MSI-AN-FdI)(\b|$)/.test(n)) return "MSI-AN-FdI";
+    if (/^(FI|PdL|FI\/PdL|FI-PdL|Forza Italia)(\b|$)/.test(n)) return "FI-PdL";
+    if (/^Lega(\b|$)/.test(n)) return "Lega";
+    if (/^M5S(\b|$)/.test(n)) return "M5S";
+    return null;
+  };
+  /* la chiave di una serie: un breve tratto del suo colore accanto al nome (il testo resta nell'inchiostro) */
+  G.chiave = (c, tratt) => `<span class="chiave${tratt ? " tratt" : ""}" style="--k:${c}" aria-hidden="true"></span>`;
+  G.quadro = (c) => `<span class="quadro" style="--k:${c}" aria-hidden="true"></span>`;
+  G.chiaveSVG = function (g, x, y, c, tratt) {
+    return g.append("line").attr("x1", x).attr("x2", x + 12).attr("y1", y).attr("y2", y).attr("stroke", c).attr("stroke-width", 2.5).attr("stroke-dasharray", tratt ? "4 2" : null);
+  };
+  /* legenda in una riga, sopra il disegno: serve sempre con due serie o più (con al massimo quattro ci sono anche le etichette dirette) */
+  G.legenda = function (voci) {
+    return `<p class="legenda">${voci.map((v) => `<span>${v.quadro ? G.quadro(v.c) : G.chiave(v.c, v.tratt)}${G.esc(v.nome)}</span>`).join("")}</p>`;
+  };
   G.FONTE = "Fonte: resoconti stenografici di Camera e Senato.";
   G.ANNI = []; for (let a = 1848; a <= 2022; a++) G.ANNI.push(a);
   G.SOGLIA = 300000; // parole minime perché un anno di un ramo entri nelle curve
@@ -292,12 +323,13 @@
     const v = (k) => (cs.getPropertyValue(k) || "").trim();
     let pieno = v("--sez"), scuro = v("--sez-s"), mezzo = v("--sez-m");
     if (!pieno || document.body.dataset.sezione === "neutra" || !document.body.dataset.sezione) { pieno = "#1B3FA8"; scuro = "#14307F"; mezzo = "#C9D3EE"; }
-    G.SEZ = pieno; G.SEZ_S = scuro; G.SEZ_M = mezzo;
-    // impianto del vocabolario: il blu della voce per la parola di cui si parla, il rosso per la cosa da guardare
-    // (anno di punta, tesi, smentita), tutto il resto in grigi
-    G.ROSSO = "#D2281F"; G.NERO = "#8C939D"; G.GDATI = "#B8BEC7"; G.RIGA = "#DFE2E6"; G.GRIGIO = "#5C636D"; G.INK = "#15181C";
+    // impianto del vocabolario: il blu per la parola di cui si parla (nei segni il blu controllato, un poco più chiaro di
+    // quello dei collegamenti, che sta sotto la fascia di luminosità), il rosso per la cosa da guardare, il resto in grigi
+    G.SEZ = G.BLU; G.SEZ_S = scuro; G.SEZ_M = mezzo;
+    G.ROSSO = "#D2281F"; G.SCURO = "#3F4650"; G.NERO = "#8C939D"; G.GDATI = "#B8BEC7"; G.RIGA = "#DFE2E6"; G.GRIGIO = "#5C636D"; G.INK = "#15181C"; G.FONDO = "#fff";
     if (document.body.dataset.sezione === "fascismo") {
-      G.SEZ = G.ROSSO = "#E3120B"; G.SEZ_S = "#F2F3F5"; G.SEZ_M = "#3A3E46"; G.NERO = "#A3A9B2"; G.GDATI = "#5B6470"; G.RIGA = "#2A2D33"; G.GRIGIO = "#A3A9B2"; G.INK = "#F2F3F5";
+      G.FONDO = "#0E0F12"; G.BARRA = "#5B6470";
+      G.SEZ = G.ROSSO = "#E3120B"; G.SEZ_S = "#F2F3F5"; G.SEZ_M = "#3A3E46"; G.SCURO = "#E6E8EB"; G.NERO = "#A3A9B2"; G.GDATI = "#5B6470"; G.RIGA = "#2A2D33"; G.GRIGIO = "#A3A9B2"; G.INK = "#F2F3F5";
     }
   };
   /* fascia di colore pieno con briciole, titolo e sommario (guida v2, capitolo 3) */
@@ -329,7 +361,7 @@
     const cap = box.append("figcaption");
     if (o.titolo != null) cap.append("h3").attr("class", "fig-tit").html(o.titolo);
     if (o.sotto != null) cap.append("p").attr("class", "fig-sotto").html(o.sotto);
-    if (o.lettura) box.append("p").attr("class", "fig-lettura").attr("aria-live", "polite");
+    if (typeof o.lettura === "string") box.append("p").attr("class", "fig-lettura").text(o.lettura);
     const area = box.append("div").attr("class", "fig-area");
     if (o.fonte !== false) {
       const f = box.append("p").attr("class", "fig-fonte").html((o.fonte || G.FONTE) + (o.limite ? " " + o.limite : ""));
@@ -337,6 +369,15 @@
     }
     area.attr("data-titolo", (o.titolo || "").replace(/<[^>]+>/g, ""));
     return area;
+  };
+  /* il bottone dei dati sotto un grafico che non nasce da G.figura (le tavole della home): una volta sola per grafico */
+  G.bottoneCSV = function (sel, nome, righe) {
+    const el = typeof sel === "string" ? document.querySelector(sel) : sel;
+    if (!el || (el.nextElementSibling && el.nextElementSibling.classList.contains("dati-csv"))) return;
+    const pf = document.createElement("p"); pf.className = "fig-fonte dati-csv";
+    const bt = document.createElement("button"); bt.type = "button"; bt.textContent = "Dati del grafico (CSV)";
+    bt.addEventListener("click", () => G.scaricaCSV(nome, typeof righe === "function" ? righe() : righe));
+    pf.appendChild(bt); el.after(pf);
   };
   G.scaricaCSV = function (nome, righe) {
     const testo = righe.map((r) => r.map((c) => (c == null ? "" : /[",;\n]/.test(String(c)) ? '"' + String(c).replace(/"/g, '""') + '"' : String(c))).join(",")).join("\n");
@@ -395,38 +436,42 @@
   };
 
   /* ---------- grafico a linee ---------- */
-  /* o: {x:[a,b], y:[0,max], serie:[{punti:[[x,y]], colore, sp, etich, valoreEtich}], h, m, unita, trascr, note, lettura:fn} */
+  /* o: {x:[a,b], y:[0,max], serie:[{punti:[[x,y]], colore, sp, etich, nome, tratt, piccoEtich}], h, m, unita, trascr, note,
+        lettura: false per togliere il mirino, legenda: false per toglierla, yFmt, xFmt}
+     Regole comuni (revisione v7): linea della tesi 2,25 px, le altre 1,5; punti con raggio 4 e un anello bianco;
+     le etichette sono nell'inchiostro, con il tratto del colore accanto; con due serie o più c'è la legenda sopra;
+     i numeri dell'asse stanno sopra le linee, con l'alone bianco; il mirino legge tutte le serie dell'anno. */
   G.linee = function (area, w, o) {
     const stretto = w < 560;
     const h = o.h || (stretto ? 240 : 340);
     const m = Object.assign({ t: 22, r: stretto ? 12 : 110, b: 26, l: 0 }, o.m || {});
     if (stretto && o.etichSopra !== false) m.r = 12;
+    const nominate = o.serie.filter((s) => s.etich || s.nome);
+    if (o.legenda !== false && nominate.length >= 2) area.append("div").html(G.legenda(nominate.map((s) => ({ c: s.colore, nome: s.etich || s.nome, tratt: !!s.tratt }))));
     const svg = area.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", area.attr("data-titolo") || "grafico");
     const x = d3.scaleLinear().domain(o.x).range([m.l, w - m.r]);
     const y = d3.scaleLinear().domain(o.y).range([h - m.b, m.t]);
     const gy = svg.append("g").attr("class", "asse");
     const ticks = o.yTicks || y.ticks(4);
-    ticks.forEach((v, i) => {
-      gy.append("line").attr("x1", m.l).attr("x2", w - m.r).attr("y1", y(v)).attr("y2", y(v)).attr("class", v === 0 ? "zero" : null);
-      gy.append("text").attr("x", m.l).attr("y", y(v) - 4).text((o.yFmt || G.num1)(v) + (i === ticks.length - 1 && o.unita ? " " + o.unita : ""));
-    });
+    ticks.forEach((v) => gy.append("line").attr("x1", m.l).attr("x2", w - m.r).attr("y1", y(v)).attr("y2", y(v)).attr("class", v === 0 ? "zero" : null));
     o.serie.forEach((s) => { s.punti = s.punti.filter((p) => p[0] >= o.x[0] && p[0] <= o.x[1]); if (s.banda) s.banda = s.banda.filter((p) => p[0] >= o.x[0] && p[0] <= o.x[1]); });
     const span = o.x[1] - o.x[0];
     const passo = o.xPasso || (span > 100 ? (stretto ? 50 : 20) : span > 40 ? (stretto ? 20 : 10) : span > 12 ? (stretto ? 5 : 2) : 1);
-    d3.range(Math.ceil(o.x[0] / passo) * passo, o.x[1] + 0.001, passo).forEach((v) => gy.append("text").attr("x", x(v)).attr("y", h - m.b + 17).attr("text-anchor", "middle").text(o.xFmt ? o.xFmt(v) : v));
+    d3.range(Math.ceil(o.x[0] / passo) * passo, o.x[1] + 0.001, passo).forEach((v) => gy.append("text").attr("x", x(v)).attr("y", h - m.b + 17).attr("text-anchor", x(v) - m.l < 16 ? "start" : "middle").text(o.xFmt ? o.xFmt(v) : v));
     if (o.fasce) o.fasce.forEach((f) => {
-      svg.append("rect").attr("x", x(f.da)).attr("width", Math.max(1, x(f.a) - x(f.da))).attr("y", m.t).attr("height", h - m.b - m.t).attr("fill", f.colore || "#EFEFEF");
+      svg.append("rect").attr("x", x(f.da)).attr("width", Math.max(1, x(f.a) - x(f.da))).attr("y", m.t).attr("height", h - m.b - m.t).attr("fill", f.colore || "#F2F3F5");
       if (f.testo) svg.append("text").attr("x", x(f.da) + 4).attr("y", m.t + 12).attr("class", "nota-t").attr("font-weight", 700).text(f.testo);
     });
-    if (o.trascr) G.lineeTrascrizione(svg, x, m.t, h - m.b, o.trascr, !stretto);
+    if (o.trascr) G.lineeTrascrizione(svg, x, m.t, h - m.b, o.trascr, !stretto && o.scrittaTrascr !== false);
     const linea = d3.line().defined((d) => d[1] != null).x((d) => x(d[0])).y((d) => y(d[1]));
-    const fine = [];
+    const fine = [], sopra = svg.append("g");
+    const spessore = (s) => (s.sp >= 2 ? 2.25 : s.sp && s.sp < 1.5 ? s.sp : 1.5);
     o.serie.forEach((s) => {
       if (s.banda) {
         const ar = d3.area().defined((d) => d[1] != null && d[2] != null).x((d) => x(d[0])).y0((d) => y(d[1])).y1((d) => y(d[2]));
-        svg.append("path").attr("d", ar(s.banda)).attr("fill", "#E6E6E6");
+        svg.append("path").attr("d", ar(s.banda)).attr("fill", "#E9EBEE");
       }
-      svg.append("path").attr("d", linea(s.punti)).attr("fill", "none").attr("stroke", s.colore).attr("stroke-width", s.sp || 1.5).attr("stroke-linejoin", "round").attr("stroke-dasharray", s.tratt || null);
+      svg.append("path").attr("d", linea(s.punti)).attr("fill", "none").attr("stroke", s.colore).attr("stroke-width", spessore(s)).attr("stroke-linejoin", "round").attr("stroke-linecap", "round").attr("stroke-dasharray", s.tratt || null);
       // punti isolati (anni senza vicini) come pallini, così non spariscono
       s.punti.forEach((d, i) => { if (d[1] != null && (s.punti[i - 1] || [])[1] == null && (s.punti[i + 1] || [])[1] == null) svg.append("circle").attr("cx", x(d[0])).attr("cy", y(d[1])).attr("r", 1.8).attr("fill", s.colore); });
       if (s.punto) s.punti.filter((d) => d[1] != null).forEach((d) => svg.append("circle").attr("cx", x(d[0])).attr("cy", y(d[1])).attr("r", s.punto).attr("fill", s.colore));
@@ -434,26 +479,25 @@
       if (ult && s.etich && !(stretto && o.etichSopra !== false)) fine.push({ y: y(ult[1]), x: x(ult[0]), s });
       if (s.piccoEtich && s.piccoEtich.x != null) {
         const px = x(s.piccoEtich.x), py = y(s.piccoEtich.y);
-        svg.append("circle").attr("cx", px).attr("cy", py).attr("r", 3).attr("fill", s.colore);
+        sopra.append("circle").attr("cx", px).attr("cy", py).attr("r", 4).attr("fill", s.piccoEtich.colore || s.colore).attr("stroke", G.FONDO || "#fff").attr("stroke-width", 2);
         const mezza = String(s.piccoEtich.testo).length * 3.6, anchor = px > w - mezza - 10 ? "end" : px < mezza + 4 ? "start" : "middle";
-        svg.append("text").attr("class", "etich").attr("x", px).attr("y", Math.max(12, py - 7)).attr("text-anchor", anchor).attr("fill", s.colore).text(s.piccoEtich.testo);
+        sopra.append("text").attr("class", "etich").attr("x", px).attr("y", Math.max(12, py - 9)).attr("text-anchor", anchor).attr("fill", G.INK).text(s.piccoEtich.testo);
       }
     });
+    sopra.raise();
     G.separa(fine, 15, m.t, h - m.b);
-    fine.forEach((f) => svg.append("text").attr("class", "etich").attr("x", f.x + 6).attr("y", f.y + 4).attr("fill", f.s.colore).text(f.s.etich));
+    fine.forEach((f) => {
+      // le serie di contesto (grigio chiaro) hanno l'etichetta grigia e senza tratto: resta in vista la serie colorata
+      const contesto = f.s.colore === G.GDATI;
+      if (!contesto) G.chiaveSVG(sopra, f.x + 5, f.y, f.s.colore, !!f.s.tratt);
+      sopra.append("text").attr("class", "etich").attr("x", contesto ? f.x + 6 : f.x + 21).attr("y", f.y + 4).attr("fill", contesto ? G.GRIGIO : G.INK).attr("font-weight", contesto ? 400 : null).text(f.s.etich);
+    });
+    // i numeri dell'asse verticale si scrivono per ultimi, sopra le linee, con l'alone bianco
+    const gt = svg.append("g").attr("class", "asse");
+    ticks.forEach((v, i) => gt.append("text").attr("class", "alone").attr("x", m.l).attr("y", y(v) - 4).text((o.yFmt || G.num1)(v) + (i === ticks.length - 1 && o.unita ? " " + o.unita : "")));
     if (o.note) o.note.slice(0, stretto ? 2 : 3).forEach((n) => G.nota(svg, x(n.x), y(n.y), x(n.tx != null ? n.tx : n.x), n.ty != null ? n.ty : y(n.y) - 40, n.testo, n));
-    if (o.lettura) {
-      const riga = area.node().parentNode.querySelector(".fig-lettura");
-      const v = svg.append("line").attr("y1", m.t).attr("y2", h - m.b).attr("stroke", G.NERO).attr("stroke-width", 1).style("display", "none");
-      svg.append("rect").attr("x", m.l).attr("y", m.t).attr("width", Math.max(0, w - m.r - m.l)).attr("height", h - m.t - m.b).attr("fill", "transparent")
-        .on("pointermove", (ev) => {
-          const a = Math.round(x.invert(d3.pointer(ev)[0]));
-          v.attr("x1", x(a)).attr("x2", x(a)).style("display", null);
-          if (riga) riga.innerHTML = o.lettura(a);
-        })
-        .on("pointerleave", () => { v.style("display", "none"); });
-    }
     if (o.dopo) o.dopo(svg, x, y, h, m);
+    if (o.lettura !== false) G.mirino(svg, x, y, o.serie.map((s) => ({ nome: s.etich || s.nome || (o.serie.length === 1 ? "" : ""), colore: s.colore, tratt: !!s.tratt, punti: s.punti })), { fmt: o.yFmt || G.num1, fmtX: o.xFmt, unita: o.unita || o.unitaLettura || "" });
     return { svg, x, y, m, h };
   };
 
@@ -475,9 +519,10 @@
       const px = x(p[0]);
       const anchor = px > w - 30 ? "end" : px < 30 ? "start" : "middle";
       svg.append("line").attr("x1", px).attr("x2", px).attr("y1", y(p[1] || 0) - 3).attr("y2", y(p[1] || 0)).attr("stroke", G.ROSSO).attr("stroke-width", 2);
-      svg.append("text").attr("x", px).attr("y", Math.max(12, y(p[1] || 0) - 5)).attr("text-anchor", anchor).attr("font-size", 12).attr("font-weight", 800).attr("fill", G.ROSSO).text(p[0]);
+      svg.append("text").attr("x", px).attr("y", Math.max(12, y(p[1] || 0) - 5)).attr("text-anchor", anchor).attr("font-size", 12).attr("font-weight", 800).attr("fill", G.INK).attr("class", "alone").text(p[0]);
     }
     if (o.asse !== false) [1848, 2022].forEach((v, i) => svg.append("text").attr("x", x(v)).attr("y", h - 2).attr("text-anchor", i ? "end" : "start").attr("font-size", 12).attr("fill", G.GRIGIO).text(v));
+    if (o.lettura !== false) G.mirino(svg, x, y, [{ nome: "", colore: o.linea || G.SEZ, punti: pts }], { fmt: o.fmt || G.num1, unita: o.unita || "" });
     return svg;
   };
   /* mini-curva da tabella (svg in linea) */
@@ -487,14 +532,15 @@
     let k = 0; valori.forEach((v, i) => { if ((v || 0) > (valori[k] || 0)) k = i; });
     const x = (i) => (i / (valori.length - 1)) * (w - 4) + 2, y = (v) => h - 2 - ((v || 0) / max) * (h - 5);
     const d = valori.map((v, i) => (v == null ? null : [x(i), y(v)])).reduce((s, p, i) => (p ? s + (s && valori[i - 1] != null ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1) : s), "");
-    return `<svg class="mini-svg" width="${w}" height="${h}" aria-hidden="true"><path d="${d}" fill="none" stroke="#111" stroke-width="1.25"/><circle cx="${x(k).toFixed(1)}" cy="${y(valori[k]).toFixed(1)}" r="2.2" fill="#E3120B"/></svg>`;
+    return `<svg class="mini-svg" width="${w}" height="${h}" aria-hidden="true"><path d="${d}" fill="none" stroke="#3F4650" stroke-width="1.25"/><circle cx="${x(k).toFixed(1)}" cy="${y(valori[k]).toFixed(1)}" r="2.5" fill="#D2281F"/></svg>`;
   };
 
   /* barre orizzontali in tabella: righe [[etichetta html, valore, tesi?]] */
   G.barre = function (righe, o) {
     o = o || {};
     const max = o.max || d3.max(righe, (r) => r[1]) || 1;
-    return '<table class="barre">' + righe.map((r) => `<tr${r[2] ? ' class="tesi"' : ""}><td class="e">${r[0]}</td><td class="b"><i style="width:${Math.max(0.5, (100 * r[1]) / max).toFixed(1)}%"></i></td><td class="n">${(o.fmt || G.num)(r[1])}</td></tr>`).join("") + "</table>";
+    const nudo = (t) => String(t).replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
+    return `<table class="barre${o.classe ? " " + o.classe : ""}">` + righe.map((r) => `<tr${r[2] ? ' class="tesi"' : ""}><td class="e">${r[0]}</td><td class="b" data-tip="${G.esc((o.fmt || G.num)(r[1]) + "\n" + nudo(r[0]))}"><i style="width:${Math.max(0.5, (100 * r[1]) / max).toFixed(1)}%${r[3] ? ";background:" + r[3] : ""}"></i></td><td class="n">${(o.fmt || G.num)(r[1])}</td></tr>`).join("") + "</table>";
   };
 
   /* tabella ordinabile: colonne [{t, k, n:true, fmt}] */
@@ -556,7 +602,7 @@
   /* colori dei filoni delle storie (guida v2, 1.3) */
   G.FILONE = { "Parole che nascono e muoiono": ["#2454FF", "#fff"], "Esteri ed Europa": ["#00A3AD", "#16181D"], "Semplificazione e resoconto": ["#7B3FE4", "#fff"],
     "Potere, partiti e persone": ["#E5007D", "#fff"], "Prima Repubblica": ["#F56300", "#16181D"], "Temi": ["#00A85A", "#16181D"], "Fascismo": ["#16181D", "#fff"] };
-  G.SCURO = { "#2454FF": "#1B3FCC", "#00A3AD": "#00757D", "#7B3FE4": "#5B2BB5", "#E5007D": "#B80064", "#F56300": "#B84A00", "#00A85A": "#007A41", "#16181D": "#16181D", "#E3120B": "#C00F09" };
+  G.TONO_SCURO = { "#2454FF": "#1B3FCC", "#00A3AD": "#00757D", "#7B3FE4": "#5B2BB5", "#E5007D": "#B80064", "#F56300": "#B84A00", "#00A85A": "#007A41", "#16181D": "#16181D", "#E3120B": "#C00F09" };
   /* tessere delle storie, di misura diversa */
   /* le storie come rimandi di un vocabolario: → titolo, epoca in corsivo, verdetto; la smentita col quadrato rosso */
   G.voceStoria = (s) => `<p class="rimando">${s.verdetto === "smentita" ? '<span class="sm" aria-hidden="true">■</span>' : '<span class="fr" aria-hidden="true">→</span>'} <a href="storia.html?id=${s.id}">${G.esc(s.titolo)}</a> <i>${G.esc(s.occhiello || s.filone || "")}</i>${s.verdetto ? " " + G.esito(s.verdetto) : ""}</p>`;
@@ -582,7 +628,6 @@
      «somiglianze» delle schede partito, i cinque più simili di qualunque legislatura); nessun conto nuovo. Si esclude la
      propria famiglia (il PCI non «somiglia» al PDS che ne è l'erede). */
   G.RIGHE_GRIGLIA = [["PCI, PDS, DS, PD", ["PCI", "PDS/DS/PD"]], ["DC", ["DC"]], ["PSI", ["PSI"]], ["MSI, AN, FdI", ["MSI", "AN", "FdI"]], ["PLI", ["PLI"]], ["PRI", ["PRI"]], ["FI, PdL", ["FI/PdL"]], ["Lega", ["Lega"]], ["M5S", ["M5S"]]];
-  G.TESTO_FAM = { "PCI-PD": "#C4100A", DC: "#1A64C4", PSI: "#C2306A", "MSI-AN-FdI": "#1B2A7A", "FI-PdL": "#00799A", Lega: "#00804A", M5S: "#8A6D00", altri: "#5C636D" };
   G.NOME_BREVE = (n) => ({ "PDS/DS/PD": "PDS-DS-PD", "FI/PdL": "FI-PdL", "UDC/CCD": "UDC-CCD", "SEL/LeU/SI": "SEL-LeU", "Scelta Civica": "Sc. Civica", "Rosa nel Pugno": "Rosa n. P.", "Unita' Socialista": "Un. Soc.", "PSI-PSDI unificati": "PSI-PSDI", "La Rete": "Rete" }[n] || n);
   G.datiGriglia = function () {
     return Promise.all([G.carica("partiti/indice.json"), G.carica("base.json")]).then(([IX, B]) => {
@@ -606,16 +651,27 @@
     return (o.D ? Promise.resolve(o.D) : G.datiGriglia()).then((D) => {
       const righe = (o.righe ? G.RIGHE_GRIGLIA.filter((r) => o.righe.indexOf(r[0]) >= 0) : G.RIGHE_GRIGLIA).concat(o.extra || []);
       const legs = o.legs || d3.range(1, 19);
+      const celle = [["partito", "legislatura", "somiglia a", "sua legislatura", "famiglia", "vicinanza"]];
+      let r0 = "";
       const cella = (ids, L) => {
         const id = ids.find((x) => D.S[x] && (D.S[x].somiglianze || {})[String(L)]);
         if (!id) return `<td class="vuota"></td>`;
         const v = D.vicino(id, L);
         if (!v) return `<td class="vuota">·</td>`;
-        const c = G.TESTO_FAM[v.fam] || G.TESTO_FAM.altri;
-        return `<td title="${G.esc(id.replace("Unita'", "Unità"))} nella ${G.romano(L)} legislatura parla come ${G.esc(v.p.replace("Unita'", "Unità"))} della ${v.leg}: vicinanza ${G.num(v.s, 2)}"><b style="color:${c}">${G.esc(G.NOME_BREVE(v.p))}</b><span>${v.leg} · ${G.num(v.s, 2)}</span></td>`;
+        // la sigla resta nell'inchiostro; il quadretto accanto porta il colore della famiglia
+        const c = G.FAMIGLIA[v.fam] || G.FAMIGLIA.altri;
+        celle.push([r0, G.romano(L), v.p.replace("Unita'", "Unità"), v.leg, v.fam, v.s]);
+        return `<td data-tip="vicinanza ${G.num(v.s, 2)}\n${G.esc(id.replace("Unita'", "Unità"))} nella ${G.romano(L)} legislatura parla come ${G.esc(v.p.replace("Unita'", "Unità"))} della ${v.leg}"><b>${G.quadro(c)}${G.esc(G.NOME_BREVE(v.p))}</b><span>${v.leg} · ${G.num(v.s, 2)}</span></td>`;
       };
       el.innerHTML = `<div class="griglia-scorre"><table class="griglia-somiglia"><caption class="nascosto">A chi somiglia la lingua di ogni partito, legislatura per legislatura</caption><thead><tr><th scope="col">partito</th>${legs.map((L) => `<th scope="col">${G.romano(L)}<span>${D.anni[L] ? D.anni[L][0] + "-" + String(D.anni[L][1]).slice(2) : ""}</span></th>`).join("")}</tr></thead><tbody>` +
-        righe.map((r) => `<tr${o.evid && r[1].some((x) => o.evid.indexOf(x) >= 0) ? ' class="evid"' : ""}><th scope="row">${r[1].length === 1 && D.slug[r[1][0]] ? `<a href="partito.html?id=${encodeURIComponent(r[1][0])}">${G.esc(r[0])}</a>` : G.esc(r[0])}</th>${legs.map((L) => cella(r[1], L)).join("")}</tr>`).join("") + `</tbody></table></div>`;
+        righe.map((r) => { r0 = r[0]; return `<tr${o.evid && r[1].some((x) => o.evid.indexOf(x) >= 0) ? ' class="evid"' : ""}><th scope="row">${r[1].length === 1 && D.slug[r[1][0]] ? `<a href="partito.html?id=${encodeURIComponent(r[1][0])}">${G.esc(r[0])}</a>` : G.esc(r[0])}</th>${legs.map((L) => cella(r[1], L)).join("")}</tr>`; }).join("") + `</tbody></table></div>`;
+      // i dati della tabella, come per ogni grafico
+      if (o.csv !== false) {
+        const pf = document.createElement("p"); pf.className = "fig-fonte griglia-csv";
+        const bt = document.createElement("button"); bt.type = "button"; bt.textContent = "Dati della tabella (CSV)";
+        bt.addEventListener("click", () => G.scaricaCSV(o.nomeCSV || "a_chi_somiglia", celle));
+        pf.appendChild(bt); el.appendChild(pf);
+      }
       return D;
     });
   };
@@ -730,6 +786,79 @@
       const r = n <= 30 ? G.romano(n) : String(n);
       if (s.textContent !== "Tav. " + r) s.textContent = "Tav. " + r;
     });
+  };
+
+  /* ---------- il riquadro di lettura (uguale in tutto il sito) ----------
+     Passando su un segno compare un riquadro bianco con un filo, senza ombra né angoli tondi: prima il valore, in grassetto,
+     poi che cosa è. Ogni segno che porta data-tip (testo; le righe si separano con «\n», la prima è il valore) o un <title>
+     ha il suo riquadro; dentro i grafici anche gli elementi con l'attributo title. Il riquadro aggiunge e non toglie:
+     i valori stanno anche nelle etichette o nei dati del grafico (CSV). Le linee usano G.tip.mostra con il mirino. */
+  G.tip = (function () {
+    let box = null;
+    const fai = () => { if (!box) { box = document.createElement("div"); box.className = "riquadro"; box.setAttribute("role", "status"); document.body.appendChild(box); } return box; };
+    const metti = (x, y) => {
+      const b = fai(), r = b.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight;
+      let left = x + 14, top = y + 14;
+      if (left + r.width > W - 8) left = Math.max(8, x - r.width - 14);
+      if (top + r.height > H - 8) top = Math.max(8, y - r.height - 14);
+      b.style.left = left + "px"; b.style.top = top + "px";
+    };
+    const T = {
+      mostra(html, x, y) { const b = fai(); b.innerHTML = html; b.style.display = "block"; metti(x, y); },
+      testo(t, x, y) { const r = String(t).split("\n"); T.mostra(`<b>${G.esc(r[0])}</b>${r.slice(1).map((q) => `<span>${G.esc(q)}</span>`).join("")}`, x, y); },
+      nascondi() { if (box) box.style.display = "none"; },
+    };
+    // trova il testo del segno: data-tip, poi un <title> figlio (che si sposta in data-tip, così il browser non ne mostra un secondo)
+    const DENTRO = "figure, .fig, .fig-area, .tavola, .griglia-scorre, svg";
+    const segno = (el) => {
+      for (let n = el; n && n !== document.body && n.nodeType === 1; n = n.parentNode) {
+        if (n.hasAttribute("data-tip")) return n;
+        const ti = n.querySelector && n.querySelector(":scope > title");
+        if (ti && n.tagName.toLowerCase() !== "svg") { n.setAttribute("data-tip", ti.textContent); ti.remove(); return n; }
+        if (n.hasAttribute("title") && n.closest(DENTRO) && n.tagName.toLowerCase() !== "a") { n.setAttribute("data-tip", n.getAttribute("title")); n.removeAttribute("title"); return n; }
+        if (n.tagName && n.tagName.toLowerCase() === "svg") return null;
+      }
+      return null;
+    };
+    let attivo = null;
+    document.addEventListener("pointermove", (e) => {
+      if (e.target && e.target.closest && e.target.closest(".mirino")) return; // le linee gestiscono il loro riquadro
+      const s = e.target && e.target.nodeType === 1 ? segno(e.target) : null;
+      if (s) { if (attivo && attivo !== s) attivo.classList.remove("letto"); attivo = s; s.classList.add("letto"); T.testo(s.getAttribute("data-tip"), e.clientX, e.clientY); }
+      else if (attivo) { attivo.classList.remove("letto"); attivo = null; T.nascondi(); }
+    }, { passive: true });
+    document.addEventListener("focusin", (e) => { const s = e.target.nodeType === 1 ? segno(e.target) : null; if (s) { const r = s.getBoundingClientRect(); T.testo(s.getAttribute("data-tip"), r.right, r.top); } });
+    document.addEventListener("focusout", () => T.nascondi());
+    window.addEventListener("scroll", () => { if (attivo) { attivo.classList.remove("letto"); attivo = null; } T.nascondi(); }, { passive: true });
+    return T;
+  })();
+  /* il mirino delle linee: una riga verticale che si aggancia all'anno più vicino, un punto su ogni serie e un riquadro
+     con tutte le serie di quell'anno. serie: [{nome, colore, tratt, punti:[[x,y]]}] */
+  G.mirino = function (svg, x, y, serie, o) {
+    o = o || {};
+    const [x0, x1] = x.range(), [yb, yt] = y.range();
+    const fmt = o.fmt || ((v) => G.num1(v));
+    const xs = [...new Set([].concat(...serie.map((s) => s.punti.filter((p) => p[1] != null).map((p) => p[0]))))].sort((a, b) => a - b);
+    if (!xs.length) return;
+    const g = svg.append("g").style("display", "none").attr("pointer-events", "none");
+    const ln = g.append("line").attr("y1", yt).attr("y2", yb).attr("stroke", G.GRIGIO).attr("stroke-width", 1);
+    const pt = serie.map((s) => g.append("circle").attr("r", 4).attr("fill", s.colore).attr("stroke", o.fondo || G.FONDO || "#fff").attr("stroke-width", 2));
+    svg.append("rect").attr("class", "mirino").attr("x", x0).attr("y", Math.min(yt, yb)).attr("width", Math.max(0, x1 - x0)).attr("height", Math.abs(yb - yt)).attr("fill", "transparent")
+      .on("pointermove", (e) => {
+        const v = x.invert(d3.pointer(e)[0]);
+        const a = xs.reduce((b, q) => (Math.abs(q - v) < Math.abs(b - v) ? q : b), xs[0]);
+        g.style("display", null); ln.attr("x1", x(a)).attr("x2", x(a));
+        const righe = [];
+        serie.forEach((s, i) => {
+          const p = s.punti.find((q) => q[0] === a);
+          if (p && p[1] != null) pt[i].attr("cx", x(a)).attr("cy", y(p[1])).style("display", null); else pt[i].style("display", "none");
+          // s.leggi: i valori da scrivere, se diversi da quelli disegnati (per esempio l'anno vero sotto la media di tre anni)
+          const v = s.leggi ? (s.leggi.find((q) => q[0] === a) || [a, null]) : p;
+          if (s.nome || serie.length === 1) righe.push(`<span>${serie.length > 1 ? G.chiave(s.colore, s.tratt) : ""}<b>${v && v[1] != null ? G.esc(fmt(v[1])) : "–"}</b> ${G.esc(s.nome || o.unita || "")}</span>`);
+        });
+        G.tip.mostra(`<span class="riq-x">${G.esc(o.fmtX ? o.fmtX(a) : a)}</span>${righe.join("")}${o.unita && serie.length > 1 ? `<span class="riq-u">${G.esc(o.unita)}</span>` : ""}`, e.clientX, e.clientY);
+      })
+      .on("pointerleave", () => { g.style("display", "none"); G.tip.nascondi(); });
   };
 
   /* errore leggibile */

@@ -8,7 +8,7 @@
   const PRONTI = [["guerra", "pace"], ["compagni", "camerati", "popolo"], ["divorzio", "aborto", "droga"], ["mafia", "terrorismo", "emergenza"], ["tangentopoli", "spread", "casta"]];
   const $ = (id) => document.getElementById(id);
   const minuscola = (s) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
-  const SERIE = ["#1B3FA8", "#D2281F", "#0B8F52", "#7B3FE4", "#B84A00"];
+  const SERIE = G.SERIE; // blu, rosso, verde, viola, arancio: la tavolozza controllata di comune.js
   let PSG = {}; // prime volte nel senso di oggi, con i nomi propri segnati
 
   G.avvia(function () {
@@ -44,7 +44,7 @@
       <span class="pronti">oppure: ${PRONTI.map((p) => `<a href="?p=${p.join(",")}" data-p="${p.join(",")}">${p.join(", ")}</a>`).join("")}</span><span class="avviso" id="asse-avviso" role="status"></span></div>
       <div id="asse-fig"></div>`);
     const fig = G.figura("#asse-fig", {
-      titolo: null, lettura: true,
+      titolo: null, lettura: "Passa sul grafico per leggere i valori di un anno.",
       fonte: "Volte ogni milione di parole, media di Camera e Senato e di tre anni. Tratteggio: anni in cui cambia la trascrizione.",
       limite: "Gli anni con meno di 300.000 parole in un ramo non sono disegnati: nel 1934-40 lo sono quasi tutti, nel 1941-45 non ci sono sedute.",
       csv: () => [["anno"].concat(attive)].concat(G.ANNI.map((a, i) => [a].concat(attive.map((w) => (curve[w] && curve[w].pm.m[i] != null ? curve[w].pm.m[i].toFixed(2) : ""))))), nomeCSV: "confronto_parole",
@@ -61,7 +61,8 @@
       const serie = attive.map((w, i) => ({ w, c: curve[w], col: SERIE[i], m3: G.media3(curve[w].pm.m), vero: G.picco(curve[w].pm.m) }));
       if (serie.length) {
         const a = serie[0];
-        const nome = (s, maiusc) => `<a href="parola.html?p=${s.w}" style="color:${s.col}">${G.esc(maiusc ? G.maiusc(s.c.forma) : s.c.forma)}</a>`;
+        // la parola resta nell'inchiostro; il tratto del suo colore, accanto, dice qual è la sua linea
+        const nome = (s, maiusc) => `<span class="con-chiave">${G.chiave(s.col)}<a href="parola.html?p=${s.w}">${G.esc(maiusc ? G.maiusc(s.c.forma) : s.c.forma)}</a></span>`;
         let t = `${nome(a, true)} tocca il massimo nel ${a.vero.anno}`, dal = null;
         if (serie.length > 1) {
           const b = serie[1];
@@ -74,10 +75,10 @@
         }
         $("asse-tit").innerHTML = t;
       }
-      $("asse-gettoni").innerHTML = serie.length > 1 ? "togli: " + serie.map((s) => `<button class="togli" type="button" style="color:${s.col}" data-w="${s.w}" aria-label="Togli ${G.esc(s.c.forma)} dal confronto">${G.esc(s.c.forma)} ×</button>`).join(" ") : "";
+      $("asse-gettoni").innerHTML = serie.length > 1 ? "togli: " + serie.map((s) => `<button class="togli" type="button" data-w="${s.w}" aria-label="Togli ${G.esc(s.c.forma)} dal confronto">${G.chiave(s.col)}${G.esc(s.c.forma)} ×</button>`).join(" ") : "";
       document.querySelectorAll("#asse-gettoni .togli").forEach((b) => b.addEventListener("click", () => { attive = attive.filter((w) => w !== b.dataset.w); aggiornaURL(); disegna(); }));
       // le parole del confronto come voci, nella colonna accanto
-      $("tre").innerHTML = serie.map((s) => `<p class="voce"><a class="lemma" href="parola.html?p=${s.w}" style="color:${s.col}">${G.esc(s.c.forma)}</a> <span class="anni">[${s.c.y0}-2022]</span>${s.c.y0 >= 1990 && !(PSG[s.w] && (PSG[s.w].np || /non nuova|incerta/.test(PSG[s.w].stato))) ? ' <i class="gram">neol.</i>' : ""} Detta ${G.num(s.c.tot)} volte. Anno di punta il <a class="lk" href="anno.html?a=${s.vero.anno}">${s.vero.anno}</a>, con ${G.num1(s.vero.val)} volte ogni milione di parole.</p>`).join("");
+      $("tre").innerHTML = serie.map((s) => `<p class="voce">${G.chiave(s.col)}<a class="lemma" href="parola.html?p=${s.w}">${G.esc(s.c.forma)}</a> <span class="anni">[${s.c.y0}-2022]</span>${s.c.y0 >= 1990 && !(PSG[s.w] && (PSG[s.w].np || /non nuova|incerta/.test(PSG[s.w].stato))) ? ' <i class="gram">neol.</i>' : ""} Detta ${G.num(s.c.tot)} volte. Anno di punta il <a class="lk" href="anno.html?a=${s.vero.anno}">${s.vero.anno}</a>, con ${G.num1(s.vero.val)} volte ogni milione di parole.</p>`).join("");
       fig.datum(serie);
       G.ridisegna("#asse-fig .fig-area");
     }
@@ -117,29 +118,28 @@
       d3.range(1860, 2021, stretto ? 50 : 20).forEach((a) => gy.append("text").attr("x", x(a)).attr("y", HH - m.b + 16).attr("text-anchor", "middle").text(a));
       G.lineeTrascrizione(svg, x, m.t, HH - m.b, "entrambi", false);
       const linea = d3.line().defined((d) => d[1] != null).x((d) => x(d[0])).y((d) => y(d[1]));
-      const fine = [];
+      const fine = [], sopra = svg.append("g");
       serie.forEach((s, k) => {
-        svg.append("path").attr("d", linea(G.ANNI.map((a, i) => [a, s.m3[i]]))).attr("fill", "none").attr("stroke", s.col).attr("stroke-width", k === 0 ? 2.4 : 1.9).attr("stroke-linejoin", "round");
+        svg.append("path").attr("d", linea(G.ANNI.map((a, i) => [a, s.m3[i]]))).attr("fill", "none").attr("stroke", s.col).attr("stroke-width", 2.25).attr("stroke-linejoin", "round").attr("stroke-linecap", "round");
         const pk = G.picco(s.m3);
-        svg.append("circle").attr("cx", x(pk.anno)).attr("cy", y(pk.val)).attr("r", 3.4).attr("fill", s.col);
+        sopra.append("circle").attr("cx", x(pk.anno)).attr("cy", y(pk.val)).attr("r", 4).attr("fill", s.col).attr("stroke", "#fff").attr("stroke-width", 2);
         if (!stretto) {
           const px = x(pk.anno);
-          svg.append("text").attr("class", "etich").attr("x", px).attr("y", y(pk.val) - 7).attr("text-anchor", px > w - m.r - 60 ? "end" : "middle").attr("fill", s.col).text(s.c.forma + " " + s.vero.anno + ": " + G.num1(s.vero.val));
+          sopra.append("text").attr("class", "etich").attr("x", px).attr("y", y(pk.val) - 9).attr("text-anchor", px > w - m.r - 60 ? "end" : "middle").attr("fill", G.INK).text(s.c.forma + " " + s.vero.anno + ": " + G.num1(s.vero.val));
         }
         const ult = G.ANNI.map((a, i) => [a, s.m3[i]]).filter((d) => d[1] != null).slice(-1)[0];
         if (ult && !stretto) fine.push({ y: y(ult[1]), x: x(ult[0]), s });
       });
+      sopra.raise();
       G.separa(fine, 15, m.t, HH - m.b);
-      fine.forEach((f) => svg.append("text").attr("class", "etich").attr("x", f.x + 6).attr("y", f.y + 4).attr("fill", f.s.col).text(f.s.c.forma));
+      fine.forEach((f) => { G.chiaveSVG(sopra, f.x + 5, f.y, f.s.col); sopra.append("text").attr("class", "etich").attr("x", f.x + 21).attr("y", f.y + 4).attr("fill", G.INK).text(f.s.c.forma); });
+      // i numeri dell'asse sopra le linee, con l'alone bianco
+      const gt = svg.append("g").attr("class", "asse");
+      gy.selectAll("text").each(function () { this.classList.add("alone"); gt.node().appendChild(this); });
+      // il mirino: i punti stanno sulle linee (media di tre anni), il riquadro scrive il valore vero dell'anno, come la tabella dei dati
+      G.mirino(svg, x, y, serie.map((s) => ({ nome: s.c.forma, colore: s.col, punti: G.ANNI.map((a, i) => [a, s.m3[i]]), leggi: G.ANNI.map((a, i) => [a, s.c.pm.m[i]]) })), { fmt: G.num1, unita: "volte per milione di parole, anno per anno" });
       const riga = area.node().parentNode.querySelector(".fig-lettura");
-      const v = svg.append("line").attr("y1", m.t).attr("y2", HH - m.b).attr("stroke", G.GRIGIO).style("display", "none");
-      svg.append("rect").attr("x", 0).attr("y", m.t).attr("width", w - m.r).attr("height", HH - m.t - m.b).attr("fill", "transparent")
-        .on("pointermove", (e) => {
-          const a = Math.max(1848, Math.min(2022, Math.round(x.invert(d3.pointer(e)[0])))), i = a - 1848;
-          v.attr("x1", x(a)).attr("x2", x(a)).style("display", null);
-          riga.innerHTML = "<b>" + a + "</b>: " + serie.map((s) => `<span style="color:${s.col};font-weight:700">${G.esc(s.c.forma)}</span> ${s.c.pm.m[i] == null ? "nessun dato" : G.num1(s.c.pm.m[i])}`).join(" · ") + " volte per milione";
-        }).on("pointerleave", () => v.style("display", "none"));
-      if (riga && !riga.innerHTML) riga.innerHTML = stretto ? serie.map((s) => `<span style="color:${s.col};font-weight:700">${G.esc(s.c.forma)} ${s.vero.anno}: ${G.num1(s.vero.val)}</span>`).join(" · ") : '<span class="grigio">Passa sul grafico per leggere i valori di un anno.</span>';
+      if (riga && stretto) riga.innerHTML = serie.map((s) => `<span>${G.chiave(s.col)}<b>${G.esc(s.c.forma)}</b> ${s.vero.anno}: ${G.num1(s.vero.val)}</span>`).join(" · ");
     });
     function aggiornaURL() { try { history.replaceState(null, "", attive.length ? "?p=" + attive.join(",") : location.pathname); } catch (e) { /* niente */ } }
     function leggi(t) {
@@ -179,6 +179,7 @@
     if (v === "celle") { $("leg").innerHTML = V.legendaGradini(); V.amiciCelle("#g-strisce", D.X, { hr: 24, wl: 112 }); }
     else if (v === "strisce") { $("leg").innerHTML = V.legendaStrisce(); V.strisce("#g-strisce", D.X, { hp: 19, hf: 6, vuoto: 8, wl: 112, fsNome: 15, pesoNome: 800, sotto: false, note: [V.NOTE_STRISCE[2], V.NOTE_STRISCE[5]] }); }
     else { $("leg").innerHTML = V.legendaLinee(); V.amiciLinee("#g-strisce", D.X, { hr: 40, wl: 112 }); }
+    G.bottoneCSV("#g-strisce", "amici_nemici", () => [["paese", "anno", "indice_media_tre_anni", "stato_vero"]].concat([].concat(...["Austria", "Germania", "Francia", "Gran Bretagna", "Russia/URSS", "Stati Uniti", "Jugoslavia"].map((p) => { const t = V.tonoPaese(D.X, p), al = D.X.alleanze[p] || {}; return G.ANNI.map((a) => [p, a, t[a] != null ? t[a].toFixed(3) : "", (al[a] || [])[1] || ""]); }))));
     manubri(H, SI, GV);
   }
   function manubri(H, SI, GV) {
@@ -187,6 +188,7 @@
     const piu = righe.filter((r) => r[4] > r[2] && r[0] !== "Bosnia").length;
     $("gu-titolo").textContent = `Chi sta all'opposizione dice «guerra» più di chi governa: succede in ${piu} operazioni militari su ${righe.length}`;
     $("gu-did").innerHTML = "Su cento volte che si parla dell'operazione, quante si dice «guerra» invece di «missione» o «operazione» (entro 30 parole dal nome del paese), Camera. Ogni intervento conta dalla parte in cui stava chi parlava quel giorno. <a href=\"storia.html?id=missione-o-guerra\">La storia →</a>";
+    G.bottoneCSV("#g-manubri", "missione_o_guerra", [["operazione", "guerra_su_100_chi_governa", "guerra_su_100_opposizione"]].concat(righe.map((r) => [r[0], r[2], r[4]])));
     V.fig("#g-manubri", (a, w) => {
       const T = V.tema, passo = 46, mt = 30, h = mt + righe.length * passo + 4, wl = 0;
       const svg = a.append("svg").attr("width", w).attr("height", h).attr("viewBox", `0 0 ${w} ${h}`).attr("role", "img").attr("aria-label", "Missione o guerra: quota di «guerra» detta da chi governa e da chi sta all'opposizione, operazione per operazione").style("display", "block").style("overflow", "visible");
@@ -227,10 +229,12 @@
       $("ri-spiega").innerHTML = `Che cosa vuol dire. Ogni anno lo stenografo annota un certo numero di risate ogni mille parole dette in aula. Se ${G.esc(b.nome)} facesse ridere come un parlamentare qualunque di quegli anni, con le sue ${G.num(b.parole)} parole avremmo circa ${G.num(attese, attese < 10 ? 1 : 0)} ${Math.round(attese) === 1 ? "risata" : "risate"}: è il previsto. Lo stenografo ne ha annotate ${G.num(b.ila)}: ${G.num(b.rapporto, 1)} volte tanto.`;
     }
     V.barre("#g-risate", E.map((o, i) => [o.nome.length > 24 ? o.nome.slice(0, 23) + "…" : o.nome, o.rapporto, i === 0]), { wl: 150, passo: 19, fmt: (v) => V.num(v, 1) + " volte" });
+    G.bottoneCSV("#g-risate", "risate_piu_del_previsto", [["oratore", "risate_osservate_su_attese"]].concat(E.map((o) => [o.nome, o.rapporto])));
     $("smentite").innerHTML = (H.smentite_txt || []).slice(0, 5).map((s) => `<li><span class="sm" aria-hidden="true">■</span> <a href="storia.html?id=${s.storia}">${G.esc(s.testo)}</a></li>`).join("");
     const tot = H.esperimenti.conti.find((r) => r[0] === "Totale");
     $("n-esp").textContent = tot ? tot[7] : "";
     V.verdetti("#g-verdetti", H.esperimenti.conti, { wl: 132, passo: 13, q: 6 });
+    G.bottoneCSV("#g-verdetti", "esperimenti_conti", [["filone", "regge", "in parte", "smentita", "non valida", "descrittiva", "non misurata", "totale"]].concat(H.esperimenti.conti));
   }
 
   /* ---------------- le parole ---------------- */
@@ -252,7 +256,7 @@
         for (let k = 0; k < 172 && sorp == null; k++) if ([0, 1, 2].every((j) => A[k + j] != null && Bq[k + j] != null && Bq[k + j] > A[k + j])) sorp = k;
         const box = document.createElement("div");
         box.className = "coppia";
-        box.innerHTML = `<p class="coppia-testa"><a class="lemma" href="parola.html?p=${p}">${G.esc(H.curve[p].forma || p)}</a> <span class="fr">e</span> <a class="lemma" href="parola.html?p=${q}" style="color:#D2281F">${G.esc(C.forma || q)}</a>${sorp != null ? ` <span class="anni">sorpasso nel ${1848 + sorp}</span>` : ""}</p><div class="fig" id="coppia-${p}"></div><p class="did">Volte per milione di parole, media di Camera e Senato e di tre anni; il punto è il primo anno da cui la seconda resta sopra.${p === "emigrazione" ? ` Con la misura dell'esperimento il sorpasso cade nel 1988: <a href="storia.html?id=${storia}">la storia</a>.` : storia ? ` <a href="storia.html?id=${storia}">La storia</a>.` : ""}</p>`;
+        box.innerHTML = `<p class="coppia-testa">${G.chiave(G.SCURO)}<a class="lemma" href="parola.html?p=${p}">${G.esc(H.curve[p].forma || p)}</a> <span class="fr">e</span> ${G.chiave(G.ROSSO)}<a class="lemma" href="parola.html?p=${q}">${G.esc(C.forma || q)}</a>${sorp != null ? ` <span class="anni">sorpasso nel ${1848 + sorp}</span>` : ""}</p><div class="fig" id="coppia-${p}"></div><p class="did">Volte per milione di parole, media di Camera e Senato e di tre anni; il punto è il primo anno da cui la seconda resta sopra.${p === "emigrazione" ? ` Con la misura dell'esperimento il sorpasso cade nel 1988: <a href="storia.html?id=${storia}">la storia</a>.` : storia ? ` <a href="storia.html?id=${storia}">La storia</a>.` : ""}</p>`;
         riga.replaceWith(box);
         V.fig("#coppia-" + p, (a, w) => {
           const T = V.tema, h = 64, mb = 14, mt = 8;
@@ -261,14 +265,15 @@
           const mx = d3.max(A.concat(Bq), (v) => v || 0) || 1, y = d3.scaleLinear().domain([0, mx * 1.05]).range([h - mb, mt]);
           const linea = d3.line().defined((d) => d != null).x((d, k) => x(1848 + k)).y((d) => y(d));
           svg.append("line").attr("x1", 0).attr("x2", w).attr("y1", h - mb).attr("y2", h - mb).attr("stroke", T.dati);
-          svg.append("path").attr("d", linea(A)).attr("fill", "none").attr("stroke", T.ink).attr("stroke-width", 1.5);
-          svg.append("path").attr("d", linea(Bq)).attr("fill", "none").attr("stroke", "#D2281F").attr("stroke-width", 1.5);
+          svg.append("path").attr("d", linea(A)).attr("fill", "none").attr("stroke", G.SCURO).attr("stroke-width", 1.5);
+          svg.append("path").attr("d", linea(Bq)).attr("fill", "none").attr("stroke", G.ROSSO).attr("stroke-width", 1.5);
           if (sorp != null) {
             const px = x(1848 + sorp), py = y(Bq[sorp]);
-            svg.append("circle").attr("cx", px).attr("cy", py).attr("r", 3.5).attr("fill", "#D2281F");
+            svg.append("circle").attr("cx", px).attr("cy", py).attr("r", 4).attr("fill", G.ROSSO).attr("stroke", "#fff").attr("stroke-width", 2);
             svg.append("text").attr("x", px + (px > w * 0.6 ? -6 : 6)).attr("y", py - 6).attr("text-anchor", px > w * 0.6 ? "end" : "start").attr("font-size", 12).attr("font-weight", 700).attr("fill", T.ink).attr("class", "alone").text(`${1848 + sorp}: ${G.num1(Bq[sorp])} contro ${G.num1(A[sorp])}`);
           }
           [1848, 1900, 1950, 2022].forEach((t, j) => svg.append("text").attr("x", x(t)).attr("y", h - 2).attr("text-anchor", j === 0 ? "start" : j === 3 ? "end" : "middle").attr("font-size", 11.5).attr("fill", T.grigio).text(t));
+          G.mirino(svg, x, y, [{ nome: H.curve[p].forma || p, colore: G.SCURO, punti: A.map((v, k) => [1848 + k, v]) }, { nome: C.forma || q, colore: G.ROSSO, punti: Bq.map((v, k) => [1848 + k, v]) }], { fmt: G.num1, unita: "volte per milione di parole" });
         });
       });
     });
@@ -290,6 +295,7 @@
     const fr = SI.storie.find((s) => s.id === "repubblica-non-si-semplifica");
     if (fr) $("fr-titolo").textContent = fr.titolo;
     V.frasi("#g-frasi", B.archivi, { h: 150 });
+    G.bottoneCSV("#g-frasi", "parole_per_frase", [["archivio", "ramo", "da", "a", "parole_per_frase"]].concat(B.archivi.filter((r) => r.frase).map((r) => [r.nome || r.id || "", r.ramo, r.da, r.a, r.frase])));
     const cam = D.F.periodi.filter((p) => p.ramo === "camera"), d0 = cam[0], d1 = cam.find((p) => /regime/i.test(p.periodo)) || cam[cam.length - 1];
     const fc = D.L.francese.camera || {}, am = Object.keys(fc).reduce((a, b) => (fc[b] > fc[a] ? b : a), Object.keys(fc)[0]);
     const quattro = [["fascismo.html", "Il fascismo in aula", "1922-1943", `il dissenso annotato alla Camera scende da ${G.num(d0.dissenso_100, 0)} a ${G.num(d1.dissenso_100, 0)} ogni cento interventi`],
@@ -322,5 +328,6 @@
     $("sezioni").innerHTML = [["parole.html", "Parole", c.parole], ["persone.html", "Persone", c.persone], ["partiti.html", "Partiti", c.partiti], ["legislature.html", "Legislature", c.legislature], ["anni.html", "Anni", G.ANNI.length], ["temi.html", "Temi", c.temi], ["esperimenti.html", "Storie", c.storie], ["esperimenti.html", "Esperimenti", c.esperimenti]]
       .map((s) => `<li><a href="${s[0]}">${s[1]}</a><span>${G.num(s[2])}</span></li>`).join("");
     V.barre("#g-oratori", H.oratori.slice(0, 8).map((o) => [o[0].replace(/^(\S)\S+ /, "$1. "), o[2], !!o[3]]), { wl: 112, passo: 17, hb: 7 });
+    G.bottoneCSV("#g-oratori", "chi_parla_di_piu", [["oratore", "interventi"]].concat(H.oratori.map((o) => [o[0], o[2]])));
   }
 })();
