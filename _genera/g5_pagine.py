@@ -30,13 +30,28 @@ SEZIONE = {"parole": "parole", "parola": "parole", "primevolte": "parole", "ling
            "storia": "storie", "fascismo": "fascismo", "esteri": "esteri"}
 
 
+# dati che la home chiede subito (js/home.js li usa tutti; i primi due servono alla tavola I)
+PRELOAD_HOME = ["home.json", "base.json", "capitoli/indice.json", "storie/indice.json", "sezioni/esteri.json", "sezioni/fascismo.json",
+                "storie/tangentopoli-entra-in-aula.json", "storie/fine-delle-ideologie.json", "sezioni/risate_migliori.json",
+                "sezioni/h68_governi.json", "percorsi/indice.json"]
+
+
 def guscio(titolo, descrizione, js, corpo, attivo=None, dove=False, home=False, sezione="neutra"):
     attivo = ALIAS_MENU.get(attivo, attivo)
     menu = "".join('<a href="%s"%s>%s</a>' % (h, ' class="attivo"' if t == attivo else "", t) for t, h in MENU)
     pre = ["scene.js"] if js in ("capitolo.js", "esteri.js", "lingue.js", "fascismo.js", "percorso.js") else []
     if js in ("home.js", "capitolo.js"):
         pre = pre + ["tavole.js"]  # le tavole del vocabolario illustrato (strisce, scie, figure dei capitoli)
-    scripts = "".join('<script defer src="js/%s"></script>' % s for s in (["d3.min.js", "comune.js"] + pre + ([js] if js else [])))
+    # home (v8, velocità): script con priorità alta e i dati della home già richiesti nell'intestazione, così partono
+    # insieme agli script invece che dopo; le richieste meno urgenti hanno priorità bassa
+    alta = ' fetchpriority="high"' if home else ""
+    scripts = "".join('<script defer%s src="js/%s"></script>' % (alta, s) for s in (["d3.min.js", "comune.js"] + pre + ([js] if js else [])))
+    if home:
+        scripts += chr(10) + chr(10).join('<link rel="preload" href="dati/%s" as="fetch" crossorigin fetchpriority="%s">' % (d, "high" if k < 2 else "low") for k, d in enumerate(PRELOAD_HOME))
+    # intestazione della home identica a quella che disegna G.testata (js/comune.js): così non cambia quando arriva lo script
+    marchio_titolo = ' title="La prima pagina"' if home else ""
+    riga_guide = ('<div class="riga-guide"><span class="guida" id="guida-a"><a href="parola.html?p=adunque">◂ adunque</a></span>'
+                  '<span class="guida destra" id="guida-b"><a href="parola.html?p=tangentopoli">tangentopoli ▸</a></span></div>') if home else ""
     return f"""<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -59,7 +74,7 @@ def guscio(titolo, descrizione, js, corpo, attivo=None, dove=False, home=False, 
 <nav class="unghie" aria-label="Le parole dalla A alla Z">{UNGHIE}</nav>
 <div class="pagina">
 <header id="testata" class="testatina{' home' if home else ''}">
-<div class="riga-nome"><a class="marchio" href="index.html">vocabolàrio <i>del</i> Parlaménto</a><nav class="menu" aria-label="Sezioni">{menu}</nav></div>
+<div class="riga-nome"><a class="marchio" href="index.html"{marchio_titolo}>vocabolàrio <i>del</i> Parlaménto</a><nav class="menu" aria-label="Sezioni">{menu}</nav></div>{riga_guide}
 </header>
 {'<div id="dove" class="dove"></div>' if dove else ''}
 <main id="main">

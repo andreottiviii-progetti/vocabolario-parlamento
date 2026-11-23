@@ -12,27 +12,39 @@
   let PSG = {}; // prime volte nel senso di oggi, con i nomi propri segnati
 
   G.avvia(function () {
+    G.PIGRO = true; // i grafici fuori schermo si disegnano quando ci si avvicina (comune.js, G.quandoVicino)
     G.testata({ compatta: false });
     G.piede();
     G.suggerisci($("q"), $("sugg-home"));
-    return Promise.all([G.carica("home.json"), G.carica("base.json"), G.carica("capitoli/indice.json"), G.carica("storie/indice.json"), V.datiCapitoli(), G.carica("sezioni/risate.json"), G.carica("sezioni/h68_governi.json").catch(() => ({})), G.carica("percorsi/indice.json").catch(() => ({ percorsi: [] })), G.carica("prime/senso.json").catch(() => ({})), G.carica("sezioni/risate_migliori.json").catch(() => null)])
-      .then(([H, B, IX, SI, D, R, GV, PI, PS, RM]) => {
-        PSG = PS || {};
-        const c = B.conti;
-        const pronto = asse(H);
-        brevi(H);
-        sette(IX, D);
-        amici(H, SI, D, GV);
-        tagli(H, SI, R);
-        parole(H, PS);
-        listino(B);
-        percorsiFrase(B, SI, D, R, PI, RM);
-        storie(SI, c, H);
+    // Tutte le richieste partono insieme (index.html le ha già avviate con i preload) e ogni pezzo della pagina si disegna
+    // appena ha i suoi dati, senza aspettare gli altri. Le cifre che la home usa a pezzi di file grandi stanno dentro
+    // home.json, voce «veloce» (le prepara _genera/g11_home_veloce.py): se mancano si torna ai file interi.
+    const C = (p) => G.carica(p);
+    const pH = C("home.json").then((H) => { G.PACCO = H.veloce || null; return H; });
+    const pB = C("base.json");
+    const pIX = C("capitoli/indice.json"), pSI = C("storie/indice.json");
+    const pD = pH.then((H) => V.datiCapitoli(H.veloce));
+    const pR = pH.then((H) => (H.veloce ? H.veloce.risate : C("sezioni/risate.json")));
+    const pPS = pH.then((H) => (H.veloce ? H.veloce.senso : C("prime/senso.json").catch(() => ({}))));
+    const pGV = C("sezioni/h68_governi.json").catch(() => ({}));
+    const pPI = C("percorsi/indice.json").catch(() => ({ percorsi: [] }));
+    const pRM = C("sezioni/risate_migliori.json").catch(() => null);
+    const quando = (nome, dip, f) => Promise.all(dip).then((v) => f(...v)).catch((e) => { console.error(nome, e); });
+    return Promise.all([
+      quando("tavola I", [pH, pB, pPS], (H, B, PS) => { PSG = PS || {}; brevi(H); return asse(H); }),
+      quando("capitoli", [pIX, pD], (IX, D) => sette(IX, D)),
+      quando("tavole II e III", [pH, pSI, pD, pGV], (H, SI, D, GV) => amici(H, SI, D, GV)),
+      quando("tagli", [pH, pSI, pR], (H, SI, R) => tagli(H, SI, R)),
+      quando("parole", [pH, pPS], (H, PS) => parole(H, PS)),
+      quando("listino", [pB], (B) => listino(B)),
+      quando("percorsi e frase", [pB, pSI, pD, pR, pPI, pRM], (B, SI, D, R, PI, RM) => percorsiFrase(B, SI, D, R, PI, RM)),
+      quando("storie", [pSI, pB, pH], (SI, B, H) => storie(SI, B.conti, H)),
+      quando("chiusa", [pIX], (IX) => {
         $("riga-steno").textContent = minuscola(IX.riga) + ".";
         $("chiusa-frasi").innerHTML = `<i class="es">«${G.esc(IX.prologo)}»</i> <span class="anni">la prima riga del primo resoconto, 8 maggio 1848</span> · <i class="es">«${G.esc(IX.chiusa)}»</i> <span class="anni">la frase che chiude il racconto, 20 luglio 2022</span>`;
-        return pronto;
-      });
-  });
+      }),
+    ]);
+  }, { subito: true });
 
   /* ---------------- tavola I: parole a confronto, scelte dal lettore ---------------- */
   function asse(H) {
@@ -140,17 +152,22 @@
       G.mirino(svg, x, y, serie.map((s) => ({ nome: s.c.forma, colore: s.col, punti: G.ANNI.map((a, i) => [a, s.m3[i]]), leggi: G.ANNI.map((a, i) => [a, s.c.pm.m[i]]) })), { fmt: G.num1, unita: "volte per milione di parole, anno per anno" });
       const riga = area.node().parentNode.querySelector(".fig-lettura");
       if (riga && stretto) riga.innerHTML = serie.map((s) => `<span>${G.chiave(s.col)}<b>${G.esc(s.c.forma)}</b> ${s.vero.anno}: ${G.num1(s.vero.val)}</span>`).join(" · ");
-    });
+    }, { manuale: true }); // si disegna solo quando arrivano le curve (disegna → G.ridisegna)
     function aggiornaURL() { try { history.replaceState(null, "", attive.length ? "?p=" + attive.join(",") : location.pathname); } catch (e) { /* niente */ } }
     function leggi(t) {
       const nuove = t.split(/[,;]+/).map(G.norma).filter(Boolean);
       if (!nuove.length) return;
-      attive = nuove.slice(0, 5); aggiornaURL(); carica();
+      attive = nuove.slice(0, 5); aggiornaURL();
+      serveSenso().then(carica);
+    }
+    // lo stato «parola nuova» dentro home.json copre le parole della home; per le altre si legge il file intero
+    function serveSenso() {
+      return G.PACCO && G.PACCO.curve && attive.every((w) => G.PACCO.curve[w]) ? Promise.resolve() : G.carica("prime/senso.json").then((PS) => { PSG = PS || {}; }).catch(() => {});
     }
     $("asse-in").addEventListener("keydown", (e) => { if (e.key === "Enter") leggi(e.target.value); });
     $("asse-ok").addEventListener("click", () => leggi($("asse-in").value));
     el.querySelectorAll(".pronti a").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); $("asse-in").value = a.dataset.p.replace(/,/g, ", "); leggi(a.dataset.p); }));
-    return carica();
+    return serveSenso().then(carica);
   }
 
   function brevi(H) {
@@ -223,7 +240,7 @@
   /* ---------------- i tagli: partiti, chi fa ridere più del previsto, smentite ---------------- */
   function tagli(H, SI, R) {
     const mp = SI.storie.find((s) => s.id === "mappa-partiti-governo-opposizione");
-    G.griglia("#g-somiglia-home", { righe: ["PCI, PDS, DS, PD", "MSI, AN, FdI", "FI, PdL", "Lega", "M5S"], legs: d3.range(13, 19) });
+    G.griglia("#g-somiglia-home", { righe: ["PCI, PDS, DS, PD", "MSI, AN, FdI", "FI, PdL", "Lega", "M5S"], legs: d3.range(13, 19), lite: true });
     const E = (R.efficaci || []).slice(0, 8), b = E[0];
     if (b) {
       const attese = b.ila / b.rapporto;

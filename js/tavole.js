@@ -33,8 +33,10 @@
   V.fig = function (sel, fn) {
     const el = typeof sel === "string" ? document.querySelector(sel) : sel;
     if (!el) return;
-    const dis = () => { const w = Math.floor(el.clientWidth); if (w > 0 && w !== el._w) { el._w = w; el.innerHTML = ""; fn(d3.select(el), w); } };
-    reg.push(dis); dis();
+    const dis = () => { if (el._attesa) return; const w = Math.floor(el.clientWidth); if (w > 0 && w !== el._w) { el._w = w; el.innerHTML = ""; fn(d3.select(el), w); } };
+    reg.push(dis);
+    // nella home i grafici lontani dallo schermo si disegnano quando si avvicinano (G.quandoVicino); altrove subito
+    if (window.G && G.PIGRO && G.quandoVicino) { el._attesa = true; G.quandoVicino(el, () => { el._attesa = false; dis(); }); } else dis();
   };
   let tm; window.addEventListener("resize", () => { clearTimeout(tm); tm = setTimeout(() => reg.forEach((f) => f()), 120); });
   const svgDi = (a, w, h, nome) => a.append("svg").attr("width", w).attr("height", h).attr("viewBox", `0 0 ${w} ${h}`).attr("role", "img").attr("aria-label", nome || "grafico").style("display", "block").style("overflow", "visible");
@@ -504,7 +506,9 @@
         punti: m1 != null ? [{ x: 2010.5, y: m1, testo: V.num(m1, 2), dy: -6, dx: -4, anc: "end" }, { x: 2015.5, y: m2, testo: V.num(m2, 2), dy: -8, dx: 0, anc: "middle" }] : [], sp: 1.6, fmt: (v) => V.num(v, 2) + " ogni mille parole" });
     }
   };
-  V.datiCapitoli = () => Promise.all([V.carica("sezioni/lingue.json"), V.carica("sezioni/fascismo.json"), V.carica("sezioni/esteri.json"), V.carica("partiti/traiettorie.json"), V.carica("storie/tangentopoli-entra-in-aula.json"), V.carica("partiti/m5s.json"), V.carica("storie/fine-delle-ideologie.json").catch(() => null), (window.G && G.curvaParola ? G.curvaParola("io") : Promise.resolve(null))]).then(([L, F, X, TR, TG, M5, FI, IO]) => ({ L: L, F: F, X: X, TR: TR, TG: TG, M5: M5, FI: FI, IO: IO }));
+  /* i dati dei sette piccoli grafici dei capitoli. pacco = H.veloce di home.json: le due curve delle lingue (e non i 137 KB
+     di lingue.json) e la curva di «io» (e non l'indice delle parole); le traiettorie e il M5S non servono ai sette grafici */
+  V.datiCapitoli = (pacco) => Promise.all([pacco && pacco.lingue ? pacco.lingue : V.carica("sezioni/lingue.json"), V.carica("sezioni/fascismo.json"), V.carica("sezioni/esteri.json"), V.carica("storie/tangentopoli-entra-in-aula.json"), V.carica("storie/fine-delle-ideologie.json").catch(() => null), (window.G && G.curvaParola ? G.curvaParola("io") : Promise.resolve(null))]).then(([L, F, X, TG, FI, IO]) => ({ L: L, F: F, X: X, TG: TG, FI: FI, IO: IO }));
   /* le note dentro il grafico delle strisce (frasi e numeri dal capitolo 4) */
   V.NOTE_STRISCE = [
     { paese: "Austria", anno: 1866, righe: ["«la guerra all'Austria sia per noi suprema necessità»", "Giuseppe Romano, Camera, 1° maggio 1866"] },

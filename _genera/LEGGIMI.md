@@ -9,7 +9,7 @@ Tutti i numeri del sito vengono da file generati dai programmi di questa cartell
 - Alla fine il programma controlla che nessun file superi 2 MB, che ogni pagina abbia il noindex e che nei file pubblici non ci siano parole vietate. Se scrive «TUTTO A POSTO» si può pubblicare.
 - Poi: `git add -A`, `git commit`, `git push` (GitHub Pages si aggiorna da solo).
 
-Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` → `g3_sito.py` → `g3b_distanze.py` → `g7_scansione2.py` → `g8_sezioni.py` → `g9_prime_volte.py` → `g6b_tabelline.py` → `g6c_correzioni.py` → `g6_storie.py` → `g5_pagine.py`; poi `g10_rapporti.py` scrive in `_progetto/` la copertura dei risultati e il conto delle frasi scartate. I file intermedi stanno in `_genera/cache/` (fuori dal repository).
+Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` → `g3_sito.py` → `g3b_distanze.py` → `g7_scansione2.py` → `g8_sezioni.py` → `g9_prime_volte.py` → `g6b_tabelline.py` → `g6c_correzioni.py` → `g6_storie.py` → `g5_pagine.py` → `g11_home_veloce.py`; poi `g10_rapporti.py` scrive in `_progetto/` la copertura dei risultati e il conto delle frasi scartate. I file intermedi stanno in `_genera/cache/` (fuori dal repository).
 
 Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salta e le elenca in `_genera/cache/storie_rapporto.txt`. Tolto il marcatore, basta il comando «solo storie».
 
@@ -86,3 +86,5 @@ Se la frase della prima volta è illeggibile, resta la data con la nota «testo 
 ## Controllo con le schermate
 
 `python -I _genera/controlla.py` apre le pagine con playwright, segnala errori e scorrimenti orizzontali e salva le schermate in `_schermate/` (fuori dal repository).
+
+**Velocità della home (v8).** `g11_home_veloce.py` gira per ultimo (anche con `--storie`): riscrive `dati/home.json` togliendo le voci che nessuna pagina legge (temi, mappa_linee, picchi) e aggiungendo la voce `veloce`, con le sole cifre che la home prima prendeva da file grandi (curve delle parole del confronto e delle coppie, tabella delle risate, due curve delle lingue, stato delle parole nuove, griglia «A chi somiglia» per le legislature 13-18). Le parole le legge da `js/home.js` (PREDEF, PRONTI, COPPIE), quindi se si cambiano lì basta rilanciare. Se si rifà `home.json` con `g3_sito.py`, rilanciare anche g11. Strumenti di misura: `misura_velocita.py` (tempi, richieste e KB con CPU e rete rallentate), `prova_home.py` (confronto parole, valori al mouse, CSV: prima e dopo devono coincidere), `schermate_v8.py` (home intera a 1440 e 390 px).

@@ -83,6 +83,7 @@ def main():
         lancia("g6c_correzioni.py")
         lancia("g6_storie.py")
         lancia("g5_pagine.py")
+        lancia("g11_home_veloce.py")
     else:
         lancia("g1_parole.py")
         if "--da-capo" in a or scansione_vecchia():
@@ -99,6 +100,7 @@ def main():
         lancia("g6c_correzioni.py")
         lancia("g6_storie.py")
         lancia("g5_pagine.py")
+        lancia("g11_home_veloce.py")
     ok = controlli()
     print("TUTTO A POSTO" if ok else "CI SONO PROBLEMI: guarda sopra", flush=True)
     fine()

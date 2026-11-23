@@ -59,7 +59,11 @@
   G.pad = (n) => String(n).padStart(3, "0");
   /* normalizza come il progetto: minuscolo, senza accenti, solo a-z */
   G.norma = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z]/g, "");
+  /* la curva di una parola. Le parole della home (confronto, coppie, «io») stanno già dentro home.json, alla voce «veloce»:
+     per quelle non si apre né l'indice (738 KB) né il pezzo di dati (330 KB); per tutte le altre si va come sempre */
   G.curvaParola = function (w) {
+    const P = G.PACCO && G.PACCO.curve && G.PACCO.curve[w];
+    if (P) return G.carica("base.json").then((b) => ({ w: w, forma: P[0] || w, tot: P[1], picco: P[2], y0: P[3], conti: P[4], pm: G.perMilione(P[4], b.tot) }));
     return G.indiceParole().then((ix) => {
       const i = ix._mappa.get(w);
       if (i == null) return null;
@@ -288,28 +292,53 @@
   /* ---------- registro dei grafici (ridisegno al cambio di larghezza) ---------- */
   const REG = [];
   let avviato = false;
-  G.grafico = function (sel, fn) {
+  /* Disegno pigro (solo la home lo attiva con G.PIGRO = true): un grafico lontano dallo schermo non si disegna subito,
+     così la tavola I in cima arriva per prima. Si disegna quando gli si avvicina a meno di 900 px (G.quandoVicino) oppure,
+     se nessuno lo chiama prima, nei tempi morti del browser, uno alla volta. Il disegno è lo stesso; cambia solo il momento.
+     Chi vuole il disegno subito (la tavola I) lo chiama da sé con G.ridisegna. */
+  G.PIGRO = false;
+  const CODA = [];
+  let riposando = false;
+  function riposo() {
+    const passo = () => { const v = CODA.shift(); if (v) v(); if (CODA.length) riposo(); else riposando = false; };
+    riposando = true;
+    if (window.requestIdleCallback) window.requestIdleCallback(passo, { timeout: 2500 }); else setTimeout(passo, 150);
+  }
+  G.quandoVicino = function (el, fn) {
+    if (!G.PIGRO || !el || typeof IntersectionObserver === "undefined") { fn(); return; }
+    let fatto = false;
+    const vai = () => { if (fatto) return; fatto = true; io.disconnect(); fn(); };
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) vai(); }, { rootMargin: "900px 0px" });
+    io.observe(el);
+    CODA.push(vai);
+    if (!riposando) riposo();
+  };
+  G.grafico = function (sel, fn, opz) {
     const area = typeof sel === "string" ? d3.select(sel) : sel;
     if (area.empty()) return;
     const r = { area, fn };
     REG.push(r);
-    if (avviato) disegna(r);
+    if (avviato && !(opz && opz.manuale)) G.quandoVicino(area.node(), () => disegna(r));
   };
   function disegna(r) {
+    r.fatto = true;
     r.area.selectAll("*").remove();
     const w = Math.floor(r.area.node().getBoundingClientRect().width);
     if (w > 0) r.fn(r.area, w);
   }
   let ultimaL = 0;
-  G.avvia = function (main) {
-    const parti = () => { ultimaL = window.innerWidth; avviato = true; REG.forEach(disegna); };
+  G.avvia = function (main, opz) {
+    // opz.subito: ogni grafico si disegna appena è registrato, senza aspettare che arrivino tutti i dati della pagina né i caratteri
+    const subito = !!(opz && opz.subito);
+    const parti = () => { ultimaL = window.innerWidth; avviato = true; REG.forEach((r) => { if (!G.PIGRO || r.fatto) disegna(r); }); };
     const via = () => {
       G.carica("base.json").then((B) => {
         G.B = B; G.conti = B.conti; G.conti.anni = G.ANNI.length;
         if (B.trascrizione) { G.TRASCR = { camera: B.trascrizione.camera, senato: B.trascrizione.senato }; G.SCRITTURA = B.trascrizione.scrittura; }
         document.querySelectorAll("[data-conto]").forEach((e) => { const v = G.conti[e.dataset.conto]; if (v != null) e.textContent = G.num(v, String(v).indexOf(".") >= 0 ? 1 : 0); });
-      }).catch(() => {}).then(() => { G.colori(); return main(); }).catch((e) => { console.error(e); }).then(() => {
+      }).catch(() => {}).then(() => { G.colori(); if (subito) { ultimaL = window.innerWidth; avviato = true; } return main(); }).catch((e) => { console.error(e); }).then(() => {
         G.faiFascia();
+        if (subito) return;
         if (document.fonts && document.fonts.ready) document.fonts.ready.then(parti); else parti();
       });
       let t;
@@ -632,12 +661,14 @@
      propria famiglia (il PCI non «somiglia» al PDS che ne è l'erede). */
   G.RIGHE_GRIGLIA = [["PCI, PDS, DS, PD", ["PCI", "PDS/DS/PD"]], ["DC", ["DC"]], ["PSI", ["PSI"]], ["MSI, AN, FdI", ["MSI", "AN", "FdI"]], ["PLI", ["PLI"]], ["PRI", ["PRI"]], ["FI, PdL", ["FI/PdL"]], ["Lega", ["Lega"]], ["M5S", ["M5S"]]];
   G.NOME_BREVE = (n) => ({ "PDS/DS/PD": "PDS-DS-PD", "FI/PdL": "FI-PdL", "UDC/CCD": "UDC-CCD", "SEL/LeU/SI": "SEL-LeU", "Scelta Civica": "Sc. Civica", "Rosa nel Pugno": "Rosa n. P.", "Unita' Socialista": "Un. Soc.", "PSI-PSDI unificati": "PSI-PSDI", "La Rete": "Rete" }[n] || n);
-  G.datiGriglia = function () {
-    return Promise.all([G.carica("partiti/indice.json"), G.carica("base.json")]).then(([IX, B]) => {
+  G.datiGriglia = function (lite) {
+    // lite: la home ha già le sole cifre che le servono (partiti delle sue righe, legislature 13-18) dentro home.json, voce «veloce»
+    const L = lite && G.PACCO && G.PACCO.griglia;
+    return Promise.all([L ? null : G.carica("partiti/indice.json"), G.carica("base.json")]).then(([IX, B]) => {
       const fam = {}, slug = {};
-      IX.partiti.forEach((p) => { fam[p.id] = p.famiglia; slug[p.id] = p.slug; });
+      if (L) { Object.assign(fam, L.fam); Object.assign(slug, L.slug); } else IX.partiti.forEach((p) => { fam[p.id] = p.famiglia; slug[p.id] = p.slug; });
       const servono = [...new Set([].concat(...G.RIGHE_GRIGLIA.map((r) => r[1])))].filter((id) => slug[id]);
-      return Promise.all(servono.map((id) => G.carica("partiti/" + slug[id] + ".json").catch(() => null))).then((schede) => {
+      return (L ? Promise.resolve(servono.map((id) => L.S[id] || null)) : Promise.all(servono.map((id) => G.carica("partiti/" + slug[id] + ".json").catch(() => null)))).then((schede) => {
         const S = {}; schede.forEach((s) => { if (s) S[s.id] = s; });
         const anni = {}; (B.legislature || []).filter((l) => l.epoca === "repubblica").forEach((l) => { anni[l.n] = [l.da, l.a]; });
         const stessa = (a, b) => (fam[a] && fam[a] !== "altri" ? fam[a] === fam[b] : a === b);
@@ -651,7 +682,7 @@
     o = o || {};
     const el = document.querySelector(sel);
     if (!el) return Promise.resolve();
-    return (o.D ? Promise.resolve(o.D) : G.datiGriglia()).then((D) => {
+    return (o.D ? Promise.resolve(o.D) : G.datiGriglia(o.lite)).then((D) => {
       const righe = (o.righe ? G.RIGHE_GRIGLIA.filter((r) => o.righe.indexOf(r[0]) >= 0) : G.RIGHE_GRIGLIA).concat(o.extra || []);
       const legs = o.legs || d3.range(1, 19);
       const celle = [["partito", "legislatura", "somiglia a", "sua legislatura", "famiglia", "vicinanza"]];
