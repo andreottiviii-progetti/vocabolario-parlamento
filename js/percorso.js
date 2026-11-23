@@ -71,10 +71,8 @@
     const el = document.getElementById("contenuto");
     const id = G.param("id") || "";
     return G.carica("percorsi/" + id.replace(/[^a-z-]/g, "") + ".json").then((P) => {
-      const col = COLORE[P.id] || ["#16181D", "#16181D"];
-      document.body.style.setProperty("--sez", col[0]);
-      document.body.style.setProperty("--sez-s", col[1]);
-      G.SEZ = col[0];
+      // impianto del vocabolario: nessun colore per percorso, i segni restano nel blu delle voci
+      const col = [G.SEZ, G.SEZ_S];
       document.title = P.titolo + " · Il vocabolario del Parlamento";
       const br = document.querySelector(".briciole");
       if (br) br.innerHTML = `<a href="index.html">Home</a> › <a href="percorsi.html">Percorsi</a> › ${G.esc(P.titolo)}`;
@@ -83,7 +81,7 @@
           <div>${t.storie.map((s) => `<p class="t-occ">${G.esc(s.occhiello)}${s.verdetto && s.verdetto !== "descrittiva" ? " · " + G.esito(s.verdetto) : ""}</p><h3><a class="lk" href="storia.html?id=${encodeURIComponent(s.id)}">${G.esc(s.titolo)}</a></h3>`).join("")}
           ${t.nota ? `<p>${t.nota}</p>` : ""}</div>
         </li>${t.passaggio ? `<li class="passaggio"><p>${t.passaggio}</p></li>` : ""}`).join("");
-      el.innerHTML = `<p class="occhiello" style="color:${col[1]}">Percorso · ${ANNI[P.id] || ""}</p>
+      el.innerHTML = `<p class="occhiello">Percorso · ${ANNI[P.id] || ""}</p>
         <h1 class="titolo-pagina">${G.esc(P.titolo)}</h1>
         <p class="sommario">${P.domanda}</p>
         ${P.apertura ? `<div class="apertura" style="border-left-color:${col[0]}">${P.apertura}</div>` : ""}

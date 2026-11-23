@@ -320,11 +320,11 @@
   V.verdetti = function (sel, conti, o) {
     o = Object.assign({ passo: 17, wl: 200, q: 7 }, o || {});
     V.fig(sel, (a, w) => {
-      const T = V.tema, stretto = w < 420, wl = stretto ? 0 : o.wl, righe = conti.filter((c) => c[0] !== "Totale");
+      const T = V.tema, stretto = o.wl > 0 ? w < 280 : true, wl = stretto ? 0 : o.wl, righe = conti.filter((c) => c[0] !== "Totale");
       const passo = o.passo + (stretto ? 13 : 0), h = righe.length * passo + 2, svg = svgDi(a, w, h, "Verdetti degli esperimenti");
       righe.forEach((r, i) => {
         const y0 = i * passo + (stretto ? 13 : 0); let k = 0;
-        testo(svg, stretto ? 0 : wl - 8, stretto ? y0 - 2 : y0 + o.q + 3, r[0].replace(/^Temi: /, "").replace(/ \(.*\)$/, "").slice(0, 34), { anc: stretto ? "start" : "end", fill: T.ink, fs: T.fs });
+        testo(svg, stretto ? 0 : wl - 8, stretto ? y0 - 2 : y0 + o.q + 3, ((t) => (stretto || t.length * 6.1 < wl - 10 ? t : t.slice(0, Math.floor((wl - 16) / 6.1)) + "…"))(r[0].replace(/^Temi: /, "").replace(/ \(.*\)$/, "").slice(0, 34)), { anc: stretto ? "start" : "end", fill: T.ink, fs: T.fs });
         [[r[1], T.ink, 0], [r[2], T.dati, 0], [r[3], T.nemico, 0], [r[4] + r[5] + r[6], T.fondo, 1]].forEach(([n, c, vuoto]) => { for (let j = 0; j < n; j++, k++) svg.append("rect").attr("x", wl + k * (o.q + 2)).attr("y", y0 + 2).attr("width", o.q).attr("height", o.q).attr("fill", c).attr("stroke", vuoto ? T.dati : "none"); });
       });
     });

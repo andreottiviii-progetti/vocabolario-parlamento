@@ -207,7 +207,7 @@
       });
       if (finestra) {
         const x0 = x(finestra[0]), x1 = Math.max(x0 + 5, x(finestra[1] + 1));
-        svg.append("rect").attr("x", x0).attr("y", 1).attr("width", x1 - x0).attr("height", 24).attr("fill", "none").attr("stroke", G.ROSSO).attr("stroke-width", 3);
+        svg.append("rect").attr("x", x0).attr("y", 1).attr("width", x1 - x0).attr("height", 24).attr("fill", "none").attr("stroke", G.ROSSO).attr("stroke-width", 1.5);
         const t = "Sei qui: " + finestra[2];
         const destra = x1 + 8 + t.length * 6.6 < w;
         svg.append("text").attr("x", destra ? x1 + 6 : x0 - 6).attr("y", 41).attr("text-anchor", destra ? "start" : "end").attr("font-size", 12).attr("font-weight", 700).attr("fill", G.ROSSO).attr("class", "alone").text(t);

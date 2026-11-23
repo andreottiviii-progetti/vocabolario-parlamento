@@ -26,7 +26,7 @@
         listino(B);
         temiPercorsi(H, B, SI, D, R, PI);
         storie(SI, c, H);
-        $("riga-steno").textContent = IX.riga + ".";
+        $("riga-steno").textContent = minuscola(IX.riga) + ".";
         $("chiusa-frasi").innerHTML = `<i class="es">«${G.esc(IX.prologo)}»</i> <span class="anni">la prima riga del primo resoconto, 8 maggio 1848</span> · <i class="es">«${G.esc(IX.chiusa)}»</i> <span class="anni">la frase che chiude il racconto, 20 luglio 2022</span>`;
         return pronto;
       });
@@ -185,7 +185,7 @@
   function tagli(H, SI, R, I) {
     const mp = SI.storie.find((s) => s.id === "mappa-partiti-governo-opposizione");
     if (mp) $("pa-titolo").textContent = mp.titolo;
-    V.scie("#g-scie", H.mappa_linee, { h: 250 });
+    V.scie("#g-scie", H.mappa_linee, { h: 285 });
     const ri = SI.storie.find((s) => s.id === "risate-in-aula");
     if (ri) { $("ri-titolo").textContent = ri.titolo; $("ri-titolo").href = "storia.html?id=" + ri.id; }
     V.barre("#g-risate", R.periodi.map((p, i) => [p[0], p[1], i === R.periodi.length - 1 || i === 0]), { wl: 74, passo: 17, fmt: (v) => V.num(v, v < 10 ? 1 : 0) });
@@ -197,7 +197,7 @@
     $("smentite").innerHTML = (H.smentite_txt || []).slice(0, 5).map((s) => `<li><span class="sm" aria-hidden="true">■</span> <a href="storia.html?id=${s.storia}">${G.esc(s.testo)}</a></li>`).join("");
     const tot = H.esperimenti.conti.find((r) => r[0] === "Totale");
     $("n-esp").textContent = tot ? tot[7] : "";
-    V.verdetti("#g-verdetti", H.esperimenti.conti, { wl: 0, passo: 12, q: 7 });
+    V.verdetti("#g-verdetti", H.esperimenti.conti, { wl: 132, passo: 13, q: 6 });
   }
 
   /* ---------------- le parole ---------------- */
@@ -230,7 +230,7 @@
       ["lingue.html", "Le lingue dell'aula", "1848-2022", `nel ${am} il ${G.num(fc[am], 1)}% delle parole alla Camera è in francese`],
       ["risate.html", "Risate e insulti", "1848-2022", `da ${G.num(R.periodi[0][1], 0)} a ${G.num(R.periodi[R.periodi.length - 1][1], 1)} risate ogni mille interventi`]];
     const altri = (PI.percorsi || []).map((p) => [`percorso.html?id=${p.id}`, p.titolo, p.tappe + " tappe", p.domanda.replace(/<[^>]+>/g, "")]);
-    $("percorsi-voci").innerHTML = quattro.concat(altri).map((p) => `<p><a class="lemma" href="${p[0]}">${G.esc(p[1])}</a> <span class="anni">[${p[2]}]</span> ${G.esc(G.maiusc(p[3]))}.</p>`).join("");
+    $("percorsi-voci").innerHTML = quattro.concat(altri).map((p) => `<p><a class="lemma" href="${p[0]}">${G.esc(p[1])}</a> <span class="anni">[${p[2]}]</span> ${G.esc(G.maiusc(p[3]))}${/[.?!]$/.test(p[3]) ? "" : "."}</p>`).join("");
   }
 
   /* ---------------- vedi anche: le storie, le sezioni, chi parla di più ---------------- */
