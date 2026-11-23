@@ -477,3 +477,8 @@ body[data-sezione="fascismo"] .unghie a,body[data-sezione="fascismo"] .unghie a:
 .frasi-griglia li{break-inside:avoid;font-size:16px;line-height:1.38;padding:4px 0;border-bottom:1px solid var(--filo)}
 .vl{margin-top:12px}
 @media (max-width:900px){.frasi-griglia{columns:1}}
+/* coppie di parole nella home: le due curve sulla stessa scala */
+.coppia{break-inside:avoid;border-bottom:1px solid var(--filo);padding:3px 0 4px}
+.coppia-testa{margin:0;font-size:15px}
+.coppia-testa .lemma{font-size:16.5px}
+.coppia .did{margin:0}

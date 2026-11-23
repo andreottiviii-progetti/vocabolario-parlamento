@@ -238,6 +238,40 @@
     const pp = H.multipli.filter((p) => H.curve[p]).sort((p, q) => V.annoDiPunta(H, p) - V.annoDiPunta(H, q));
     $("venti").innerHTML = pp.map((p, i) => `<a class="riga-voce" href="parola.html?p=${p}"><span class="lemma">${G.esc(H.curve[p].forma || p)}</span> <span class="anni">[${V.annoDiPunta(H, p)}]</span><span class="fig" id="v${i}"></span></a>`).join("");
     pp.forEach((p, i) => V.mini("#v" + i, V.curvaParola(H, p), { h: 28, assi: false, mt: 5, sp: 1.2, punti: [{ x: V.annoDiPunta(H, p), testo: "" }], fmt: (v) => V.num(v, v < 10 ? 1 : 0) + " per milione" }));
+    // coppie: la parola della lista accanto a quella che la sostituisce, sulla stessa scala, con l'anno del sorpasso
+    // (primo anno da cui la seconda resta sopra la prima per tre anni, curve del sito: media di Camera e Senato e di tre anni)
+    const COPPIE = { emigrazione: ["immigrazione", "emigranti-immigrati-sorpasso"], telegrafo: ["telefono", "tecnologia-ritardo"] };
+    Object.keys(COPPIE).forEach((p) => {
+      const i = pp.indexOf(p), el = document.getElementById("v" + i);
+      if (i < 0 || !el) return;
+      const [q, storia] = COPPIE[p], riga = el.closest(".riga-voce");
+      G.curvaParola(q).then((C) => {
+        if (!C) return;
+        const A = G.media3(H.curve[p].m.slice()), Bq = G.media3(C.pm.m);
+        let sorp = null;
+        for (let k = 0; k < 172 && sorp == null; k++) if ([0, 1, 2].every((j) => A[k + j] != null && Bq[k + j] != null && Bq[k + j] > A[k + j])) sorp = k;
+        const box = document.createElement("div");
+        box.className = "coppia";
+        box.innerHTML = `<p class="coppia-testa"><a class="lemma" href="parola.html?p=${p}">${G.esc(H.curve[p].forma || p)}</a> <span class="fr">e</span> <a class="lemma" href="parola.html?p=${q}" style="color:#D2281F">${G.esc(C.forma || q)}</a>${sorp != null ? ` <span class="anni">sorpasso nel ${1848 + sorp}</span>` : ""}</p><div class="fig" id="coppia-${p}"></div>${storia ? `<p class="did"><a href="storia.html?id=${storia}">→ la storia</a></p>` : ""}`;
+        riga.replaceWith(box);
+        V.fig("#coppia-" + p, (a, w) => {
+          const T = V.tema, h = 64, mb = 14, mt = 8;
+          const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", `${p} e ${q}, volte per milione di parole, 1848-2022${sorp != null ? ", sorpasso nel " + (1848 + sorp) : ""}`);
+          const x = d3.scaleLinear().domain([1848, 2022]).range([1, w - 1]);
+          const mx = d3.max(A.concat(Bq), (v) => v || 0) || 1, y = d3.scaleLinear().domain([0, mx * 1.05]).range([h - mb, mt]);
+          const linea = d3.line().defined((d) => d != null).x((d, k) => x(1848 + k)).y((d) => y(d));
+          svg.append("line").attr("x1", 0).attr("x2", w).attr("y1", h - mb).attr("y2", h - mb).attr("stroke", T.dati);
+          svg.append("path").attr("d", linea(A)).attr("fill", "none").attr("stroke", T.ink).attr("stroke-width", 1.5);
+          svg.append("path").attr("d", linea(Bq)).attr("fill", "none").attr("stroke", "#D2281F").attr("stroke-width", 1.5);
+          if (sorp != null) {
+            const px = x(1848 + sorp), py = y(Bq[sorp]);
+            svg.append("circle").attr("cx", px).attr("cy", py).attr("r", 3.5).attr("fill", "#D2281F");
+            svg.append("text").attr("x", px + (px > w * 0.6 ? -6 : 6)).attr("y", py - 6).attr("text-anchor", px > w * 0.6 ? "end" : "start").attr("font-size", 12).attr("font-weight", 700).attr("fill", T.ink).attr("class", "alone").text(`${1848 + sorp}: ${G.num1(Bq[sorp])} contro ${G.num1(A[sorp])}`);
+          }
+          [1848, 1900, 1950, 2022].forEach((t, j) => svg.append("text").attr("x", x(t)).attr("y", h - 2).attr("text-anchor", j === 0 ? "start" : j === 3 ? "end" : "middle").attr("font-size", 11.5).attr("fill", T.grigio).text(t));
+        });
+      });
+    });
     const tre = (q, k) => [1, 2, 3].map((j) => (j === k ? `<b>${G.num1(q[j])}</b>` : G.num1(q[j]))).join(" · ");
     // «neol.» solo per le parole davvero nuove: la prima volta nel senso di oggi viene dalla lettura delle prime comparse
     const neol = (w) => { const x = PS[w]; return x && !x.np && (x.stato === "confermata" || x.stato === "corretta") ? ` <i class="gram" title="parola nuova: prima volta nel senso di oggi ${x.nuova ? x.nuova[0].slice(0, 4) : ""}">neol. ${x.nuova ? x.nuova[0].slice(0, 4) : ""}</i>` : ""; };
