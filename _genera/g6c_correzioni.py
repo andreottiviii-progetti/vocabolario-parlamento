@@ -276,7 +276,7 @@ def raccogli(dati, extra=()):
                 aggiungi(y)
         elif isinstance(x, dict):
             for k, y in x.items():
-                if k not in ("forma", "y0"):
+                if k not in ("forma", "y0", "fasce", "riferimento", "xtipo"):
                     aggiungi(y)
     aggiungi(dati)
     aggiungi(list(extra))
@@ -696,6 +696,16 @@ def _serie_ok_parole(rr, col, ramo_col=None):
     return rr
 
 
+@regola("terrorismo-1980", 2)
+def _(g):
+    # una colonna per mese, da marzo 1978 a febbraio 1983; i mesi con `valido` = False (quasi nessuna seduta) restano vuoti, non zero
+    rr = [r for r in righe("risultati/h50_moro_serie.csv", ancora="rapimento 16/3/1978") if "1978-03" <= r["anno_mese"] <= "1983-02"]
+    rr.sort(key=lambda r: r["anno_mese"])
+    d = COLONNE([r["anno_mese"] for r in rr], [int(fl(r["menzioni"])) if r["valido"] == "True" else None for r in rr], "menzioni al mese")
+    d["xtipo"] = "mese"
+    return d
+
+
 @regola("terrorismo-1980", 3)
 def _(g):
     a, b = anni_blocco(g, (1970, 1990))
@@ -1066,7 +1076,19 @@ def _(g):
     a, b = anni_blocco(g, (1861, 2022))
     rr = [r for r in tabella("risultati/h51_annuale.csv") if (fl(r["parole_tot"]) or 0) >= 300000]
     pts = entro(serie_anni(rr, "anno", "att_tot", 1, 3), a, b)
-    return cand(g, LINEE([("Parole del debito (ogni 10.000 parole)", pts)]), LINEE([("Parole del debito (ogni 10.000 parole)", media3(pts))]))
+    # le fasce grigie: gli anni di crisi della colonna `crisi` (1866, 1873-76, 1893-94, 1926-27, 1992-93, 2011-12), uniti in periodi
+    anni_crisi = sorted(int(r["anno"]) for r in rr if r["crisi"] == "1" and a <= int(r["anno"]) <= b)
+    fasce = []
+    for y in anni_crisi:
+        if fasce and y == fasce[-1][1] + 1:
+            fasce[-1][1] = y
+        else:
+            fasce.append([y, y])
+    fasce = [[da - 0.5, aa + 0.5] for da, aa in fasce]  # l'anno e' una colonna di un anno: la fascia copre dal suo inizio alla sua fine
+    d1 = LINEE([("Parole del debito (ogni 10.000 parole)", pts)])
+    d2 = LINEE([("Parole del debito (ogni 10.000 parole)", media3(pts))])
+    d1["fasce"] = d2["fasce"] = fasce
+    return cand(g, d1, d2)
 
 
 @regola("debito-pubblico", 2)
@@ -2095,6 +2117,26 @@ def _(g):
     ok = sorted((v for v in d if len(d[v]) == 2), key=lambda v: -d[v]["2008-2022"])
     rows = [[v, round(d[v]["1946-1969"], 1), round(d[v]["2008-2022"], 1)] for v in ok]
     return TABELLA(["Parola", "1946-1969 (volte per milione)", "2008-2022 (volte per milione)"], rows)
+
+
+@regola("corruzione-salto-1980", 1)
+def _(g):
+    a, b = anni_blocco(g, (1970, 1994))
+    rr = righe("risultati/riparazione_pesi/413_versioni.csv", serie="corruzione", ramo="tutti")
+    return LINEE([("Conteggio semplice", entro(serie_anni(rr, "anno", "grezza", 1, 2), a, b)),
+                  ("Pesando ogni partito per i suoi seggi", entro(serie_anni(rr, "anno", "pesata_seggi", 1, 2), a, b))])
+
+
+@regola("corruzione-salto-1980", 2)
+def _(g):
+    a, b = anni_blocco(g, (1976, 1993))
+    rr = righe("risultati/h55_c_partiti_anno.csv", variante="principale: parlamentari")
+    serie = []
+    for col, nome in (("Radicali", "Radicali"), ("MSI-AN", "MSI-AN"), ("DC", "DC"), ("PCI-PDS", "PCI-PDS")):
+        serie.append((nome, entro(serie_anni([r for r in rr if r["partito"] == col], "anno", "rapporto", 1, 2), a, b)))
+    d = LINEE(serie)
+    d["riferimento"] = {"y": 1}  # riga tratteggiata a 1: il sottotitolo dice che 1 = la quota di parole del partito
+    return d
 
 
 @regola("corruzione-salto-1980", 3)

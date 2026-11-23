@@ -60,7 +60,7 @@
       document.getElementById("contributori").innerHTML = per.slice(0, 4).map((k, i) => `<div class="c3${i ? " fil" : ""}"><h3 class="titolo-piccolo">Inglese, ${G.esc(k.split("|")[1])}</h3><ul class="elenco-n">${C[k].slice(0, 10).map((x) => `<li><span>${G.lParola(G.norma(x[0]), x[0])}</span><span>${G.num(x[1])}</span></li>`).join("")}</ul></div>`).join("");
       // linee di vita delle forme antiche
       const FO = L.forme.filter((f) => f[3]).sort((a, b) => a[3] - b[3]);
-      const med = FO.length ? FO[Math.floor(FO.length / 2)][3] : null;
+      const med = FO.length ? FO[Math.ceil(FO.length / 2) - 1][3] : null; // l'anno entro cui si è dimezzata metà delle forme (con sei forme, la terza)
       const a3 = G.figura("#g-forme", {
         titolo: `Le forme antiche si dimezzano una per volta: metà entro il ${med}`,
         sotto: "Per ogni forma antica dell'italiano, la linea va dal 1848 all'anno in cui la sua frequenza si dimezza; il punto è l'anno di massimo. Camera e Senato.",
@@ -70,15 +70,17 @@
       G.grafico(a3, (a, w) => {
         const rh = 18, lw = 120, h = FO.length * rh + 26;
         const svg = a.append("svg").attr("width", w).attr("height", h).attr("role", "img").attr("aria-label", "Linee di vita delle forme antiche");
-        const x = d3.scaleLinear().domain([1848, 1960]).range([lw, w - 20]);
+        // l'asse finisce poco dopo l'ultima forma che si dimezza (con un margine per l'anno scritto accanto alla linea)
+        const FINE = Math.ceil((d3.max(FO, (f) => f[3]) + 8) / 10) * 10;
+        const x = d3.scaleLinear().domain([1848, FINE]).range([lw, w - 20]);
         const g = svg.append("g").attr("class", "asse");
-        [1860, 1880, 1900, 1920, 1940, 1960].forEach((v) => { g.append("line").attr("x1", x(v)).attr("x2", x(v)).attr("y1", 0).attr("y2", h - 20); g.append("text").attr("x", x(v)).attr("y", h - 4).attr("text-anchor", "middle").text(v); });
+        d3.range(1860, FINE + 1, 20).forEach((v) => { g.append("line").attr("x1", x(v)).attr("x2", x(v)).attr("y1", 0).attr("y2", h - 20); g.append("text").attr("x", x(v)).attr("y", h - 4).attr("text-anchor", "middle").text(v); });
         FO.forEach((f, i) => {
           const y = i * rh + 10;
           svg.append("a").attr("href", "parola.html?p=" + G.norma(f[0])).append("text").attr("x", lw - 8).attr("y", y + 4).attr("text-anchor", "end").attr("font-size", 13).attr("fill", G.INK).text(f[0]);
-          svg.append("line").attr("x1", x(1848)).attr("x2", x(Math.min(1960, f[3]))).attr("y1", y).attr("y2", y).attr("stroke", G.SEZ_M).attr("stroke-width", 6);
-          svg.append("circle").attr("cx", x(Math.min(1960, f[2]))).attr("cy", y).attr("r", 4).attr("fill", G.SEZ);
-          svg.append("text").attr("x", x(Math.min(1960, f[3])) + 6).attr("y", y + 4).attr("font-size", 12).attr("fill", G.GRIGIO).text(f[3]);
+          svg.append("line").attr("x1", x(1848)).attr("x2", x(f[3])).attr("y1", y).attr("y2", y).attr("stroke", G.SEZ_M).attr("stroke-width", 6);
+          svg.append("circle").attr("cx", x(f[2])).attr("cy", y).attr("r", 4).attr("fill", G.SEZ);
+          svg.append("text").attr("x", x(f[3]) + 6).attr("y", y + 4).attr("font-size", 12).attr("fill", G.GRIGIO).text(f[3]);
           svg.append("rect").attr("x", 0).attr("y", y - rh / 2).attr("width", w).attr("height", rh).attr("fill", "transparent").attr("data-tip", `si dimezza nel ${f[3]}\n«${f[0]}»: massimo nel ${f[2]}, ${G.num(f[1])} volte`);
         });
       });

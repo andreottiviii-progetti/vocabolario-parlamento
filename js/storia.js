@@ -139,7 +139,13 @@
         return { punti: s.punti, colore: C[i], sp: i === 0 ? 2.5 : 1.5, etich: dirette ? nome(s) : null, nome: nome(s),
           piccoEtich: i === 0 && pk ? { x: pk[0], y: pk[1], colore: uno ? G.ROSSO : C[i], testo: (uno || !dirette ? "" : nome(s) + " ") + Math.round(pk[0]) + ": " + fmt(pk[1]) } : null };
       });
-      G.linee(a, w, { x: xe, y: [y0, y1], serie: ss, yFmt: fmt, xFmt: (v) => String(Math.round(v)), m: { r: dirette ? Math.max(48, lungo * 6.8 + 30) : 20 } });
+      // fasce grigie (per esempio gli anni di crisi) e una riga tratteggiata di riferimento (il suo valore sta sull'asse; il sottotitolo dice cosa vuol dire)
+      const fasce = D.fasce ? D.fasce.map((f) => ({ da: f[0], a: f[1], colore: "#E4E7EB" })) : null;
+      const rif = D.riferimento;
+      const dopo = rif ? (svg, x, y, h, m) => {
+        svg.append("line").attr("x1", m.l).attr("x2", w - ((m.r != null ? m.r : 0))).attr("y1", y(rif.y)).attr("y2", y(rif.y)).attr("stroke", G.GRIGIO).attr("stroke-width", 1).attr("stroke-dasharray", "4 3");
+      } : null;
+      G.linee(a, w, { x: xe, y: [y0, y1], serie: ss, yFmt: fmt, xFmt: (v) => String(Math.round(v)), m: { r: dirette ? Math.max(48, lungo * 6.8 + 30) : 20 }, fasce, dopo });
       return;
     }
     if (D.forma === "colonne") {
