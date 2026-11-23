@@ -696,7 +696,7 @@
      legislature). Lontani: la distanza sulla mappa delle parole, media delle legislature in comune (traiettorie). */
   G.viciniLontani = function (id, D, TR) {
     const S = D.S[id] || {}, best = {};
-    Object.values(S.somiglianze || {}).forEach((so) => (so.altro_partito || []).forEach((q) => { if (!D.stessa(id, q[0]) && (best[q[0]] == null || q[2] > best[q[0]][0])) best[q[0]] = [q[2], q[1]]; }));
+    Object.values(S.somiglianze || {}).forEach((so) => ((so && so.altro_partito) || []).forEach((q) => { if (!D.stessa(id, q[0]) && (best[q[0]] == null || q[2] > best[q[0]][0])) best[q[0]] = [q[2], q[1]]; }));
     const vicini = Object.entries(best).sort((a, b) => b[1][0] - a[1][0]).slice(0, 3);
     const P = TR.partiti, mio = P[id] || [], dist = {};
     Object.entries(P).forEach(([n, v]) => {
