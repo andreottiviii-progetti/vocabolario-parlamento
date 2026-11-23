@@ -32,6 +32,7 @@ PAGINE = [
     ("storia.html?id=terrorismo-1980", 1440, "storia_terrorismo"),
     ("storia.html?id=generazioni-o-tutti", 1440, "storia_generazioni"),
     ("storia.html?id=liste-bloccate-non-concentrano", 1440, "storia_liste"),
+    ("storia.html?id=parlato-anche-al-senato", 1440, "storia_parlato_senato"),
     ("storia.html?id=congiuntivo-e-catene", 1440, "storia_congiuntivo"),
     ("storia.html?id=forme-antiche-unita", 1440, "storia_forme_antiche"),
     ("storia.html?id=chi-cambia-gruppo", 1440, "storia_cambia_gruppo"),

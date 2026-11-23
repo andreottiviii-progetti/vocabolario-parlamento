@@ -2229,6 +2229,27 @@ def _(g):
     return LINEE([("Terzo di interventi con meno errori dello scanner", serie_anni(rr, "decennio", "frase_media_basso_rumore", 1, 2)),
                   ("Tutti gli interventi", serie_anni(rr, "decennio", "frase_media_tutti", 1, 2))])
 
+@regola("parlato-anche-al-senato", 1)
+def _(g):
+    rr = righe("risultati/h118_h119/932_serie_annuali.csv", ramo={"camera", "senato"})
+    def serie(ramo):
+        return media3(serie_anni([r for r in rr if r["ramo"] == ramo], "anno", "indice", 1, 4))
+    d = LINEE([("Senato", serie("senato")), ("Camera", serie("camera"))])  # la prima linea e' rossa: il Senato e' la tesi
+    d["riferimento"] = {"y": 0}
+    # le due pendenze per decennio dopo il 1994 del titolo, lette dal file delle pendenze
+    pen = {r["ramo"]: fl(r["valore"]) for r in righe("risultati/h118_h119/932_pendenze.csv", misura="IND", stima="POST")}
+    return d, [round(pen["camera"], 2), round(pen["senato"], 2)]
+
+
+@regola("parlato-anche-al-senato", 2)
+def _(g):
+    aula = {r["ramo"]: r for r in righe("risultati/h118_h119/932_pendenze.csv", misura="IND", stima="POST")}
+    min_ = {r["ramo"]: r for r in righe("risultati/h118_h119/933_ministri_pendenze.csv", misura="IND", stima="POST", ramo={"camera", "senato"})}
+    voci = [("Aula, Camera", aula["camera"]), ("Aula, Senato", aula["senato"]), ("Ministri, Camera", min_["camera"]), ("Ministri, Senato", min_["senato"])]
+    return INTERVALLI([n for n, _r in voci], [r_(r["valore"], 2) for _n, r in voci], [r_(r["lo"], 2) for _n, r in voci],
+                      [r_(r["hi"], 2) for _n, r in voci], "salita dell'indice per decennio dopo il 1994")
+
+
 
 if __name__ == "__main__":
     try:
