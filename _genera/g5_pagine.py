@@ -66,7 +66,18 @@ def guscio(titolo, descrizione, js, corpo, attivo=None, dove=False, home=False, 
 <link rel="stylesheet" href="css/stile.css">
 <link rel="stylesheet" href="css/v2.css">
 <link rel="stylesheet" href="css/v3.css">
-<link rel="icon" href="data:,">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="it_IT">
+<meta property="og:site_name" content="Il vocabolario del Parlamento">
+<meta property="og:title" content="{titolo}">
+<meta property="og:description" content="{descrizione}">
+<meta property="og:image" content="https://andreottiviii-progetti.github.io/vocabolario-parlamento/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 {scripts}
 </head>
 <body data-sezione="{sezione}"{' class="home-v"' if home else ''}>

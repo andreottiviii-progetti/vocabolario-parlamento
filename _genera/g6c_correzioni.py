@@ -2119,6 +2119,42 @@ def _(g):
     return TABELLA(["Parola", "1946-1969 (volte per milione)", "2008-2022 (volte per milione)"], rows)
 
 
+# anni in cui cambia il modo di trascrivere il resoconto (1979 e 1987), scritti nelle storie sulle generazioni
+FASCE_RESOCONTO = [[1978.5, 1979.5], [1986.5, 1987.5]]
+
+
+@regola("generazioni-o-tutti", 1)
+def _(g):
+    rr = righe("risultati/h111/869_coorti_grafico.csv", ramo="camera", misura="frase", usabile="True")
+    nati = sorted({r["nati"] for r in rr})
+    tesi = "nati nel 1930-39"
+    ordine = [tesi] + [n for n in nati if n != tesi]  # la prima linea e' rossa e piu' spessa: la generazione del titolo
+    serie = []
+    for n in ordine:
+        pts = sorted((fl(r["anno_medio"]), round(fl(r["valore"]), 2)) for r in rr if r["nati"] == n)
+        serie.append((n[0].upper() + n[1:], [(int(x), y) for x, y in pts]))
+    d = LINEE(serie, y0=28)
+    d["fasce"] = FASCE_RESOCONTO
+    # gli estremi del quinquennio del titolo («1968-72»), scritti nella colonna `periodo` del file
+    per = next(r["periodo"] for r in rr if r["periodo"].startswith("1968"))
+    extra = [int(x) for x in per.split("-")]
+    return d, extra
+
+
+@regola("generazioni-o-tutti", 2)
+def _(g):
+    rr = righe("risultati/h111/869_aula_persone.csv", ramo="camera", misura="frase")
+    rr.sort(key=lambda r: int(r["anno"]))
+    d = LINEE([("Stesse persone", serie_anni(rr, "anno", "solo_stesse_persone_m3", 1, 2)), ("Aula", serie_anni(rr, "anno", "aula_m3", 1, 2))], y0=25)
+    d["fasce"] = FASCE_RESOCONTO
+    # cambio dal primo all'ultimo anno, calcolato dalle due linee (media di tre anni)
+    aula = [r for r in rr if fl(r["aula_m3"]) is not None]
+    sp = [r for r in rr if fl(r["solo_stesse_persone_m3"]) is not None]
+    c_aula = round(fl(aula[-1]["aula_m3"]) - fl(aula[0]["aula_m3"]), 1)
+    c_sp = round(abs(fl(sp[-1]["solo_stesse_persone_m3"]) - fl(sp[0]["solo_stesse_persone_m3"])), 1)
+    return d, [c_aula, c_sp, 1948, 1952, 2018, 2022]
+
+
 @regola("corruzione-salto-1980", 1)
 def _(g):
     a, b = anni_blocco(g, (1970, 1994))

@@ -618,6 +618,17 @@
   },
   {
    "epoca": "Repubblica 1994-2022",
+   "data": "2011-12-14",
+   "ramo": "camera",
+   "oratore": "Gianluca Pini",
+   "pid": "camera:p302160",
+   "partito": "Lega Nord e Autonomie",
+   "frase": "Quando Berlusconi raccontava le barzellette diceva prima che stava per raccontare una barzelletta.",
+   "contesto": "Contro il governo Monti appena nato: almeno Berlusconi «non cercava di vendere fumo ai cittadini italiani». Nel resoconto seguono applausi, non risate.",
+   "id": "R-PINI-2011"
+  },
+  {
+   "epoca": "Repubblica 1994-2022",
    "data": "2015-09-30",
    "ramo": "senato",
    "oratore": "Paolo Romani",

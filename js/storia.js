@@ -142,7 +142,7 @@
           piccoEtich: i === 0 && pk ? { x: pk[0], y: pk[1], colore: uno ? G.ROSSO : C[i], testo: (uno || !dirette ? "" : nome(s) + " ") + Math.round(pk[0]) + ": " + fmt(pk[1]) } : null };
       });
       // fasce grigie (per esempio gli anni di crisi) e una riga tratteggiata di riferimento (il suo valore sta sull'asse; il sottotitolo dice cosa vuol dire)
-      const fasce = D.fasce ? D.fasce.map((f) => ({ da: f[0], a: f[1], colore: "#E4E7EB" })) : null;
+      const fasce = D.fasce ? D.fasce.map((f) => ({ da: f[0], a: f[1], colore: "#E4E7EB", testo: f[2] })) : null;
       const rif = D.riferimento;
       const dopo = rif ? (svg, x, y, h, m) => {
         svg.append("line").attr("x1", m.l).attr("x2", w - ((m.r != null ? m.r : 0))).attr("y1", y(rif.y)).attr("y2", y(rif.y)).attr("stroke", G.GRIGIO).attr("stroke-width", 1).attr("stroke-dasharray", "4 3");

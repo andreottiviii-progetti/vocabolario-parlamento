@@ -273,7 +273,7 @@ def main():
                 temi_par[par] = righe[:6]
     print("temi per partito:", len(temi_par), flush=True)
     for fp in glob.glob(os.path.join(DATI, "partiti", "*.json")):
-        if os.path.basename(fp) in ("indice.json", "traiettorie.json"):
+        if os.path.basename(fp) in ("indice.json", "traiettorie.json", "distanze.json"):
             continue
         P = json.load(open(fp, encoding="utf-8"))
         P["temi_su"] = temi_par.get(P["id"], [])
