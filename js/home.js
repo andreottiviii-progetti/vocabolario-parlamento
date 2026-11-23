@@ -252,7 +252,7 @@
         for (let k = 0; k < 172 && sorp == null; k++) if ([0, 1, 2].every((j) => A[k + j] != null && Bq[k + j] != null && Bq[k + j] > A[k + j])) sorp = k;
         const box = document.createElement("div");
         box.className = "coppia";
-        box.innerHTML = `<p class="coppia-testa"><a class="lemma" href="parola.html?p=${p}">${G.esc(H.curve[p].forma || p)}</a> <span class="fr">e</span> <a class="lemma" href="parola.html?p=${q}" style="color:#D2281F">${G.esc(C.forma || q)}</a>${sorp != null ? ` <span class="anni">sorpasso nel ${1848 + sorp}</span>` : ""}</p><div class="fig" id="coppia-${p}"></div>${storia ? `<p class="did"><a href="storia.html?id=${storia}">→ la storia</a></p>` : ""}`;
+        box.innerHTML = `<p class="coppia-testa"><a class="lemma" href="parola.html?p=${p}">${G.esc(H.curve[p].forma || p)}</a> <span class="fr">e</span> <a class="lemma" href="parola.html?p=${q}" style="color:#D2281F">${G.esc(C.forma || q)}</a>${sorp != null ? ` <span class="anni">sorpasso nel ${1848 + sorp}</span>` : ""}</p><div class="fig" id="coppia-${p}"></div><p class="did">Volte per milione di parole, media di Camera e Senato e di tre anni; il punto è il primo anno da cui la seconda resta sopra.${p === "emigrazione" ? ` Con la misura dell'esperimento il sorpasso cade nel 1988: <a href="storia.html?id=${storia}">la storia</a>.` : storia ? ` <a href="storia.html?id=${storia}">La storia</a>.` : ""}</p>`;
         riga.replaceWith(box);
         V.fig("#coppia-" + p, (a, w) => {
           const T = V.tema, h = 64, mb = 14, mt = 8;
