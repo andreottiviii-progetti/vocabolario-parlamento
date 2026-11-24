@@ -29,16 +29,18 @@
     const pGV = C("sezioni/h68_governi.json").catch(() => ({}));
     const pPI = C("percorsi/indice.json").catch(() => ({ percorsi: [] }));
     const pRM = C("sezioni/risate_migliori.json").catch(() => null);
-    const quando = (nome, dip, f) => Promise.all(dip).then((v) => f(...v)).catch((e) => { console.error(nome, e); });
+    // v9: la tavola I parte subito; ogni altro pezzo si costruisce in un compito a sé (setTimeout 0), così i pezzi non si sommano
+    // in un unico compito lungo e il browser può disegnare e rispondere tra l'uno e l'altro
+    const quando = (nome, dip, f, dopo) => Promise.all(dip).then((v) => (dopo ? new Promise((r) => setTimeout(r, 0)).then(() => f(...v)) : f(...v))).catch((e) => { console.error(nome, e); });
     return Promise.all([
       quando("tavola I", [pH, pB, pPS], (H, B, PS) => { PSG = PS || {}; brevi(H); return asse(H); }),
-      quando("capitoli", [pIX, pD], (IX, D) => sette(IX, D)),
-      quando("tavole II e III", [pH, pSI, pD, pGV], (H, SI, D, GV) => amici(H, SI, D, GV)),
-      quando("tagli", [pH, pSI, pR], (H, SI, R) => tagli(H, SI, R)),
-      quando("parole", [pH, pPS], (H, PS) => parole(H, PS)),
-      quando("listino", [pB], (B) => listino(B)),
-      quando("percorsi e frase", [pB, pSI, pD, pR, pPI, pRM], (B, SI, D, R, PI, RM) => percorsiFrase(B, SI, D, R, PI, RM)),
-      quando("storie", [pSI, pB, pH], (SI, B, H) => storie(SI, B.conti, H)),
+      quando("capitoli", [pIX, pD], (IX, D) => sette(IX, D), true),
+      quando("tavole II e III", [pH, pSI, pD, pGV], (H, SI, D, GV) => amici(H, SI, D, GV), true),
+      quando("tagli", [pH, pSI, pR], (H, SI, R) => tagli(H, SI, R), true),
+      quando("parole", [pH, pPS], (H, PS) => parole(H, PS), true),
+      quando("listino", [pB], (B) => listino(B), true),
+      quando("percorsi e frase", [pB, pSI, pD, pR, pPI, pRM], (B, SI, D, R, PI, RM) => percorsiFrase(B, SI, D, R, PI, RM), true),
+      quando("storie", [pSI, pB, pH], (SI, B, H) => storie(SI, B.conti, H), true),
       quando("chiusa", [pIX], (IX) => {
         $("riga-steno").textContent = minuscola(IX.riga) + ".";
         $("chiusa-frasi").innerHTML = `<i class="es">«${G.esc(IX.prologo)}»</i> <span class="anni">la prima riga del primo resoconto, 8 maggio 1848</span> · <i class="es">«${G.esc(IX.chiusa)}»</i> <span class="anni">la frase che chiude il racconto, 20 luglio 2022</span>`;

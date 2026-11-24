@@ -8,7 +8,7 @@ COSA FA  1. toglie da home.json le voci che nessun programma del sito legge più
          2. aggiunge «veloce»: curve (conti grezzi) delle parole del confronto e delle coppie della home (le parole sono
             lette da js/home.js: PREDEF, PRONTI, COPPIE), tabella delle risate, due curve di lingue, parole nuove
             con il loro stato, griglia «A chi somiglia» (solo le legislature 13-18 e i partiti delle cinque righe).
-FONTI    dati/parole/indice.json, parole/c/*.json, sezioni/risate.json, sezioni/lingue.json, partiti/*.json,
+FONTI    dati/parole/c/*.json (un pezzo per chiave: la scheda di curva contiene gia' forma, totale, picco e anno di partenza), sezioni/risate.json, sezioni/lingue.json, partiti/*.json,
          prime/senso.json, home.json: tutti già scritti dagli altri programmi. Nessun dato nuovo, nessun conto nuovo.
 Va lanciato per ultimo (rifai_tutto.py lo fa). Se si rifà home.json da zero con g3_sito.py, rilanciarlo.
 """
@@ -18,9 +18,8 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comune import DATI, SITO, scrivi_json, fine  # noqa
+from comune import DATI, SITO, scrivi_json, fine, chiave_pezzo, nome_pezzo, PEZZI_PAROLE  # noqa
 
-PEZZO = 400  # parole per pezzo (come G.PEZZO in js/comune.js)
 LEGS = list(range(13, 19))  # legislature della griglia in home (d3.range(13, 19))
 RIGHE_HOME = ["PCI", "PDS/DS/PD", "MSI", "AN", "FdI", "FI/PdL", "Lega", "M5S"]  # id delle cinque righe della home
 TOGLI = ("temi", "mappa_linee", "picchi")  # voci di home.json che nessun file js legge
@@ -55,20 +54,16 @@ def main():
         H.pop(k, None)
 
     # ---- curve delle parole (conti grezzi: il resto lo calcola js/comune.js come per ogni parola)
-    IX = leggi("parole/indice.json")
-    pos = {r[0]: i for i, r in enumerate(IX["p"])}
     parole = parole_della_home()
     curve, cache = {}, {}
     for w in parole:
-        i = pos.get(w)
-        if i is None:
+        k = chiave_pezzo(w, PEZZI_PAROLE)
+        if k not in cache:
+            cache[k] = leggi("parole/c/" + nome_pezzo(k))
+        if w not in cache[k]:
             print("   attenzione: «%s» non ha la curva" % w)
             continue
-        k = i // PEZZO
-        if k not in cache:
-            cache[k] = leggi("parole/c/%03d.json" % k)
-        r = IX["p"][i]
-        curve[w] = [r[1], r[2], r[3], r[4], cache[k][w]]
+        curve[w] = cache[k][w]  # [forma, totale, picco, anno di partenza, conti]
 
     # ---- risate: la tabella degli oratori e i periodi (non le 908 KB di frasi)
     R = leggi("sezioni/risate.json")

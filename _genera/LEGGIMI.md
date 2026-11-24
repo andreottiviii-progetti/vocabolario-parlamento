@@ -13,11 +13,20 @@ Ordine dei programmi: `g1_parole.py` → `g2_scansione.py` → `g4_parole.py` �
 
 Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salta e le elenca in `_genera/cache/storie_rapporto.txt`. Tolto il marcatore, basta il comando «solo storie».
 
+## Come stanno le parole nei file (pezzi per chiave)
+
+Curve (`dati/parole/c`), schede (`dati/parole/d`) e prime volte (`dati/prime/d`) non sono in pezzi alfabetici: ogni parola sta nel
+pezzo `chiave_pezzo(parola, N)` (`comune.py`: hash FNV-1a a 32 bit sui caratteri della parola, diviso N; N = `PEZZI_PAROLE` 1024 per
+curve e schede, `PEZZI_PRIME` 4096 per le prime volte). La stessa funzione è `G.chiavePezzo` in `js/comune.js`: i due numeri N devono
+restare uguali nei due posti. File con nome a quattro cifre (`0027.json`); i pezzi vuoti si scrivono lo stesso, per non avere mai un 404.
+Se si cambia N, o la funzione, si rifanno g4 e g9 e si cambiano `comune.py` e `js/comune.js`. Per leggere una sola scheda da un programma:
+`leggi_scheda_pezzo()` in `comune.py`. L'elenco di tutte le parole resta in `dati/parole/indice.json` (serve a `parole.html` e alle storie).
+
 ## Da dove viene ogni dato
 
 | Dato del sito | File del sito | File di origine nel progetto | Programma |
 |---|---|---|---|
-| Curve delle parole (volte per anno, Camera e Senato) | `dati/parole/c/*.json`, `scarica/conteggi_*.csv` | `misure/parole/unigrammi/*.parquet` | g1, g4 |
+| Curve delle parole (volte per anno, Camera e Senato; con forma, totale, picco e anno di partenza) | `dati/parole/c/NNNN.json` (1024 pezzi per chiave), `scarica/conteggi_*.csv` | `misure/parole/unigrammi/*.parquet` | g1, g4 |
 | Denominatore delle curve (parole per anno) | `dati/base.json` (`tot`), `scarica/parole_denominatori.csv` | `misure/parole/totali/*.parquet` (stessi filtri di `script/140_andamento_parola.py`) | g1 |
 | Elenco delle 23.842 parole, anno di punta, anno di partenza | `dati/parole/indice.json`, `scarica/parole.csv` | `misure/parole/unigrammi`; regola della prima comparsa stabile di `script/91_prima_occorrenza.py` | g1 |
 | Parole con la stessa storia | `dati/parole/d/*.json` (`vi`) | curve di g1 | g1 |
@@ -63,7 +72,7 @@ Le storie con il marcatore `[DA VERIFICARE` non vengono pubblicate: `g6` le salt
 | Le lingue dell'aula | `dati/sezioni/lingue.json` | `risultati/h8_francese.csv`, `serie_parole.csv`, `h9_contributori.csv`, `h7_forme.csv`, `392_grafie_antiche.csv` (cartella delle revisioni), `regno_due_pezzi/571_*.csv`; frasi in francese dai turni | g7, g8 |
 | Amici e nemici | `dati/sezioni/esteri.json` | `risultati/h39_serie_paese_anno.csv`, `h39_alleanze_guerre.csv`, `h39_epoche_*.csv`, `h39_prev_*.csv`, `h70_h71_h78/fase3_numeri.json`, `fase3_h39_paesi.csv` | g8 |
 | Mappa dei partiti in movimento, opposizione, frasi dei partiti | `dati/partiti/traiettorie.json`, campi `opposizione`, `frasi_tipiche`, `traiettoria` in `dati/partiti/*.json` | `risultati/mappa_partiti_mappa_unica_relativa.csv`, `h67/h67_partiti_legislature_full.csv`; frasi dai turni | g7, g8 |
-| Prime volte (parole da 10 volte in su ed espressioni) | `dati/prime/*` | `misure/parole/unigrammi`, `base_pulita/turni`, elenco ragionato `_genera/espressioni.txt` | g9 |
+| Prime volte (parole da 10 volte in su ed espressioni) | `dati/prime/*` (le schede in `dati/prime/d/NNNN.json`, 4096 pezzi per chiave) | `misure/parole/unigrammi`, `base_pulita/turni`, elenco ragionato `_genera/espressioni.txt` | g9 |
 | Capitoli del racconto | `dati/capitoli/*.json` | `_progetto/racconto/capitoli/*.md` (le righe Grafico, Stato e Dati non vanno in pagina; i capoversi con frasi ancora da ricontrollare in `FRASI_VERE.md` sono tolti) | g6 |
 
 ## Filtro di qualità delle frasi (regole fissate prima, funzione `frase_pulita` in `comune.py`)

@@ -1,9 +1,4 @@
 /* Il vocabolario del Parlamento — foglio di stile unico */
-@font-face{
-  font-family:"Archivo";
-  src:url("../caratteri/Archivo-variabile.woff2") format("woff2");
-  font-weight:100 900;font-stretch:62% 125%;font-style:normal;font-display:swap;
-}
 :root{
   --nero:#111111;--rosso:#E3120B;--giallo:#FFE600;--giallo-riga:#FFF7A8;
   --grigio:#6B6B6B;--grigio-dati:#9A9A9A;--riga:#D9D9D9;

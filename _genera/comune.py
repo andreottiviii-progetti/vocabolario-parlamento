@@ -17,7 +17,7 @@ PERSONE = os.path.join(BASE, "misure", "persone")
 SITO = r"D:\vocabolario-parlamento-sito"
 QUI = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(QUI, "cache")
-DATI = os.path.join(SITO, "dati")
+DATI = os.environ.get("VOCAB_DATI") or os.path.join(SITO, "dati")  # VOCAB_DATI: solo per le prove, per scrivere altrove
 ANNI = list(range(1848, 2023))
 ESCLUSI = ("presidente", "segretario", "collettivo")
 LIMITE = 2_000_000  # byte: nessun file del sito oltre questa misura
@@ -60,6 +60,50 @@ def scrivi_json(percorso_rel, oggetto):
     with open(p, "wb") as f:
         f.write(b)
     return len(b)
+
+
+# ----------------------------------------------------------------------------- pezzi per chiave (parole, prime volte)
+# Ogni parola sta in un piccolo file scelto da una chiave che si calcola dalla parola stessa (hash FNV-1a a 32 bit sui
+# byte della parola senza accenti, a-z, diviso per il numero dei pezzi). La stessa funzione e' in js/comune.js (G.chiave):
+# cosi' la pagina di una parola scarica solo il suo pezzo, senza aprire l'indice di tutte le parole.
+PEZZI_PAROLE = 1024  # dati/parole/c e dati/parole/d (curve e schede delle 23.842 parole): circa 23 parole per pezzo
+PEZZI_PRIME = 4096   # dati/prime/d (schede delle prime volte, 222.726 parole): circa 54 parole per pezzo
+
+
+def chiave_pezzo(w, n):
+    """Numero del pezzo in cui sta la parola w (uguale a G.chiavePezzo(w, n) in js/comune.js)."""
+    h = 2166136261
+    for b in w.encode("utf-8"):
+        h = ((h ^ b) * 16777619) & 0xFFFFFFFF
+    return h % n
+
+
+def nome_pezzo(k):
+    return "%04d.json" % k
+
+
+def scrivi_pezzi(cartella_rel, voci, n):
+    """Scrive in dati/<cartella_rel>/ tutti gli n pezzi (anche i vuoti, cosi' il sito non vede mai un 404).
+    voci = {parola: scheda}. Restituisce (byte totali, pezzo piu' grande in byte, numero di pezzi non vuoti)."""
+    pezzi = [dict() for _ in range(n)]
+    for w, v in voci.items():
+        pezzi[chiave_pezzo(w, n)][w] = v
+    tot, mx, pieni = 0, 0, 0
+    for k, p in enumerate(pezzi):
+        b = scrivi_json(cartella_rel + "/" + nome_pezzo(k), p)
+        tot += b
+        mx = max(mx, b)
+        pieni += 1 if p else 0
+    return tot, mx, pieni
+
+
+def leggi_scheda_pezzo(cartella_rel, w, n):
+    """La scheda di una parola da dati/<cartella_rel>/ (None se manca): per i programmi che cercano poche parole."""
+    p = os.path.join(DATI, cartella_rel, nome_pezzo(chiave_pezzo(w, n)))
+    if not os.path.exists(p):
+        return None
+    with open(p, encoding="utf-8") as f:
+        return json.load(f).get(w)
 
 
 def fine():

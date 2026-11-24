@@ -15,8 +15,8 @@
 }
 /* ogni sezione ha la stessa faccia: niente colori di sezione fuori dai grafici */
 body[data-sezione]:not([data-sezione="fascismo"]){--sez:#1B3FA8;--sez-s:#14307F;--sez-m:#C9D3EE;--sez-testo:#fff}
-body{font-family:"Alegreya Sans",system-ui,sans-serif;font-size:16.5px;line-height:1.38;color:var(--ink);background:var(--fondo);font-variant-numeric:lining-nums}
-svg text{font-family:"Alegreya Sans",system-ui,sans-serif}
+body{font-family:"Alegreya Sans","Alegreya Sans Riserva",system-ui,sans-serif;font-size:16.5px;line-height:1.38;color:var(--ink);background:var(--fondo);font-variant-numeric:lining-nums}
+svg text{font-family:"Alegreya Sans","Alegreya Sans Riserva",system-ui,sans-serif}
 h1,h2,h3,h4{font-stretch:100%;letter-spacing:-.008em}
 a:hover{color:inherit;text-decoration:underline;text-underline-offset:2px}
 p{margin:0 0 .6em}
@@ -32,11 +32,11 @@ a[href^="parola.html"]:hover{color:var(--voce-s)}
 .anni{font-size:14px;color:var(--grigio);white-space:nowrap;font-weight:400}
 .sm{color:var(--rosso);font-style:normal}
 .fr{color:var(--grigio)}
-.num{font:700 13px/1 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.06em;color:var(--grigio);margin-right:6px;white-space:nowrap;vertical-align:.08em}
+.num{font:700 13px/1 "Alegreya Sans SC","Alegreya Sans SC Riserva","Alegreya Sans",sans-serif;letter-spacing:.06em;color:var(--grigio);margin-right:6px;white-space:nowrap;vertical-align:.08em}
 .did{font-size:13.5px;line-height:1.33;color:var(--grigio);margin:5px 0 0}
 .es{font-style:italic;font-size:15px;line-height:1.3;padding-left:12px;text-indent:-12px;margin:4px 0 0}
 .es span{font-style:normal;font-size:13.5px;color:var(--grigio)}
-.rubrica{font:700 15px/1.2 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.05em;padding-bottom:4px;margin:0 0 7px;border-bottom:1px solid var(--ink)}
+.rubrica{font:700 15px/1.2 "Alegreya Sans SC","Alegreya Sans SC Riserva","Alegreya Sans",sans-serif;letter-spacing:.05em;padding-bottom:4px;margin:0 0 7px;border-bottom:1px solid var(--ink)}
 .rubrica a{color:inherit}
 * + .rubrica{margin-top:14px}
 
@@ -45,7 +45,7 @@ a[href^="parola.html"]:hover{color:var(--voce-s)}
 
 /* ---------- le unghie dell'alfabeto, sul bordo destro ---------- */
 .unghie{position:fixed;right:0;top:96px;z-index:8;display:flex;flex-direction:column;width:24px;background:var(--fondo);border-left:1px solid var(--filo)}
-.unghie a{font:700 12.5px/1 "Alegreya Sans SC","Alegreya Sans",sans-serif;text-align:center;padding:6px 0;border-bottom:1px solid var(--filo);color:var(--ink)}
+.unghie a{font:700 12.5px/1 "Alegreya Sans SC","Alegreya Sans SC Riserva","Alegreya Sans",sans-serif;text-align:center;padding:6px 0;border-bottom:1px solid var(--filo);color:var(--ink)}
 .unghie a:nth-child(odd){background:var(--ink);color:#fff}
 .unghie a:hover,.unghie a:focus{text-decoration:none;background:var(--voce);color:#fff}
 
@@ -55,7 +55,7 @@ a[href^="parola.html"]:hover{color:var(--voce-s)}
 .guida{font-size:18px;font-weight:800;letter-spacing:-.005em;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:22%}
 .guida a{color:var(--ink)}
 .guida.destra{text-align:right}
-.testatina .menu{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 16px;padding:0;border:0;font:500 15px/1.3 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.02em}
+.testatina .menu{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 16px;padding:0;border:0;font:500 15px/1.3 "Alegreya Sans SC","Alegreya Sans SC Riserva","Alegreya Sans",sans-serif;letter-spacing:.02em}
 .testatina .menu a{padding:2px 0}
 .testatina .menu a.attivo{color:var(--voce);box-shadow:none;text-decoration:underline;text-underline-offset:3px}
 .riga-nome{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:7px 0 6px;border-bottom:1px solid var(--filo)}
@@ -65,7 +65,7 @@ a[href^="parola.html"]:hover{color:var(--voce-s)}
 .cerca-testa{display:flex;flex:0 1 400px;min-width:0}
 .cerca-testa input,.cerca input{flex:1;min-width:0;font:inherit;font-size:16px;padding:5px 9px;border:1px solid var(--ink);border-right:0;border-radius:0;background:var(--fondo);color:var(--ink)}
 .cerca-testa button,.cerca button{font:inherit;font-weight:700;font-size:15px;padding:0 13px;border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:0;cursor:pointer}
-.briciole{font:500 14px/1.3 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.03em;color:var(--grigio);padding:0;margin:0 0 4px}
+.briciole{font:500 14px/1.3 "Alegreya Sans SC","Alegreya Sans SC Riserva","Alegreya Sans",sans-serif;letter-spacing:.03em;color:var(--grigio);padding:0;margin:0 0 4px}
 .briciole a{color:var(--grigio);text-decoration:underline;text-underline-offset:2px}
 
 /* ---------- testa della voce (prima era la fascia del titolo) ---------- */
@@ -98,7 +98,7 @@ a[href^="parola.html"]:hover{color:var(--voce-s)}
 .fil::before{border-left:1px solid var(--filo)}
 .titolo-medio{font-size:25px;font-weight:800;letter-spacing:-.012em;line-height:1.08;margin:0 0 6px}
 .titolo-piccolo{font-size:19px;font-weight:800;line-height:1.12;margin:0 0 4px}
-.occhiello{font:700 13.5px/1.2 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.04em;color:var(--grigio);margin:0 0 3px}
+.occhiello{font:700 13.5px/1.2 "Alegreya Sans SC","Alegreya Sans SC Riserva","Alegreya Sans",sans-serif;letter-spacing:.04em;color:var(--grigio);margin:0 0 3px}
 .leggi{font-weight:700}
 .colonna-testo p,.colonna-testo li{font-size:17.5px;line-height:1.45}
 .colonna-testo h2{font-size:25px;font-weight:800;margin:22px 0 8px;line-height:1.1}
@@ -210,7 +210,7 @@ body .bottone,body[data-sezione] .bottone,body[data-sezione] .menu button{backgr
 .definizione .pron{font-size:17px;color:var(--grigio);margin-left:8px;white-space:nowrap}
 .def{font-size:17px;line-height:1.3;margin:5px 0 0}
 .def b.n{font-weight:900;margin:0 2px 0 3px}
-.cerca label{display:block;font:700 14px/1 "Alegreya Sans SC",sans-serif;letter-spacing:.04em;margin-bottom:5px}
+.cerca label{display:block;font:700 14px/1 "Alegreya Sans SC","Alegreya Sans SC Riserva",sans-serif;letter-spacing:.04em;margin-bottom:5px}
 .cerca div{display:flex}
 .abbr{font-size:13px;line-height:1.3;color:#3B4149;margin:6px 0 0}
 .abbr b{color:var(--ink)}.abbr b.blu{color:var(--voce)}
@@ -404,7 +404,7 @@ body .scommessa .bottone:hover,body[data-sezione] .scommessa .bottone:hover,body
 .variante-b .guide-accanto .guida{max-width:none;font-size:13.5px;font-weight:400}
 .riga-guide.solo-cerca{justify-content:flex-end}
 .unghie{border-left:1px solid var(--filo);width:22px;top:110px}
-.unghie a,.unghie a:nth-child(odd){background:none;color:var(--grigio);font:400 12px/1 "Alegreya Sans SC","Alegreya Sans",sans-serif;padding:5px 0;border-bottom:0}
+.unghie a,.unghie a:nth-child(odd){background:none;color:var(--grigio);font:400 12px/1 "Alegreya Sans SC","Alegreya Sans SC Riserva","Alegreya Sans",sans-serif;padding:5px 0;border-bottom:0}
 .unghie a:hover,.unghie a:focus{background:none;color:var(--voce);text-decoration:underline}
 .senza-unghie .unghie{display:none}
 body[data-sezione="fascismo"] .unghie a,body[data-sezione="fascismo"] .unghie a:nth-child(odd){background:none;color:#A3A9B2}
@@ -533,3 +533,47 @@ a.parola-col,a.parola-col:hover{text-decoration:underline;text-decoration-thickn
 @media (min-width:421px) and (max-width:759px){.home-v main>section:nth-of-type(2){min-height:760px}.home-v main>section:nth-of-type(3){min-height:715px}.home-v main>section:nth-of-type(4){min-height:1090px}.home-v main>section:nth-of-type(5){min-height:1075px}.home-v main>section:nth-of-type(6){min-height:1570px}.home-v main>section:nth-of-type(7){min-height:1090px}.home-v main>section:nth-of-type(8){min-height:640px}.home-v main>section:nth-of-type(9){min-height:1170px}.home-v main>section:nth-of-type(10){min-height:80px}}
 @media (max-width:420px){.home-v main>section:nth-of-type(2){min-height:930px}.home-v main>section:nth-of-type(3){min-height:1255px}.home-v main>section:nth-of-type(4){min-height:1325px}.home-v main>section:nth-of-type(5){min-height:1240px}.home-v main>section:nth-of-type(6){min-height:1640px}.home-v main>section:nth-of-type(7){min-height:1110px}.home-v main>section:nth-of-type(8){min-height:860px}.home-v main>section:nth-of-type(9){min-height:1525px}.home-v main>section:nth-of-type(10){min-height:138px}}
 }
+/* Home (v9, velocità): anche dentro la tavola I e nella colonna accanto (le tre parole e «In breve») si riserva lo spazio prima che arrivino i dati e le curve;
+   senza, la colonna accanto sobbalzava di 150 px quando comparivano le parole e la tavola cresceva di 130 px sul tablet. Ogni valore è circa il 95% dell'altezza
+   più bassa misurata a pagina finita nella sua fascia di larghezza (stesse fasce delle sezioni qui sopra). */
+@media (scripting:enabled){
+@media (min-width:1101px){.home-v #asse{min-height:442px}.home-v #tre{min-height:150px}.home-v #brevi{min-height:223px}}
+@media (min-width:760px) and (max-width:1100px){.home-v #asse{min-height:441px}.home-v #tre{min-height:87px}.home-v #brevi{min-height:104px}}
+@media (min-width:421px) and (max-width:759px){.home-v #asse{min-height:526px}.home-v #tre{min-height:143px}.home-v #brevi{min-height:120px}}
+@media (max-width:420px){.home-v #asse{min-height:541px}.home-v #tre{min-height:143px}.home-v #brevi{min-height:194px}}
+}
+
+
+/* griglia «A chi somiglia» cliccabile (partiti.html): casella scelta e riquadro dei cinque più simili */
+.griglia-somiglia td.apribile{cursor:pointer}
+.griglia-somiglia td.apribile:hover{background:#F3F5F8}
+.griglia-somiglia td.apribile:focus-visible{outline:2px solid var(--voce);outline-offset:-2px}
+.griglia-somiglia td.scelta{background:#E8EDFB;box-shadow:inset 0 -3px 0 var(--voce)}
+.griglia-dettaglio{border-top:2px solid var(--ink);border-bottom:1px solid var(--filo);margin:14px 0 6px;padding:12px 0 10px;max-width:1180px}
+.griglia-dettaglio .testa-dett{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.griglia-dettaglio .testa-dett p{margin:0;font-size:19px;line-height:1.25}
+.griglia-dettaglio .testa-dett b{font-weight:800}
+.griglia-dettaglio .chiudi{border:0;background:none;font:inherit;font-size:26px;line-height:1;padding:0 4px;cursor:pointer;color:var(--grigio)}
+.griglia-dettaglio .chiudi:hover{color:var(--ink)}
+.griglia-dettaglio ol.simili{list-style:none;margin:10px 0 0;padding:0}
+.griglia-dettaglio ol.simili li{display:grid;grid-template-columns:22px minmax(0,1fr) 180px 44px;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #EEF0F2;font-size:15px}
+.griglia-dettaglio ol.simili li .pos{color:var(--grigio);font-size:13px;text-align:right}
+.griglia-dettaglio ol.simili li .chi b{font-weight:800}
+.griglia-dettaglio ol.simili li .chi a{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.griglia-dettaglio ol.simili li .chi i{display:block;font-size:12.5px;color:var(--grigio)}
+.griglia-dettaglio ol.simili li .barra{height:10px;background:#F1F3F5;border-radius:0 4px 4px 0;overflow:hidden}
+.griglia-dettaglio ol.simili li .barra i{display:block;height:100%;border-radius:0 4px 4px 0}
+.griglia-dettaglio ol.simili li .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.griglia-dettaglio ol.simili li.stessa{color:var(--grigio)}
+.griglia-dettaglio .nota-dett{margin:8px 0 0;font-size:13px;color:var(--grigio)}
+@media (max-width:560px){
+  .griglia-dettaglio ol.simili li{grid-template-columns:18px minmax(0,1fr) 40px;row-gap:4px}
+  .griglia-dettaglio ol.simili li .barra{grid-column:2/3;grid-row:2}
+  .griglia-dettaglio ol.simili li .val{grid-row:1/3;grid-column:3}
+}
+.griglia-dettaglio .due-liste{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:36px;margin-top:6px}
+.griglia-dettaglio .due-liste h4.rubrica{margin:8px 0 0}
+.griglia-dettaglio ol.lontani li{grid-template-columns:22px minmax(0,1fr) 140px 44px}
+@media (max-width:860px){.griglia-dettaglio .due-liste{grid-template-columns:1fr;gap:10px}}
+@media (max-width:560px){.griglia-dettaglio ol.lontani li{grid-template-columns:18px minmax(0,1fr) 40px}}
+.griglia-dettaglio .nobr{white-space:nowrap}

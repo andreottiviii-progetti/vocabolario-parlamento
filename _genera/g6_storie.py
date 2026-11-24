@@ -139,10 +139,8 @@ def risolvi(g, rapporto, sid):
         mw = re.search(r"scan_([a-z]+)\.json", f)
         if "oratori" in col and mw:
             # conteggio per persona riconosciuta (schede del sito, g4): il resoconto scrive lo stesso nome in modi diversi
-            ix = json.load(open(os.path.join(DATI, "parole", "indice.json"), encoding="utf-8"))
-            pos = next((i for i, r in enumerate(ix["p"]) if r[0] == mw.group(1)), None)
-            if pos is not None:
-                sch = json.load(open(os.path.join(DATI, "parole", "d", "%03d.json" % (pos // ix["pezzo"])), encoding="utf-8")).get(mw.group(1), {})
+            sch = leggi_scheda_pezzo("parole/d", mw.group(1), PEZZI_PAROLE)  # pezzo scelto dalla parola (comune.py)
+            if sch is not None:
                 o = [x for x in sch.get("or", []) if x[1]][:10]
                 if o:
                     return {"forma": "barre", "x": [x[1].title() for x in o], "serie": [{"nome": "volte", "v": [x[2] for x in o]}]}
@@ -471,18 +469,12 @@ def main():
     SCELTE = ["antifascismo", "camerati", "autarchia", "razzismo", "littorio", "camorra", "maffia", "telefono", "automobile", "aviazione",
               "televisione", "immigrati", "computer", "privacy", "spread", "ndrangheta", "ambientalismo", "tangentopoli", "internet",
               "femminicidio", "smartphone", "covid"]
-    mp = os.path.join(DATI, "prime", "mappa.json")
-    if os.path.exists(mp):
-        import bisect
-        inizi = json.load(open(mp, encoding="utf-8"))["inizi"]
-        scelte, pezzi_p = {}, {}
+    if os.path.exists(os.path.join(DATI, "prime", "mappa.json")):
+        scelte = {}
         fs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prime_senso.json")
         SENSO = json.load(open(fs, encoding="utf-8")) if os.path.exists(fs) else {}
         for w in SCELTE:
-            k = bisect.bisect_right(inizi, w) - 1
-            if k not in pezzi_p:
-                pezzi_p[k] = json.load(open(os.path.join(DATI, "prime", "d", "%03d.json" % k), encoding="utf-8"))
-            sp = pezzi_p[k].get(w)
+            sp = leggi_scheda_pezzo("prime/d", w, PEZZI_PRIME)  # pezzo scelto dalla parola (comune.py)
             # prima volta nel senso di oggi (letta nelle prime comparse, _genera/prime_senso.json)
             ps = SENSO.get(w)
             if ps and ps.get("stato") == "incerta":

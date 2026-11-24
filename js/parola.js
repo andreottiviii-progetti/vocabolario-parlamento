@@ -12,16 +12,18 @@
     if (q.indexOf(" ") >= 0) {
       return G.espressione(q).then((S) => (S ? paginaBreve(el, q, S, true) : nonC(el, q, null)));
     }
-    return Promise.all([G.indiceParole(), G.carica("base.json"), G.carica("esperimenti.json"), G.carica("storie/indice.json").catch(() => ({ storie: [] }))]).then(([IX, B, E, S]) => {
-      if (!IX._mappa.has(w)) return G.schedaPrime(w).then((P) => (P ? paginaBreve(el, w, P, false) : nonC(el, w, IX)));
-      return Promise.all([G.curvaParola(w), G.schedaParola(w), G.schedaPrime(w)].concat(con.map((c) => G.curvaParola(c)))).then((r) => {
-        const D = r[1] || {};
-        // la prima volta e le frasi passano dal filtro di qualita' dell'archivio delle prime volte
-        if (r[2] && r[2].senso) { D.senso = r[2].senso; if (D.senso.stato !== "confermata") r[2].g = null; }
-        if (r[2] && r[2].p && r[2].p.length) { const v = r[2].p[0]; D.pv = [v[0], v[1], v[2], v[3], v[5] || ""]; D.pv_illeggibile = !v[5]; D.prime = r[2].p; D.grezza = r[2].g; }
-        else if (D.senso && D.senso.stato === "incerta") { D.pv = null; D.prime = []; }
-        return pagina(el, r[0], D, r.slice(3).filter(Boolean), B, E, S, IX);
-      });
+    /* tutto in parallelo, senza indice: la parola ha la sua pagina intera se il suo pezzo di curve la contiene (C),
+       altrimenti si guarda l'archivio delle prime volte (scheda breve) e, se manca anche lì, «non c'è» */
+    return Promise.all([G.carica("base.json"), G.carica("esperimenti.json"), G.carica("storie/indice.json").catch(() => ({ storie: [] })),
+      G.curvaParola(w), G.schedaParola(w), G.schedaPrime(w)].concat(con.map((c) => G.curvaParola(c)))).then((r) => {
+      const B = r[0], E = r[1], S = r[2], C = r[3], P = r[5];
+      if (!C) return P ? paginaBreve(el, w, P, false) : nonC(el, w);
+      const D = r[4] || {};
+      // la prima volta e le frasi passano dal filtro di qualita' dell'archivio delle prime volte
+      if (P && P.senso) { D.senso = P.senso; if (D.senso.stato !== "confermata") P.g = null; }
+      if (P && P.p && P.p.length) { const v = P.p[0]; D.pv = [v[0], v[1], v[2], v[3], v[5] || ""]; D.pv_illeggibile = !v[5]; D.prime = P.p; D.grezza = P.g; }
+      else if (D.senso && D.senso.stato === "incerta") { D.pv = null; D.prime = []; }
+      return pagina(el, C, D, r.slice(6).filter(Boolean), B, E, S);
     });
   });
 
@@ -85,7 +87,7 @@
     });
   }
 
-  function pagina(el, C, D, altre, B, E, S, IX) {
+  function pagina(el, C, D, altre, B, E, S) {
     const w = C.w, f = C.forma;
     document.title = f + " · Il vocabolario del Parlamento";
     document.getElementById("bric").textContent = f;
@@ -123,8 +125,8 @@
         <div class="c3 fil"><h3 class="titolo-piccolo">Collegamenti</h3><ul class="fatti" id="colleg"></ul></div>
       </section>`;
     G.nelRacconto("#nel-racconto", "parole", f);
-    // parole guida: la voce prima e quella dopo, in ordine alfabetico
-    const iw = IX._mappa.get(w), vp = IX.p[iw - 1], vs = IX.p[iw + 1];
+    // parole guida: la voce prima e quella dopo, in ordine alfabetico (nella scheda: [parola, forma con gli accenti o 0])
+    const av = D.av || [], vp = av[0], vs = av[1];
     G.guideVicine(vp ? ["parola.html?p=" + vp[0], vp[1] || vp[0]] : null, vs ? ["parola.html?p=" + vs[0], vs[1] || vs[0]] : null);
     // fatti
     const fatti = [
@@ -153,7 +155,7 @@
     document.getElementById("partiti").innerHTML = pa.length ? G.barre(pa.map((p, i) => [G.lPartito(p[0], p[0].replace("Unita'", "Unità")), p[1], i === 0]), { fmt: (v) => G.num1(v) }) + `<p class="fig-fonte">Il primo partito la dice ${G.num(pa[0][2], 1)} volte quanto la media dell'aula repubblicana.</p>` : '<p class="grigio">Troppo poche volte alla Camera della Repubblica per confrontare i partiti.</p>';
     if (pa.length) document.getElementById("tit-pa").innerHTML = `Il ${G.esc(pa[0][0].replace("Unita'", "Unità"))} la usa ${G.num(pa[0][2], 1)} volte la media`;
     // vicine
-    document.getElementById("vicine").innerHTML = (D.vi || []).map((v) => { const r = IX.p[IX._mappa.get(v)]; return G.lParola(v, (r && r[1]) || v); }).join(" ");
+    document.getElementById("vicine").innerHTML = (D.vi || []).map((v, i) => G.lParola(v, (D.vf && D.vf[i]) || v)).join(" ");
     // anni top
     const anni = G.ANNI.map((a, i) => [a, C.pm.m[i]]).filter((x) => x[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 6);
     document.getElementById("anni-top").innerHTML = anni.map((x) => `<li><span>${G.lAnno(x[0])}</span><span>${G.num1(x[1])} per milione</span></li>`).join("");

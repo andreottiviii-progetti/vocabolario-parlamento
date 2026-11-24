@@ -124,17 +124,13 @@ def elenco():
 
 def vecchie():
     """La scheda attuale di dati/prime (regola di g9) per ogni voce dell'elenco."""
-    mappa = json.load(open(os.path.join(DATI, "prime", "mappa.json"), encoding="utf-8"))["inizi"]
     espr = json.load(open(os.path.join(DATI, "prime", "espressioni.json"), encoding="utf-8"))
-    pezzi, out = {}, {}
+    out = {}
     for k in elenco():
         if " " in k:
             out[k] = espr.get(k)
             continue
-        i = bisect.bisect_right(mappa, k) - 1
-        if i not in pezzi:
-            pezzi[i] = json.load(open(os.path.join(DATI, "prime", "d", "%03d.json" % i), encoding="utf-8"))
-        out[k] = pezzi[i].get(k)
+        out[k] = leggi_scheda_pezzo("prime/d", k, PEZZI_PRIME)  # pezzo scelto dalla parola (comune.py)
     return out
 
 

@@ -49,7 +49,18 @@
     return memo[p];
   };
   G.param = (k) => new URLSearchParams(location.search).get(k);
-  G.PEZZO = 400; // parole per pezzo di dati
+  /* Pezzi di dati per chiave. Ogni parola sta in un piccolo file (curve, schede, prime volte) scelto dalla parola stessa:
+     hash FNV-1a a 32 bit sui caratteri (la parola è già senza accenti, a-z) diviso per il numero dei pezzi. È la stessa
+     funzione di chiave_pezzo() in _genera/comune.py, e i due numeri devono restare uguali a PEZZI_PAROLE e PEZZI_PRIME di
+     quel file. Così la pagina di una parola scarica solo i suoi pezzi, senza aprire l'indice di tutte le parole (721 KB). */
+  G.PEZZI_PAROLE = 1024; // parole/c (curve) e parole/d (schede)
+  G.PEZZI_PRIME = 4096; // prime/d (schede delle prime volte)
+  G.chiavePezzo = function (w, n) {
+    let h = 2166136261;
+    for (let i = 0; i < w.length; i++) { h ^= w.charCodeAt(i) & 255; h = Math.imul(h, 16777619); }
+    return (h >>> 0) % n;
+  };
+  G.pezzo = (cartella, w, n) => cartella + "/" + String(G.chiavePezzo(w, n)).padStart(4, "0") + ".json";
   G.indiceParole = function () {
     return G.carica("parole/indice.json").then((ix) => {
       if (!ix._mappa) { ix._mappa = new Map(); ix.p.forEach((r, i) => ix._mappa.set(r[0], i)); }
@@ -60,25 +71,19 @@
   /* normalizza come il progetto: minuscolo, senza accenti, solo a-z */
   G.norma = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z]/g, "");
   /* la curva di una parola. Le parole della home (confronto, coppie, «io») stanno già dentro home.json, alla voce «veloce»:
-     per quelle non si apre né l'indice (738 KB) né il pezzo di dati (330 KB); per tutte le altre si va come sempre */
+     per quelle non si apre nessun pezzo; per tutte le altre si apre il solo pezzo delle curve che contiene la parola */
   G.curvaParola = function (w) {
-    const P = G.PACCO && G.PACCO.curve && G.PACCO.curve[w];
-    if (P) return G.carica("base.json").then((b) => ({ w: w, forma: P[0] || w, tot: P[1], picco: P[2], y0: P[3], conti: P[4], pm: G.perMilione(P[4], b.tot) }));
-    return G.indiceParole().then((ix) => {
-      const i = ix._mappa.get(w);
-      if (i == null) return null;
-      return Promise.all([G.carica("parole/c/" + G.pad(Math.floor(i / G.PEZZO)) + ".json"), G.carica("base.json")]).then(([c, b]) => {
-        const r = ix.p[i];
-        return { w: w, forma: r[1] || w, tot: r[2], picco: r[3], y0: r[4], conti: c[w], pm: G.perMilione(c[w], b.tot) };
-      });
+    const P = (G.PACCO && G.PACCO.curve && G.PACCO.curve[w]) || null;
+    /* altrimenti il pezzo delle curve in cui sta la parola (circa 23 parole, 20 KB): la scheda ha la stessa forma di una
+       voce di home.json «veloce»: [forma (0 se uguale), totale, anno di punta, anno di partenza, conti] */
+    return (P ? Promise.resolve(P) : G.carica(G.pezzo("parole/c", w, G.PEZZI_PAROLE)).then((c) => c[w] || null)).then((P2) => {
+      if (!P2) return null;
+      return G.carica("base.json").then((b) => ({ w: w, forma: P2[0] || w, tot: P2[1], picco: P2[2], y0: P2[3], conti: P2[4], pm: G.perMilione(P2[4], b.tot) }));
     });
   };
+  /* la scheda di una parola (prima volta, frasi, oratori, partiti, parole vicine): dal suo pezzo; null se la parola non c'è */
   G.schedaParola = function (w) {
-    return G.indiceParole().then((ix) => {
-      const i = ix._mappa.get(w);
-      if (i == null) return null;
-      return G.carica("parole/d/" + G.pad(Math.floor(i / G.PEZZO)) + ".json").then((d) => d[w]);
-    });
+    return G.carica(G.pezzo("parole/d", w, G.PEZZI_PAROLE)).then((d) => d[w] || null);
   };
   /* conti [camera[], senato[]] (sparsi: [anno0, v, v, ...]) -> per milione {c, s, m} con null dove l'anno è debole */
   G.espandi = function (sp) {
@@ -592,12 +597,7 @@
 
   /* archivio delle prime volte (parole dette almeno 10 volte) ed espressioni */
   G.schedaPrime = function (w) {
-    return G.carica("prime/mappa.json").then((M) => {
-      const I = M.inizi;
-      let lo = 0, hi = I.length - 1, k = 0;
-      while (lo <= hi) { const m = (lo + hi) >> 1; if (I[m] <= w) { k = m; lo = m + 1; } else hi = m - 1; }
-      return G.carica("prime/d/" + G.pad(k) + ".json").then((d) => G.conSenso(w, d[w] || null));
-    }).catch(() => null);
+    return G.carica(G.pezzo("prime/d", w, G.PEZZI_PRIME)).then((d) => G.conSenso(w, d[w] || null)).catch(() => null);
   };
   G.espressione = (q) => G.carica("prime/espressioni.json").then((E) => G.conSenso(q, E[q] || null)).catch(() => null);
   /* prima volta nel senso di oggi (lettura delle prime comparse, _genera/prime_senso.json): per le parole nuove la regola

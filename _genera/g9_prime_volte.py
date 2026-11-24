@@ -13,7 +13,11 @@ FONTE E METODO (sola lettura in D:\vocabolario-parlamento)
     milioni). Si contano come parola intera con spazio o trattino tra le parole (come script/140 e 91), negli stessi turni.
     Entrano quelle dette almeno 10 volte.
   - Curva per decennio: volte per decennio, Camera e Senato insieme (il sito divide per le parole del decennio).
-USCITA  dati/prime/mappa.json, dati/prime/d/NNN.json (schede), dati/prime/s/<due lettere>.json (suggerimenti),
+  - Pezzi per chiave (dal 24/11/2026): le schede non stanno piu' in 127 pezzi alfabetici da 1,2 MB, ma in PEZZI_PRIME
+    (4096) file piccoli (circa 54 parole l'uno, 35 KB), scelti dalla parola stessa con chiave_pezzo() di comune.py (hash
+    FNV-1a; la stessa funzione e' G.chiavePezzo in js/comune.js). La pagina di una parola scarica cosi' un solo file piccolo,
+    senza dover leggere prima una mappa dei pezzi. mappa.json resta, ma con i soli numeri (n, soglia, decenni, pezzi).
+USCITA  dati/prime/mappa.json, dati/prime/d/NNNN.json (schede, 4096 file), dati/prime/s/<due lettere>.json (suggerimenti),
         dati/prime/espressioni.json; intermedi in _genera/cache/prime/
 USO     python -I _genera/g9_prime_volte.py        (3 processi; riprende da dove si era fermato)
 """
@@ -258,7 +262,7 @@ def main():
         dopo = [o for o in v if int(o[0][:4]) >= inf["partenza"]]
         prima = [o for o in v if int(o[0][:4]) < inf["partenza"]][:1]
         forme = [o[7].lower() for o in dopo if o[7]]
-        forma = max(set(forme), key=forme.count) if forme else w
+        forma = max(sorted(set(forme)), key=forme.count) if forme else w  # sorted: a parita' di volte vince sempre la stessa forma (prima dipendeva dall'ordine casuale dei set)
         if senza_accenti(forma) != w:
             forma = w
         s = {"t": inf["tot"], "d": inf["dec"], "p": scegli(dopo)}
@@ -270,20 +274,9 @@ def main():
             s["g"] = voce(prima[0])
         schede[w] = s
     parole = sorted(schede)
-    # pezzi sotto 1,2 MB in ordine alfabetico
-    mappa, pezzo, peso, k = [], {}, 0, 0
-    for w in parole:
-        j = json.dumps(schede[w], ensure_ascii=False, separators=(",", ":"))
-        if peso + len(j) > 1_200_000 and pezzo:
-            scrivi_json("prime/d/%03d.json" % k, pezzo)
-            k += 1
-            pezzo, peso = {}, 0
-        if not pezzo:
-            mappa.append(w)
-        pezzo[w] = schede[w]
-        peso += len(j.encode("utf-8")) + len(w) + 4
-    if pezzo:
-        scrivi_json("prime/d/%03d.json" % k, pezzo)
+    # pezzi per chiave: ogni parola nel pezzo che dice la sua chiave (comune.py, chiave_pezzo)
+    n_d, mx_d, pieni = scrivi_pezzi("prime/d", {w: schede[w] for w in parole}, PEZZI_PRIME)
+    print("schede:", len(parole), "byte:", n_d, "pezzi:", PEZZI_PRIME, "(non vuoti %d)" % pieni, "pezzo piu' grande:", mx_d, flush=True)
     # suggerimenti per le prime due lettere: parola, forma, volte (le piu' dette prima)
     sug = defaultdict(list)
     for w in parole:
@@ -317,8 +310,8 @@ def main():
     scrivi_json("prime/espressioni.json", out_e)
     json.dump(scartate, open(os.path.join(CACHE, "scartate_g9.json"), "w", encoding="utf-8"), ensure_ascii=False)
     print("frasi scartate dal filtro di qualita':", scartate["n"], flush=True)
-    scrivi_json("prime/mappa.json", {"inizi": mappa, "n": len(parole), "soglia": SOGLIA, "decenni": DECENNI})
-    print("parole:", len(parole), "pezzi:", len(mappa), "espressioni:", len(out_e), "di", len(elenco), flush=True)
+    scrivi_json("prime/mappa.json", {"n": len(parole), "soglia": SOGLIA, "decenni": DECENNI, "pezzi": PEZZI_PRIME})
+    print("parole:", len(parole), "pezzi:", PEZZI_PRIME, "espressioni:", len(out_e), "di", len(elenco), flush=True)
     for w in ("computer", "telefonino", "spread", "intelligenza"):
         print(w, json.dumps(schede.get(w), ensure_ascii=False)[:400])
     print("intelligenza artificiale", json.dumps(out_e.get("intelligenza artificiale"), ensure_ascii=False)[:400])

@@ -11,7 +11,16 @@ FONTE E METODO
   - Parole tipiche di una persona o di un partito in un archivio: confronto con il resto dell'archivio
     (logaritmo del rapporto tra le due frequenze, con 0,5 aggiunto ai conteggi), solo parole dette almeno 8 volte
     dalla persona (20 dal partito), di almeno 4 lettere e non vuote.
-USCITA  dati/parole/indice.json, dati/parole/c/NNN.json (conteggi), dati/parole/d/NNN.json (schede); _genera/cache/aggregati.pkl
+  - Pezzi per chiave (dal 24/11/2026): curve e schede non stanno piu' in 60 pezzi da 400 parole in ordine alfabetico
+    (la pagina di una parola doveva scaricare l'indice di tutte le parole, 721 KB, per sapere in quale pezzo stava, e poi
+    330 KB di curve e 570 KB di schede). Ogni parola sta in uno dei PEZZI_PAROLE (1024) piccoli file, scelto dalla parola
+    stessa con la funzione chiave_pezzo() di comune.py (hash FNV-1a; la stessa e' G.chiavePezzo in js/comune.js). La scheda di
+    curva contiene tutto cio' che prima si leggeva dall'indice: [forma (0 se uguale), totale, anno di punta, anno di
+    partenza, conti]. La scheda di dettaglio porta anche le due parole vicine in ordine alfabetico («av») e le forme con
+    gli accenti delle parole con la stessa storia («vf»): il sito non apre piu' l'indice per questi due usi.
+USCITA  dati/parole/indice.json (elenco di tutte le parole: serve solo a parole.html e alle storie),
+        dati/parole/c/NNNN.json (curve), dati/parole/d/NNNN.json (schede), 1024 file ciascuna cartella;
+        _genera/cache/aggregati.pkl
 USO     python -I _genera/g4_parole.py
 """
 import glob
@@ -26,7 +35,6 @@ from comune import *  # noqa
 
 import numpy as np
 
-PEZZO = 400
 SCARTATE = {"n": 0, "esempi": []}
 SCAN = os.path.join(CACHE, "scan")
 
@@ -159,7 +167,7 @@ def main():
     M, tot = B["M"], B["tot"]
     y0, picco = B["y0"], B["picco"]
     indice = []
-    pezzi_c, pezzi_d = defaultdict(dict), defaultdict(dict)
+    sch_c, sch_d = {}, {}
     for i, w in enumerate(parole):
         # forma con accenti dalla frase della prima volta e delle frasi
         forme = Counter()
@@ -174,7 +182,6 @@ def main():
             f0 = forme.most_common(1)[0][0]
             if f0 != w:
                 forma = f0
-        k = i // PEZZO
         # conteggi dall'anno di partenza
         cs = []
         for r in (0, 1):
@@ -185,9 +192,9 @@ def main():
                 cs.append([int(nz[0] + 1848), v[nz[0]: nz[-1] + 1].tolist()])
             else:
                 cs.append([])
-        pezzi_c[k][w] = [cs[0], cs[1]]
         tot_i = int(sum(sum(x[1]) for x in cs if x))
         indice.append([w, forma if forma != w else 0, tot_i, picco[i], y0[i]])
+        sch_c[w] = [forma if forma != w else 0, tot_i, picco[i], y0[i], [cs[0], cs[1]]]  # stessa forma di una curva di home.json «veloce»
         d = {}
         if w in prime:
             v = prime[w]
@@ -226,14 +233,20 @@ def main():
             pa.sort(key=lambda x: -x[1])
             d["pa"] = pa[:8]
         d["vi"] = [parole[j] for j in B["vicine"][i]]
-        pezzi_d[k][w] = d
-    n = 0
-    for k, v in pezzi_c.items():
-        n += scrivi_json("parole/c/%03d.json" % k, v)
-    for k, v in pezzi_d.items():
-        n += scrivi_json("parole/d/%03d.json" % k, v)
-    n += scrivi_json("parole/indice.json", {"pezzo": PEZZO, "p": indice})
-    print("parole:", len(indice), "byte:", n, "pezzi:", len(pezzi_c), flush=True)
+        sch_d[w] = d
+    # parole vicine in ordine alfabetico e forme con gli accenti delle parole con la stessa storia (prima si leggevano
+    # dall'indice, che la pagina di una parola non apre piu')
+    fm = {r[0]: r[1] for r in indice}
+    for i, w in enumerate(parole):
+        d = sch_d[w]
+        d["av"] = [[indice[j][0], indice[j][1]] if 0 <= j < len(indice) else None for j in (i - 1, i + 1)]
+        vf = [fm.get(v, 0) for v in d["vi"]]
+        if any(vf):
+            d["vf"] = vf
+    n, mx_c, _ = scrivi_pezzi("parole/c", sch_c, PEZZI_PAROLE)
+    n_d, mx_d, _ = scrivi_pezzi("parole/d", sch_d, PEZZI_PAROLE)
+    n += n_d + scrivi_json("parole/indice.json", {"p": indice})
+    print("parole:", len(indice), "byte:", n, "pezzi per cartella:", PEZZI_PAROLE, "pezzo piu' grande c/d:", mx_c, mx_d, flush=True)
     agg["par_tok"] = dict(par_tok)
     # per i temi della pagina partito (g8): conteggi di ogni parola per i partiti grandi e per tutta l'aula repubblicana
     agg["par_cont"] = {p: par_cont[p].astype(np.int64) for p in grandi}
@@ -246,7 +259,7 @@ def main():
         pickle.dump(agg, f, protocol=4)
     for w in ("spread", "tangentopoli", "liberta", "aborto"):
         i = tidx[w]
-        print(w, indice[i], pezzi_d[i // PEZZO][w].get("pv"), pezzi_d[i // PEZZO][w].get("or", [])[:3], pezzi_d[i // PEZZO][w].get("pa", [])[:3])
+        print(w, indice[i], sch_d[w].get("pv"), sch_d[w].get("or", [])[:3], sch_d[w].get("pa", [])[:3])
     fine()
 
 
