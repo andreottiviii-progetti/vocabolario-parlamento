@@ -30,7 +30,6 @@ USO     python -I _genera/g9b_prime_senso.py            estrae le comparse (3 pr
         python -I _genera/g9b_prime_senso.py leggi      scrive le schede da leggere in cache/prime_senso/leggi/
         python -I _genera/g9b_prime_senso.py finale     scrive prime_senso.json e la tabella dalle DECISIONI
 """
-import bisect
 import glob
 import gzip
 import json

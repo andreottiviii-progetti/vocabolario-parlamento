@@ -62,7 +62,7 @@ Se si cambia N, o la funzione, si rifanno g4 e g9 e si cambiano `comune.py` e `j
 | Percorsi nuovi (Prima Repubblica, partiti, parole, resoconto) | `dati/percorsi/*.json` | `_progetto/racconto/PERCORSI.md`, sezioni 3, 4, 7, 8; titoli delle storie dall'indice delle storie | g6 |
 | Temi della pagina partito | `dati/partiti/<id>.json` (`temi_su`) | conteggi per partito di g4 e parole forti dei 40 temi (`h37_temi_K40.txt`, `h37_etichette_temi.csv`) | g4, g8 |
 | Testo della pagina del metodo | `metodo.html` | `_progetto/TESTI_PAGINE.md`, capitolo 3 | g6, g5 |
-| Collegamento alla scheda su primarepubblica.net (chi ha una scheda lì) | `dati/persone/tracker.json` | `base_pulita/oratori/oratori_persone.csv` (QID di ogni persona) e l'elenco del tracker `data/elenco.json` del tracker (percorso locale, non pubblicato) (solo lettura); abbinamento esatto per QID, scartati i casi in cui l'id della Camera non coincide | g12 |
+| Collegamento alla scheda su primarepubblica.net (chi ha una scheda lì) | `dati/persone/tracker.json` | `base_pulita/oratori/oratori_persone.csv` (QID di ogni persona) e l'elenco del tracker `data/elenco.json` del tracker (percorso in `_genera/percorsi_locali.json`, non pubblicato) (solo lettura); abbinamento esatto per QID, scartati i casi in cui l'id della Camera non coincide | g12 |
 | Pagine HTML, file scaricabili | `*.html`, `scarica/*.csv`, `dati/scarica.json` | dati qui sopra | g5 |
 
 | Anni di ogni legislatura | `dati/base.json`, `dati/legislature/*.json` | anni con almeno l'1% delle parole dell'archivio in `misure/parole/totali/*.parquet` | g3 |

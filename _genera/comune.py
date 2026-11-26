@@ -64,7 +64,7 @@ def scrivi_json(percorso_rel, oggetto):
 
 # ----------------------------------------------------------------------------- pezzi per chiave (parole, prime volte)
 # Ogni parola sta in un piccolo file scelto da una chiave che si calcola dalla parola stessa (hash FNV-1a a 32 bit sui
-# byte della parola senza accenti, a-z, diviso per il numero dei pezzi). La stessa funzione e' in js/comune.js (G.chiave):
+# byte della parola senza accenti, a-z, diviso per il numero dei pezzi). La stessa funzione e' in js/comune.js (G.chiavePezzo):
 # cosi' la pagina di una parola scarica solo il suo pezzo, senza aprire l'indice di tutte le parole.
 PEZZI_PAROLE = 1024  # dati/parole/c e dati/parole/d (curve e schede delle 23.842 parole): circa 23 parole per pezzo
 PEZZI_PRIME = 4096   # dati/prime/d (schede delle prime volte, 222.726 parole): circa 54 parole per pezzo

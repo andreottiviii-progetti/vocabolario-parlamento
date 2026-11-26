@@ -5,3 +5,4 @@ _genera/cache/
 __pycache__/
 *.pyc
 RIFAI_SITO.bat
+_genera/percorsi_locali.json

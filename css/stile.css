@@ -10,7 +10,7 @@
 html{-webkit-text-size-adjust:100%}
 body{
   margin:0;background:#fff;color:var(--nero);
-  font-family:"Archivo","Arial Narrow",Arial,sans-serif;
+  font-family:"Arial Narrow",Arial,sans-serif;
   font-size:16.5px;line-height:1.45;font-weight:400;font-stretch:100%;
   font-variant-numeric:tabular-nums lining-nums;
 }
@@ -99,7 +99,7 @@ h1,h2,h3,h4{margin:0;font-weight:800;font-stretch:70%;line-height:1}
 .fig-fonte{font-size:12px;color:var(--grigio);margin:6px 0 0;line-height:1.35}
 .fig-fonte button{font:inherit;font-size:12px;background:none;border:0;padding:0;color:var(--nero);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;cursor:pointer}
 .fig-lettura{font-size:13px;min-height:19px;color:var(--nero);margin:0 0 4px}
-svg text{font-family:"Archivo","Arial Narrow",Arial,sans-serif;font-variant-numeric:tabular-nums}
+svg text{font-family:"Arial Narrow",Arial,sans-serif;font-variant-numeric:tabular-nums}
 .asse text{font-size:12px;fill:var(--grigio)}
 .asse line{stroke:var(--riga);stroke-width:1;shape-rendering:crispEdges}
 .asse .zero{stroke:var(--nero)}

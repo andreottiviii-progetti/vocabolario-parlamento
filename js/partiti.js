@@ -39,8 +39,8 @@
           Object.entries(TR.partiti).forEach(([n, v]) => v.forEach((r) => { (pos[r[0]] = pos[r[0]] || []).push([n, r[2], r[3]]); }));
           Object.values(pos).forEach((ps) => ps.forEach((p) => ps.forEach((q) => { dMax = Math.max(dMax, Math.hypot(p[1] - q[1], p[2] - q[2])); })));
         }
-        const lontani = (ids, L) => {
-          const ps = pos[L] || [], io = ps.find((p) => ids.indexOf(p[0]) >= 0);
+        const lontani = (id, L) => {
+          const ps = pos[L] || [], io = ps.find((p) => p[0] === id);
           if (!io) return [];
           return ps.filter((p) => p[0] !== io[0] && !D.stessa(io[0], p[0])).map((p) => [p[0], Math.hypot(p[1] - io[1], p[2] - io[2])]).sort((a, b) => b[1] - a[1]).slice(0, 3);
         };
@@ -63,7 +63,7 @@
             const stessa = D.stessa(id, q[0]), c = stessa ? G.GDATI : coloreDi(q[0]);
             return riga(k + 1, c, `<b>${linkP(q[0])}</b> nella ${q[1]} legislatura${anniDi(q[1])}${stessa ? " <i>stessa famiglia: la tabella lo salta</i>" : ""}`, q[2] / max, G.num(q[2], 2), stessa ? "stessa" : "");
           }).join("");
-          const lo = dMax ? lontani(ids, L) : [];
+          const lo = dMax ? lontani(id, L) : [];
           const lont = lo.map((q, k) => riga(k + 1, coloreDi(q[0]), `<b>${linkP(q[0])}</b>`, q[1] / dMax, G.num((q[1] / dMax) * 100, 0))).join("");
           const leg = `${G.romano(L)} legislatura${anniDi(G.romano(L))}`;
           pan.innerHTML = `<div class="testa-dett"><p><b>${G.esc(bello(id))} nella ${leg}</b></p><button type="button" class="chiudi" aria-label="Chiudi">×</button></div>

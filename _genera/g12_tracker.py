@@ -7,7 +7,8 @@ COSA FA  Per ogni persona del sito (dati/persone/indice.json) prende il codice W
          (un indirizzo con #Q123... apre la scheda, poi la pagina si porta all'indirizzo /onorevole/nome/).
          Si usa il QID e non il nome nell'indirizzo perché il QID non cambia mai, il nome-indirizzo sì (se compare un omonimo).
 FONTI    D:\vocabolario-parlamento\base_pulita\oratori\oratori_persone.csv   (colonne persona_id = QID, id_fonte = id del sito)
-         data/elenco.json del progetto del tracker (solo lettura; chiave «persone»), percorso in un file locale non pubblicato
+         data/elenco.json del progetto del tracker (solo lettura; chiave «persone»). Il percorso sta fuori dal repository:
+         variabile d'ambiente ELENCO_TRACKER oppure _genera/percorsi_locali.json {"elenco_tracker": "..."} (file non pubblicato).
 REGOLE   - abbinamento esatto per QID, e solo QID veri di Wikidata (Q e cifre): le schede del tracker senza QID (sigle S...)
            non si aprono da un indirizzo e restano fuori;
          - se il tracker conosce l'id della Camera di quella persona e non coincide con quello del sito, il collegamento
@@ -24,7 +25,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comune import BASE, DATI, scrivi_json, fine  # noqa
 
 ORATORI = os.path.join(BASE, "base_pulita", "oratori", "oratori_persone.csv")
-ELENCO_TRACKER = os.environ.get("ELENCO_TRACKER", "")  # percorso locale, non pubblicato
+_LOC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "percorsi_locali.json")  # non pubblicato (.gitignore)
+ELENCO_TRACKER = os.environ.get("ELENCO_TRACKER") or (json.load(open(_LOC, encoding="utf-8")).get("elenco_tracker", "") if os.path.exists(_LOC) else "")
 SITO_TRACKER = "https://primarepubblica.net/"
 
 
